@@ -1,0 +1,19 @@
+{
+  "name": "trivia-api",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:unit": "vitest run __tests__/unit",
+    "test:integration": "vitest run __tests__/integration",
+    "typecheck": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "@types/node": "^20.14.0",
+    "supabase": "^2.84.4",
+    "typescript": "^5.4.5",
+    "vitest": "^1.6.0",
+    "zod": "^3.23.8"
+  }
+}

@@ -1,0 +1,4 @@
+-- Seed file for local development
+-- Run `supabase db seed` to apply
+-- Questions are generated via the generate-questions edge function
+-- Run after migrations: supabase functions invoke generate-questions --body '{"category":"science","difficulty":"easy","count":15}'

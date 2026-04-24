@@ -1,0 +1,59 @@
+{
+  "expo": {
+    "name": "Trivia Quest",
+    "slug": "trivia-quest",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "dark",
+    "newArchEnabled": true,
+    "splash": {
+      "image": "./assets/splash.PNG",
+      "resizeMode": "cover",
+      "backgroundColor": "#0f0f1a"
+    },
+    "assetBundlePatterns": [
+      "**/*"
+    ],
+    "ios": {
+      "supportsTablet": false,
+      "bundleIdentifier": "com.triviaquest.app",
+      "buildNumber": "1",
+      "config": {
+        "usesNonExemptEncryption": false
+      }
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#0f0f1a"
+      },
+      "package": "com.triviaquest.app",
+      "versionCode": 1
+    },
+    "plugins": [
+      "expo-router",
+      "expo-audio",
+      "expo-font",
+      "expo-updates",
+      "@sentry/react-native"
+    ],
+    "updates": {
+      "enabled": true,
+      "checkAutomatically": "ON_LOAD",
+      "fallbackToCacheTimeout": 0
+    },
+    "runtimeVersion": {
+      "policy": "appVersion"
+    },
+    "scheme": "triviaquest",
+    "experiments": {
+      "typedRoutes": true
+    },
+    "extra": {
+      "eas": {
+        "projectId": "93755eda-f05a-4482-9904-7fb916022ea3"
+      }
+    }
+  }
+}

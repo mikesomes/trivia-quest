@@ -1,0 +1,339 @@
+import { handleCors } from '../_shared/cors.ts'
+import { requireAuth, isAuthError } from '../_shared/auth.ts'
+import { createServiceClient } from '../_shared/supabaseClient.ts'
+import { errorResponse, jsonResponse } from '../_shared/errors.ts'
+import { isValidUUID, parseBody } from '../_shared/validation.ts'
+import {
+  EASY_BASE_ANSWER_XP,
+  computeRoundXpBreakdown,
+  computeXpEarned,
+  getDifficultyBonusXp,
+  levelFromXp,
+  xpToNextLevel as computeXpToNextLevel,
+} from '../_shared/scoring.ts'
+import type { Difficulty } from '../_shared/types.ts'
+
+interface AchievementRecord {
+  id: string
+  name: string
+  description: string
+  icon: string
+  rarity: string
+}
+
+const MAX_SESSION_ROUNDS = 50
+
+Deno.serve(async (req) => {
+  const corsResult = handleCors(req)
+  if (corsResult) return corsResult
+  if (req.method !== 'POST') return errorResponse('Method not allowed', 405)
+
+  const auth = await requireAuth(req)
+  if (isAuthError(auth)) return auth
+
+  const body = await parseBody<{ roundId?: unknown; sessionRoundIds?: unknown }>(req)
+  if (body instanceof Response) return body
+
+  if (!isValidUUID(body.roundId)) return errorResponse('Invalid roundId', 400)
+
+  // Validate optional sessionRoundIds (previous rounds in this session)
+  let sessionRoundIds: string[] = []
+  if (body.sessionRoundIds !== undefined) {
+    if (!Array.isArray(body.sessionRoundIds) || body.sessionRoundIds.length > MAX_SESSION_ROUNDS) {
+      return errorResponse(`sessionRoundIds must be an array of at most ${MAX_SESSION_ROUNDS} IDs`, 400)
+    }
+    if (!body.sessionRoundIds.every((id) => isValidUUID(id))) {
+      return errorResponse('All sessionRoundIds must be valid UUIDs', 400)
+    }
+    sessionRoundIds = [...new Set(body.sessionRoundIds as string[])]
+  }
+
+  const supabase = createServiceClient()
+
+  // Fetch completed round
+  const { data: round, error: roundError } = await supabase
+    .from('rounds')
+    .select('*')
+    .eq('id', body.roundId)
+    .eq('user_id', auth.userId)
+    .eq('status', 'completed')
+    .maybeSingle()
+
+  if (roundError) return errorResponse('Failed to fetch round', 500)
+  if (!round) return errorResponse('Completed round not found', 404)
+  if (round.is_quest) {
+    return errorResponse('Quest rounds award XP during play and cannot be submitted here', 400)
+  }
+
+  // Check for duplicate XP submission
+  const { data: existing } = await supabase
+    .from('scores')
+    .select('id, xp_earned, correct_count, session_xp_earned')
+    .eq('round_id', body.roundId)
+    .maybeSingle()
+
+  // Fetch answers with question difficulty for accurate per-question XP
+  const { data: answers } = await supabase
+    .from('answers')
+    .select('is_correct, time_bonus, streak_bonus, time_taken_ms, streak_at_time, question_id')
+    .eq('round_id', body.roundId)
+
+  const questionIds = (answers ?? []).map(a => a.question_id).filter(Boolean)
+  const { data: questionDifficulties } = questionIds.length > 0
+    ? await supabase.from('question_bank').select('id, difficulty').in('id', questionIds)
+    : { data: [] }
+  const difficultyById = Object.fromEntries((questionDifficulties ?? []).map(q => [q.id, q.difficulty]))
+
+  const correctCount = (answers ?? []).filter(a => a.is_correct).length
+  const timeBonusTotal = (answers ?? []).reduce((sum, a) => sum + (a.time_bonus || 0), 0)
+  const streakBonusTotal = (answers ?? []).reduce((sum, a) => sum + (a.streak_bonus || 0), 0)
+
+  // Compute values needed for achievement checks
+  const longestStreak = (answers ?? []).reduce((max, a) => {
+    if (!a.is_correct) return max
+    return Math.max(max, (a.streak_at_time ?? 0) + 1)
+  }, 0)
+
+  const avgTimeTakenMs = (answers ?? []).length > 0
+    ? (answers ?? []).reduce((sum, a) => sum + (a.time_taken_ms ?? 0), 0) / (answers ?? []).length
+    : Infinity
+
+  const todayEastern = new Date().toLocaleDateString('en-CA', { timeZone: 'America/New_York' })
+  const { data: recentSubmissions } = await supabase
+    .from('scores')
+    .select('completed_at')
+    .eq('user_id', auth.userId)
+    .gte('completed_at', new Date(Date.now() - 36 * 60 * 60 * 1000).toISOString())
+  const isFirstRoundToday = !(recentSubmissions ?? []).some((row) =>
+    new Date(row.completed_at).toLocaleDateString('en-CA', { timeZone: 'America/New_York' }) === todayEastern
+  )
+
+  // ── Session cumulative totals ─────────────────────────────────────────────
+  // Pull XP for every previously completed round in this session.
+  // All rows must belong to this user; any mismatch is silently excluded.
+  let prevSessionXp = 0
+  let prevSessionCorrect = 0
+
+  if (sessionRoundIds.length > 0) {
+    const { data: prevSubmissions } = await supabase
+      .from('scores')
+      .select('xp_earned, correct_count')
+      .in('round_id', sessionRoundIds)
+      .eq('user_id', auth.userId)
+
+    for (const row of prevSubmissions ?? []) {
+      prevSessionXp += row.xp_earned ?? 0
+      prevSessionCorrect += row.correct_count ?? 0
+    }
+  }
+
+  const answerXpTotals = (answers ?? []).reduce((totals, answer) => {
+    if (!answer.is_correct) return totals
+    const qDifficulty = difficultyById[answer.question_id] ?? round.difficulty
+    totals.answerBase += EASY_BASE_ANSWER_XP
+    totals.speedBonus += answer.time_bonus ?? 0
+    totals.difficultyBonus += getDifficultyBonusXp(qDifficulty)
+    totals.streakBonus += answer.streak_bonus ?? 0
+    return totals
+  }, { answerBase: 0, speedBonus: 0, difficultyBonus: 0, streakBonus: 0 })
+
+  const xpBreakdown = computeRoundXpBreakdown({
+    ...answerXpTotals,
+    answeredCount: answers?.length ?? 0,
+    correctCount,
+    totalQuestions: 10,
+    livesRemaining: round.lives_remaining,
+    isDailyChallenge: round.is_daily_challenge,
+    isFirstRoundToday,
+  })
+
+  // Insert round XP record.
+  // XP is accumulated per answer in submit-answer so it can reflect speed,
+  // difficulty, and streak. Recompute from answer records for rich breakdowns;
+  // keep a legacy fallback for older rows with no answer XP shape.
+  const accumulatedAnswerXp = round.xp_earned_in_round ?? 0
+  const answerXpEarned = xpBreakdown.answerXp > 0 || correctCount === 0
+    ? xpBreakdown.answerXp
+    : accumulatedAnswerXp
+  const xpEarned = answerXpEarned > 0 || correctCount === 0
+    ? xpBreakdown.total
+    : computeXpEarned(correctCount, round.difficulty as Difficulty, 10)
+  const completionBonusXp = Math.max(0, xpEarned - answerXpEarned)
+  const sessionXpEarned = prevSessionXp + xpEarned
+  const sessionRound = sessionRoundIds.length + 1
+
+  if (existing) {
+    const { data: user, error: userError } = await supabase
+      .from('users')
+      .select('xp, level, total_games, total_correct, best_score, coins')
+      .eq('id', auth.userId)
+      .single()
+
+    if (userError || !user) return errorResponse('Failed to fetch user', 500)
+
+    const recoveredSessionXp = existing.session_xp_earned ?? sessionXpEarned
+    const recoveredCorrectCount = existing.correct_count ?? correctCount
+    const recoveredXpEarned = existing.xp_earned ?? xpEarned
+    const recoveredOldXp = Math.max(0, user.xp - recoveredXpEarned)
+    const recoveredNewLevel = levelFromXp(user.xp)
+    const recoveredOldLevel = levelFromXp(recoveredOldXp)
+
+    const { count: betterXpSubmissions } = await supabase
+      .from('scores')
+      .select('*', { count: 'exact', head: true })
+      .gt('session_xp_earned', recoveredSessionXp)
+
+    return jsonResponse({
+      submissionId: existing.id,
+      roundXp: recoveredXpEarned,
+      correctCount: recoveredCorrectCount,
+      xpEarned: recoveredXpEarned,
+      newXp: user.xp,
+      newLevel: recoveredNewLevel,
+      leveledUp: recoveredNewLevel > recoveredOldLevel,
+      newBestXp: recoveredSessionXp >= user.best_score,
+      rank: (betterXpSubmissions ?? 0) + 1,
+      xpToNextLevel: computeXpToNextLevel(user.xp),
+      xpBreakdown,
+      newAchievements: [],
+      sessionXpEarned: recoveredSessionXp,
+      sessionCorrectCount: prevSessionCorrect + recoveredCorrectCount,
+      sessionRound,
+      recoveredSubmission: true,
+    })
+  }
+
+  const { data: submission, error: submissionError } = await supabase
+    .from('scores')
+    .insert({
+      round_id: body.roundId,
+      user_id: auth.userId,
+      category: round.category,
+      difficulty: round.difficulty,
+      total_score: xpEarned,
+      correct_count: correctCount,
+      total_questions: 10,
+      time_bonus_total: timeBonusTotal,
+      streak_bonus_total: streakBonusTotal,
+      completed_at: round.completed_at || new Date().toISOString(),
+      xp_earned: xpEarned,
+      session_score: sessionXpEarned,
+      session_xp_earned: sessionXpEarned,
+    })
+    .select()
+    .single()
+
+  if (submissionError || !submission) return errorResponse('Failed to save XP', 500)
+
+  // Fetch current user stats
+  const { data: user, error: userError } = await supabase
+    .from('users')
+    .select('xp, level, total_games, total_correct, best_score, coins')
+    .eq('id', auth.userId)
+    .single()
+
+  if (userError || !user) return errorResponse('Failed to fetch user', 500)
+
+  // Quest rounds already write per-answer XP live; round submission adds only
+  // completion-style bonuses. Other modes award the full amount here.
+  const oldXpForLevel = round.is_quest ? Math.max(0, user.xp - answerXpEarned) : user.xp
+  const newXp = round.is_quest ? user.xp + completionBonusXp : user.xp + xpEarned
+  const oldLevel = levelFromXp(oldXpForLevel)
+  const newLevel = levelFromXp(newXp)
+  const leveledUp = newLevel > oldLevel
+  // Best XP uses session XP so multi-round sessions are ranked properly.
+  const newBestXp = sessionXpEarned > user.best_score
+  const newTotalGames = user.total_games + 1
+
+  // Coins awarded equal the XP earned this submission (1 XP = 1 coin)
+  const coinsAwarded = round.is_quest ? completionBonusXp : xpEarned
+  const newCoins = (user.coins ?? 0) + coinsAwarded
+
+  // Update user stats
+  const userUpdate: Record<string, unknown> = {
+    total_games: newTotalGames,
+    total_correct: user.total_correct + correctCount,
+    best_score: newBestXp ? sessionXpEarned : user.best_score,
+    coins: newCoins,
+  }
+  if (!round.is_quest || completionBonusXp > 0) {
+    userUpdate.xp = newXp
+    userUpdate.level = newLevel
+  }
+  await supabase.from('users').update(userUpdate).eq('id', auth.userId)
+
+  // ── Achievement checks ─────────────────────────────────────────────────────
+  const conditions: Record<string, boolean> = {
+    first_game:    newTotalGames >= 1,
+    games_10:      newTotalGames >= 10,
+    games_50:      newTotalGames >= 50,
+    games_100:     newTotalGames >= 100,
+    perfect_round: correctCount === 10,
+    speed_demon:   correctCount === 10 && avgTimeTakenMs < 8000,
+    survivor:      round.lives_remaining === 1,
+    streak_5:      longestStreak >= 5,
+    streak_10:     longestStreak >= 10,
+    streak_15:     longestStreak >= 15,
+    high_scorer:   xpEarned >= 500,
+    big_brain:     sessionXpEarned >= 1500,
+  }
+
+  const eligible = Object.entries(conditions)
+    .filter(([, met]) => met)
+    .map(([id]) => id)
+
+  // Fetch already-earned achievements to avoid duplicates
+  const { data: alreadyEarned } = await supabase
+    .from('user_achievements')
+    .select('achievement_id')
+    .eq('user_id', auth.userId)
+
+  const earnedSet = new Set((alreadyEarned ?? []).map(r => r.achievement_id))
+  const toAward = eligible.filter(id => !earnedSet.has(id))
+
+  let newAchievements: AchievementRecord[] = []
+
+  if (toAward.length > 0) {
+    // Insert new achievements
+    await supabase.from('user_achievements').insert(
+      toAward.map(achievement_id => ({ user_id: auth.userId, achievement_id }))
+    )
+
+    // Fetch full achievement records to return to client
+    const { data: awarded } = await supabase
+      .from('achievements')
+      .select('id, name, description, icon, rarity')
+      .in('id', toAward)
+
+    newAchievements = (awarded ?? []) as AchievementRecord[]
+  }
+  // ──────────────────────────────────────────────────────────────────────────
+
+  // Get current global rank (rank on session XP, matching the leaderboard views)
+  const { count: betterXpSubmissions } = await supabase
+    .from('scores')
+    .select('*', { count: 'exact', head: true })
+    .gt('session_xp_earned', sessionXpEarned)
+
+  const rank = (betterXpSubmissions ?? 0) + 1
+
+  return jsonResponse({
+    submissionId: submission.id,
+    roundXp: xpEarned,
+    correctCount,
+    xpEarned,
+    coinsEarned: coinsAwarded,
+    newCoins,
+    newXp,
+    newLevel,
+    leveledUp,
+    newBestXp,
+    rank,
+    xpToNextLevel: computeXpToNextLevel(newXp),
+    xpBreakdown,
+    newAchievements,
+    sessionXpEarned: prevSessionXp + xpEarned,
+    sessionCorrectCount: prevSessionCorrect + correctCount,
+    sessionRound,
+  })
+})

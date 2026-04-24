@@ -1,0 +1,85 @@
+[api]
+enabled = true
+port = 54321
+schemas = ["public", "storage", "graphql_public"]
+extra_search_path = ["public", "extensions"]
+max_rows = 1000
+
+[db]
+port = 54322
+shadow_port = 54320
+major_version = 17
+
+[studio]
+enabled = true
+port = 54323
+
+[inbucket]
+enabled = true
+port = 54324
+
+[storage]
+enabled = true
+
+[auth]
+enabled = true
+site_url = "http://localhost:3000"
+jwt_expiry = 3600
+enable_anonymous_sign_ins = true
+
+[edge_runtime]
+enabled = true
+
+[functions.generate-questions]
+verify_jwt = false
+
+[functions.get-profile]
+verify_jwt = false
+
+[functions.get-leaderboard]
+verify_jwt = false
+
+[functions.get-daily-challenge]
+verify_jwt = false
+
+[functions.create-round]
+verify_jwt = false
+
+[functions.get-round-questions]
+verify_jwt = false
+
+[functions.submit-answer]
+verify_jwt = false
+
+[functions.finish-round]
+verify_jwt = false
+
+[functions.submit-xp]
+verify_jwt = false
+
+[functions.update-profile]
+verify_jwt = false
+
+[functions.complete-daily-challenge]
+verify_jwt = false
+
+[functions.submit-sudden-death]
+verify_jwt = false
+
+[functions.use-hammer]
+verify_jwt = false
+
+[functions.flag-question]
+verify_jwt = false
+
+[functions.get-challenges]
+verify_jwt = false
+
+[functions.get-quest-map]
+verify_jwt = false
+
+[functions.complete-quest-node]
+verify_jwt = false
+
+[functions.purchase-item]
+verify_jwt = false
