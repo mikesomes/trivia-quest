@@ -21,6 +21,9 @@ import { formatNumber, formatAccuracy, formatDate } from '../../src/utils/format
 import { tabularNums } from '../../src/components/ui/Typography'
 import { GameIcon } from '../../src/components/icons'
 import { MedalIcon } from '../../src/components/icons'
+import { Skeleton, SkeletonBox, SkeletonCircle } from '../../src/components/ui/Skeleton'
+import { EmptyState } from '../../src/components/ui/EmptyState'
+import { router } from 'expo-router'
 const { width: SCREEN_WIDTH } = Dimensions.get('window')
 
 const RARITY_ORDER = { legendary: 0, epic: 1, rare: 2, common: 3 }
@@ -68,7 +71,16 @@ export default function ProfileScreen() {
   if (isLoading) {
     return (
       <ScreenWrapper>
-        <ActivityIndicator style={{ flex: 1 }} color={colors.primary} size="large" />
+        <Skeleton label="Loading your profile" style={styles.skeletonScreen}>
+          <SkeletonCircle size={96} style={styles.skeletonAvatar} />
+          <SkeletonBox width={160} height={22} style={styles.skeletonCenter} />
+          <SkeletonBox width={110} height={14} style={styles.skeletonCenter} />
+          <View style={styles.skeletonGrid}>
+            {Array.from({ length: 6 }, (_, i) => (
+              <SkeletonBox key={i} width="47%" height={82} borderRadius={radius.lg} />
+            ))}
+          </View>
+        </Skeleton>
       </ScreenWrapper>
     )
   }
@@ -195,10 +207,20 @@ export default function ProfileScreen() {
         </View>
 
         {filteredAchievements.length === 0 ? (
-          <View style={styles.emptyAchievements}>
-            <MedalIcon size={34} />
-            <Text style={styles.emptyText}>No achievements yet — play more games!</Text>
-          </View>
+          <EmptyState
+            icon="medal"
+            title={achievementFilter === 'earned' ? 'No achievements yet' : 'Nothing to show'}
+            body={
+              achievementFilter === 'earned'
+                ? 'Finish a round to start unlocking them — most come from streaks and accuracy.'
+                : 'Achievements will appear here as they are added.'
+            }
+            action={
+              achievementFilter === 'earned'
+                ? { label: 'Play a round', onPress: () => router.push('/game/mode-select' as never) }
+                : undefined
+            }
+          />
         ) : (
           <View style={styles.achievementsGrid}>
             {filteredAchievements.map(a => (
@@ -246,7 +268,7 @@ export default function ProfileScreen() {
                     disabled={updateName.isPending}
                   >
                     {updateName.isPending
-                      ? <ActivityIndicator color="#fff" size="small" />
+                      ? <ActivityIndicator color={colors.textOnAccent} size="small" />
                       : <Text style={styles.saveBtnText}>Save</Text>
                     }
                   </AnimatedPressable>
@@ -262,6 +284,16 @@ export default function ProfileScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1 },
+  skeletonScreen: { flex: 1, padding: spacing.lg, gap: spacing.md },
+  skeletonAvatar: { alignSelf: 'center', marginTop: spacing.xl },
+  skeletonCenter: { alignSelf: 'center' },
+  skeletonGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: spacing.md,
+    marginTop: spacing.lg,
+    justifyContent: 'space-between',
+  },
   content: { paddingBottom: spacing.xxl, gap: spacing.lg },
   error: { color: colors.incorrect, textAlign: 'center', flex: 1, marginTop: spacing.xl },
 

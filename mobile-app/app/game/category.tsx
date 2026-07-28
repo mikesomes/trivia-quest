@@ -13,6 +13,7 @@ import { ArrowLeft } from 'phosphor-react-native'
 import { getClassicProgressionMix } from '../../src/utils/difficultyMix'
 import { GAME_CONFIG } from '../../src/constants/game'
 import { CategoryBadge } from '../../src/components/ui/CategoryBadge'
+import { ErrorState } from '../../src/components/ui/ErrorState'
 
 const CARD_WIDTH = (Dimensions.get('window').width - spacing.lg * 2 - spacing.md) / 2
 
@@ -119,7 +120,10 @@ export default function CategoryScreen() {
         </View>
 
         {createRound.isError && (
-          <Text style={styles.error}>{createRound.error?.message || 'Failed to start round. Try again.'}</Text>
+          <ErrorState
+            message={createRound.error?.message || 'Could not start the round.'}
+            onRetry={() => createRound.reset()}
+          />
         )}
       </ScrollView>
     </ScreenWrapper>
@@ -205,5 +209,4 @@ const styles = StyleSheet.create({
     color: colors.textDisabled,
   },
   spinner: { marginTop: spacing.xs },
-  error: { color: colors.incorrect, textAlign: 'center' },
 })

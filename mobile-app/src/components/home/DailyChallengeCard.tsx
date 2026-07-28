@@ -10,6 +10,7 @@ import { AnimatedPressable } from '../ui/AnimatedPressable'
 import { tabularNums } from '../ui/Typography'
 import { FlameIcon } from '../icons'
 import { CorrectIcon } from '../icons'
+import { Skeleton, SkeletonBox } from '../ui/Skeleton'
 
 export function DailyChallengeCard() {
   const { data: status, isLoading } = useDailyChallengeStatus()
@@ -18,9 +19,11 @@ export function DailyChallengeCard() {
 
   if (isLoading) {
     return (
-      <View style={styles.card}>
-        <ActivityIndicator color={colors.primary} size="small" />
-      </View>
+      <Skeleton label="Loading daily challenge" style={styles.card}>
+        <SkeletonBox width="40%" height={12} />
+        <SkeletonBox width="70%" height={16} />
+        <SkeletonBox width="55%" height={11} />
+      </Skeleton>
     )
   }
 
@@ -81,7 +84,7 @@ export function DailyChallengeCard() {
             activeOpacity={0.85}
           >
             {startChallenge.isPending ? (
-              <ActivityIndicator color="#fff" size="small" />
+              <ActivityIndicator color={colors.textOnAccent} size="small" />
             ) : (
               <Text style={styles.playText}>Play Today's Challenge</Text>
             )}

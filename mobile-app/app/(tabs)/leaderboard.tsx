@@ -20,6 +20,8 @@ import { LeaderboardSkeletonList } from '../../src/components/leaderboard/Leader
 import type { LeaderboardMode, LeaderboardPeriod } from '../../src/types/api'
 import { getXpGapToNextRank, getNextRankLabel } from '../../src/utils/leaderboard'
 import { GameIcon, WarningIcon, type GameIconName } from '../../src/components/icons'
+import { EmptyState } from '../../src/components/ui/EmptyState'
+import { ErrorState } from '../../src/components/ui/ErrorState'
 
 const MODE_TABS: Array<{ id: GameModeTab; label: string; icon: GameIconName }> = [
   { id: 'xp',       label: 'XP',       icon: 'trophy' as GameIconName },
@@ -156,11 +158,10 @@ export default function LeaderboardScreen() {
 
               {isLoading && <LeaderboardSkeletonList />}
               {isError && (
-                <View style={styles.errorCard}>
-                  <WarningIcon size={30} />
-                  <Text style={styles.errorText}>Failed to load leaderboard.</Text>
-                  <Text style={styles.errorHint}>Pull down to retry.</Text>
-                </View>
+                <ErrorState
+                  message="Could not load the leaderboard."
+                  onRetry={refetch}
+                />
               )}
             </View>
           }
@@ -186,15 +187,15 @@ export default function LeaderboardScreen() {
           }}
           ListEmptyComponent={
             !isLoading && !isError ? (
-              <View style={styles.emptyCard}>
-                <GameIcon name={MODE_TABS.find((t) => t.id === activeGameMode)?.icon ?? 'trophy'} size={30} />
-                <Text style={styles.emptyTitle}>No players ranked yet</Text>
-                <Text style={styles.emptyText}>
-                  {effectivePeriod === 'alltime'
+              <EmptyState
+                icon={MODE_TABS.find((t) => t.id === activeGameMode)?.icon ?? 'trophy'}
+                title="No players ranked yet"
+                body={
+                  effectivePeriod === 'alltime'
                     ? 'Complete a game to appear here.'
-                    : 'Be the first to play this week!'}
-                </Text>
-              </View>
+                    : 'Be the first to play this week!'
+                }
+              />
             ) : null
           }
           ListFooterComponent={<View style={styles.footer} />}
@@ -273,22 +274,8 @@ const styles = StyleSheet.create({
     color: colors.textSecondary,
     fontWeight: '500',
   },
-  errorCard: {
-    alignItems: 'center',
-    gap: spacing.sm,
-    paddingVertical: spacing.xxl,
-  },
   errorIcon: {
     fontSize: 32,
-  },
-  errorText: {
-    fontSize: fontSize.md,
-    color: colors.incorrect,
-    fontWeight: '700',
-  },
-  errorHint: {
-    fontSize: fontSize.sm,
-    color: colors.textMuted,
   },
   emptyCard: {
     alignItems: 'center',

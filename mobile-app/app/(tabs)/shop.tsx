@@ -4,7 +4,6 @@ import {
   Text,
   StyleSheet,
   ScrollView,
-  Alert,
   ActivityIndicator,
 } from 'react-native'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
@@ -21,6 +20,8 @@ import { useProfile } from '../../src/hooks/useProfile'
 import type { EquipItemsRequest } from '../../src/types/api'
 import { tabularNums } from '../../src/components/ui/Typography'
 import { GameIcon } from '../../src/components/icons'
+import { EmptyState } from '../../src/components/ui/EmptyState'
+import { ErrorState } from '../../src/components/ui/ErrorState'
 
 export default function ShopScreen() {
   const { data: profile, isLoading } = useProfile()
@@ -45,15 +46,18 @@ export default function ShopScreen() {
     }
   }, [profile])
 
+  const [shopError, setShopError] = useState<string | null>(null)
+
   const purchaseMutation = useMutation({
     mutationFn: (req: { itemId: ShopItemId; quantity: number }) =>
       shopApi.purchase(req),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.profile.all() })
+      setShopError(null)
       haptics.reward()
     },
     onError: (err: Error) => {
-      Alert.alert('Purchase failed', err.message || 'Could not complete purchase. Try again.')
+      setShopError(err.message || 'Could not complete that purchase.')
       haptics.failure()
     },
   })
@@ -62,6 +66,7 @@ export default function ShopScreen() {
     mutationFn: (req: EquipItemsRequest) => shopApi.equip(req),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.profile.all() })
+      setShopError(null)
     },
     onError: (err: Error) => {
       // Revert optimistic state on error
@@ -73,7 +78,7 @@ export default function ShopScreen() {
           equipped_xp_booster: profile.equipped_xp_booster,
         })
       }
-      Alert.alert('Could not update loadout', err.message || 'Try again.')
+      setShopError(err.message || 'Could not update your loadout.')
       haptics.failure()
     },
   })
@@ -128,7 +133,23 @@ export default function ShopScreen() {
           </View>
         </View>
 
+        {shopError && (
+          <ErrorState message={shopError} onRetry={() => setShopError(null)} retryLabel="Dismiss" />
+        )}
+
         {/* Loadout */}
+        {!hasLoadout && (
+          <>
+            <Text style={styles.sectionLabel}>Loadout</Text>
+            <View style={styles.loadoutCard}>
+              <EmptyState
+                icon="shield"
+                title="Nothing equipped yet"
+                body="Buy a power-up below and it'll show up here, ready to bring into your next round."
+              />
+            </View>
+          </>
+        )}
         {hasLoadout && (
           <>
             <Text style={styles.sectionLabel}>Loadout</Text>
@@ -229,7 +250,7 @@ export default function ShopScreen() {
                   activeOpacity={0.8}
                 >
                   {purchaseMutation.isPending && purchaseMutation.variables?.itemId === item.id ? (
-                    <ActivityIndicator size="small" color="#fff" />
+                    <ActivityIndicator size="small" color={colors.textOnAccent} />
                   ) : atCap ? (
                     <Text style={[styles.buyButtonText, styles.buyButtonDisabledText]}>Full</Text>
                   ) : (

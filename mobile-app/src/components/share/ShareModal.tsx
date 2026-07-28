@@ -55,7 +55,7 @@ export function ShareModal({ visible, data, onClose }: Props) {
             activeOpacity={0.85}
           >
             {sharing ? (
-              <ActivityIndicator color="#fff" size="small" />
+              <ActivityIndicator color={colors.textOnAccent} size="small" />
             ) : (
               <Text style={styles.shareButtonText}>Share Image</Text>
             )}

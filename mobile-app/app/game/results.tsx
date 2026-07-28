@@ -33,6 +33,7 @@ import { Pulse } from '../../src/components/ui/Pulse'
 import { WalletBadge } from '../../src/components/game/WalletBadge'
 import { tabularNums } from '../../src/components/ui/Typography'
 import { GameIcon, XpIcon, CalendarIcon, FlameIcon, TrophyIcon } from '../../src/components/icons'
+import { Skeleton, SkeletonBox } from '../../src/components/ui/Skeleton'
 
 function formatMmSs(totalSeconds: number): string {
   const m = Math.floor(totalSeconds / 60)
@@ -293,7 +294,12 @@ export default function ResultsScreen() {
   if (!roundResult) {
     return (
       <ScreenWrapper>
-        <ActivityIndicator style={{ flex: 1 }} color={colors.primary} size="large" />
+        <Skeleton label="Loading your results" style={styles.skeletonScreen}>
+          <SkeletonBox width={180} height={26} style={styles.skeletonCenter} />
+          <SkeletonBox width="100%" height={120} borderRadius={radius.lg} />
+          <SkeletonBox width="100%" height={92} borderRadius={radius.lg} />
+          <SkeletonBox width="100%" height={64} borderRadius={radius.lg} />
+        </Skeleton>
       </ScreenWrapper>
     )
   }
@@ -580,6 +586,9 @@ export default function ResultsScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1 },
+  skeletonScreen: { flex: 1, padding: spacing.lg, gap: spacing.md },
+  skeletonCenter: { alignSelf: 'center', marginVertical: spacing.lg },
+
   content: { padding: spacing.lg, gap: spacing.lg, paddingBottom: spacing.xxl },
 
   titleSection: { alignItems: 'center' },

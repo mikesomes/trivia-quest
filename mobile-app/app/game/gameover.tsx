@@ -17,6 +17,7 @@ import { ArcadeNameEntry } from '../../src/components/leaderboard/ArcadeNameEntr
 import { levelFromXp } from '../../src/utils/scoring'
 import { tabularNums } from '../../src/components/ui/Typography'
 import { TrophyIcon, FlameIcon } from '../../src/components/icons'
+import { Skeleton, SkeletonBox } from '../../src/components/ui/Skeleton'
 
 function finiteNumber(value: unknown) {
   return typeof value === 'number' && Number.isFinite(value) ? value : undefined
@@ -82,7 +83,12 @@ export default function GameOverScreen() {
   if (!roundResult) {
     return (
       <ScreenWrapper>
-        <ActivityIndicator style={{ flex: 1 }} color={colors.incorrect} size="large" />
+        <Skeleton label="Loading your results" style={styles.skeletonScreen}>
+          <SkeletonBox width={180} height={26} style={styles.skeletonCenter} />
+          <SkeletonBox width="100%" height={120} borderRadius={radius.lg} />
+          <SkeletonBox width="100%" height={92} borderRadius={radius.lg} />
+          <SkeletonBox width="100%" height={64} borderRadius={radius.lg} />
+        </Skeleton>
       </ScreenWrapper>
     )
   }
@@ -254,6 +260,9 @@ export default function GameOverScreen() {
 const styles = StyleSheet.create({
   safe: { flex: 1 },
   container: { flex: 1 },
+  skeletonScreen: { flex: 1, padding: spacing.lg, gap: spacing.md },
+  skeletonCenter: { alignSelf: 'center', marginVertical: spacing.lg },
+
   content: { padding: spacing.lg, gap: spacing.lg },
   headerSection: { alignItems: 'center', paddingTop: spacing.xl },
   roundLabel: { fontSize: fontSize.sm, color: colors.textSecondary, textTransform: 'uppercase', letterSpacing: 0, fontWeight: '600' },

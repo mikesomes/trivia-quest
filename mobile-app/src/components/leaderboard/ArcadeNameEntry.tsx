@@ -78,7 +78,7 @@ export function ArcadeNameEntry({ onSubmit }: Props) {
         activeOpacity={0.8}
       >
         {saving
-          ? <ActivityIndicator color="#fff" size="small" />
+          ? <ActivityIndicator color={colors.textOnAccent} size="small" />
           : <Text style={styles.btnText}>PRESS START</Text>
         }
       </AnimatedPressable>

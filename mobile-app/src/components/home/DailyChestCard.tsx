@@ -12,6 +12,7 @@ import { ChestOpenModal } from './ChestOpenModal'
 import type { ChestReward, ChestTier } from '../../api/dailyReward'
 import { tabularNums } from '../ui/Typography'
 import { GameIcon } from '../icons'
+import { Skeleton, SkeletonBox } from '../ui/Skeleton'
 
 export function DailyChestCard() {
   const { data: status, isLoading } = useDailyRewardStatus()
@@ -43,9 +44,11 @@ export function DailyChestCard() {
 
   if (isLoading || !status) {
     return (
-      <View style={styles.card}>
-        <ActivityIndicator color={colors.primary} size="small" />
-      </View>
+      <Skeleton label="Loading daily chest" style={styles.card}>
+        <SkeletonBox width="40%" height={12} />
+        <SkeletonBox width="70%" height={16} />
+        <SkeletonBox width="55%" height={11} />
+      </Skeleton>
     )
   }
 

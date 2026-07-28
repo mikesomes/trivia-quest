@@ -1,12 +1,13 @@
 import React, { useEffect, useRef } from 'react'
 import { Animated, StyleSheet, Text, View } from 'react-native'
 import { Target } from 'phosphor-react-native'
-import { colors, fontSize, radius, spacing } from '../../constants/theme'
+import { colors, fontSize, radius, spacing, surfaces } from '../../constants/theme'
 import { useChallenges } from '../../hooks/useChallenges'
 import type { Challenge } from '../../api/challenges'
 import { GradientCard } from '../ui/GradientCard'
 import { tabularNums } from '../ui/Typography'
 import { CorrectIcon } from '../icons'
+import { Skeleton, SkeletonBox } from '../ui/Skeleton'
 
 function QuestRow({ challenge }: { challenge: Challenge }) {
   const pct = Math.min(1, challenge.progress / challenge.target)
@@ -63,7 +64,20 @@ function QuestRow({ challenge }: { challenge: Challenge }) {
 export function DailyQuestsCard() {
   const { data, isLoading } = useChallenges()
 
-  if (isLoading || !data?.challenges.length) return null
+  // Reserve the card's footprint while loading so the home feed doesn't jump
+  // when quests arrive. A genuine absence of quests still renders nothing.
+  if (isLoading) {
+    return (
+      <Skeleton label="Loading quests" style={styles.skeleton}>
+        <SkeletonBox width="35%" height={14} />
+        <SkeletonBox width="100%" height={11} />
+        <SkeletonBox width="100%" height={11} />
+        <SkeletonBox width="80%" height={11} />
+      </Skeleton>
+    )
+  }
+
+  if (!data?.challenges.length) return null
 
   const daily = data.challenges.filter(c => c.period === 'daily')
   const weekly = data.challenges.filter(c => c.period === 'weekly')
@@ -103,6 +117,14 @@ export function DailyQuestsCard() {
 }
 
 const styles = StyleSheet.create({
+  skeleton: {
+    backgroundColor: surfaces.surface1,
+    borderRadius: radius.lg,
+    borderWidth: 1,
+    borderColor: colors.border,
+    padding: spacing.md,
+    gap: spacing.sm,
+  },
   card: {
     borderColor: `${colors.streakActive}44`,
   },

@@ -14,6 +14,7 @@ import { getBlitzSegments } from '../../src/utils/difficultyMix'
 import { GAME_CONFIG } from '../../src/constants/game'
 import { CategoryBadge } from '../../src/components/ui/CategoryBadge'
 import { XpIcon } from '../../src/components/icons'
+import { ErrorState } from '../../src/components/ui/ErrorState'
 
 const CARD_WIDTH = (Dimensions.get('window').width - spacing.lg * 2 - spacing.md) / 2
 
@@ -105,7 +106,10 @@ export default function BlitzCategoryScreen() {
         </View>
 
         {createRound.isError && (
-          <Text style={styles.error}>{createRound.error?.message || 'Failed to start round. Try again.'}</Text>
+          <ErrorState
+            message={createRound.error?.message || 'Could not start the round.'}
+            onRetry={() => createRound.reset()}
+          />
         )}
       </ScrollView>
     </ScreenWrapper>
@@ -152,5 +156,4 @@ const styles = StyleSheet.create({
   labelDisabled: { color: colors.textSecondary },
   descriptionDisabled: { color: colors.textDisabled },
   spinner: { marginTop: spacing.xs },
-  error: { color: colors.incorrect, textAlign: 'center' },
 })

@@ -176,7 +176,7 @@ function NameSlide({ width, onDone }: { width: number; onDone: () => void }) {
         disabled={!isValid || loading}
       >
         {loading
-          ? <ActivityIndicator color="#fff" size="small" />
+          ? <ActivityIndicator color={colors.textOnAccent} size="small" />
           : <Text style={styles.ctaText}>Let's Play →</Text>
         }
       </AnimatedPressable>
