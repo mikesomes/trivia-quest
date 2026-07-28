@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react'
 import { Animated, Dimensions, Easing, Modal, StyleSheet, Text, TouchableWithoutFeedback, View } from 'react-native'
-import * as Haptics from 'expo-haptics'
+import { haptics } from '../../lib/haptics'
 import ConfettiCannon from 'react-native-confetti-cannon'
 import { useAudioPlayer, setAudioModeAsync } from 'expo-audio'
 import { colors, fontSize, radius, spacing } from '../../constants/theme'
@@ -47,7 +47,7 @@ export function ChestOpenModal({ visible, tier, reward, onDismiss }: Props) {
     setRevealed(false)
 
     Animated.timing(overlayOpacity, { toValue: 1, duration: 200, useNativeDriver: true }).start()
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium)
+    haptics.punch()
 
     const shakeAnim = Animated.sequence([
       Animated.timing(shake, { toValue: 1, duration: 70, useNativeDriver: true }),
@@ -60,7 +60,7 @@ export function ChestOpenModal({ visible, tier, reward, onDismiss }: Props) {
     ])
 
     shakeAnim.start(() => {
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success)
+      haptics.reward()
       confettiRef.current?.start()
       try { chime.seekTo(0); chime.play() } catch {}
       setRevealed(true)

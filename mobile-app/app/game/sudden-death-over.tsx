@@ -9,7 +9,7 @@ import { ShareModal } from '../../src/components/share/ShareModal'
 import { useGameStore } from '../../src/store/gameStore'
 import { useSubmitSuddenDeath } from '../../src/hooks/useSuddenDeath'
 import { useAudioPlayer, setAudioModeAsync } from 'expo-audio'
-import * as Haptics from 'expo-haptics'
+import { haptics } from '../../src/lib/haptics'
 import { colors, spacing, fontSize, radius } from '../../src/constants/theme'
 import { XpCounter } from '../../src/components/game/XpCounter'
 
@@ -34,9 +34,7 @@ export default function SuddenDeathOverScreen() {
     setAudioModeAsync({ playsInSilentMode: true }).catch(() => {})
     gameOverMusic.volume = 0.5
     gameOverMusic.play()
-    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error)
-    setTimeout(() => Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy), 200)
-    setTimeout(() => Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy), 400)
+    haptics.defeat()
     return () => { try { gameOverMusic.pause() } catch {} }
   }, [])
 

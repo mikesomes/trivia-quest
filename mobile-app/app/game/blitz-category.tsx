@@ -1,6 +1,6 @@
 import React from 'react'
 import { View, Text, StyleSheet, ScrollView, ActivityIndicator, Dimensions } from 'react-native'
-import * as Haptics from 'expo-haptics'
+import { haptics } from '../../src/lib/haptics'
 import { LinearGradient } from 'expo-linear-gradient'
 import { ScreenWrapper } from '../../src/components/ui/ScreenWrapper'
 import { AnimatedPressable } from '../../src/components/ui/AnimatedPressable'
@@ -24,7 +24,7 @@ export default function BlitzCategoryScreen() {
 
   const handleSelect = async (categoryId: typeof CATEGORIES[0]['id']) => {
     if (createRound.isPending) return
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium)
+    haptics.confirm()
     setCategory(categoryId)
     setDifficulty('easy')
     setIsBlitz(true)

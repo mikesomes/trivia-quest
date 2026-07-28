@@ -6,7 +6,7 @@ import {
 } from 'react-native'
 import { LinearGradient } from 'expo-linear-gradient'
 import { router } from 'expo-router'
-import * as Haptics from 'expo-haptics'
+import { haptics } from '../src/lib/haptics'
 import { colors, spacing, fontSize, radius } from '../src/constants/theme'
 import { AnimatedPressable } from '../src/components/ui/AnimatedPressable'
 import { profileApi } from '../src/api/profile'
@@ -125,7 +125,7 @@ function NameSlide({ width, onDone }: { width: number; onDone: () => void }) {
       await profileApi.setDisplayName(trimmed)
       setDisplayName(trimmed)
       await storage.setOnboardingDone()
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success)
+      haptics.reward()
       onDone()
     } catch {
       setError('Could not save your name. Try again.')
@@ -214,7 +214,7 @@ export default function OnboardingScreen() {
 
   function goNext() {
     if (isNameSlide) return
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)
+    haptics.selection()
     const next = currentIndex + 1
     flatRef.current?.scrollToIndex({ index: next, animated: true })
     setCurrentIndex(next)

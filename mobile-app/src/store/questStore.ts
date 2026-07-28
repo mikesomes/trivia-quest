@@ -1,7 +1,7 @@
 import { create } from 'zustand'
 import { persist, createJSONStorage } from 'zustand/middleware'
 import AsyncStorage from '@react-native-async-storage/async-storage'
-import * as Haptics from 'expo-haptics'
+import { haptics } from '../lib/haptics'
 import { QUEST_CATEGORIES } from '../config/questConfig'
 import { getNewlyRevealedNodes, getNodeStatus, calculateQuestXp } from '../utils/questProgress'
 import type { CategoryProgress, QuestNodeStatus, QuestRoundResult } from '../types/quest'
@@ -111,10 +111,10 @@ export const useQuestStore = create<QuestStore>()(
         })
 
         // Haptics
-        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => {})
+        haptics.celebrate()
         if (newlyRevealedNodeIds.length > 0) {
           setTimeout(() => {
-            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium).catch(() => {})
+            haptics.punch()
           }, 400)
         }
       },

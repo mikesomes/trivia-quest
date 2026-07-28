@@ -1,6 +1,6 @@
 import React from 'react'
 import { Text, StyleSheet, ActivityIndicator, type ViewStyle } from 'react-native'
-import * as Haptics from 'expo-haptics'
+import { haptics } from '../../lib/haptics'
 import { colors, spacing, radius, fontSize } from '../../constants/theme'
 import { AnimatedPressable } from './AnimatedPressable'
 
@@ -28,7 +28,7 @@ export function Button({
   return (
     <AnimatedPressable
       style={[styles.base, styles[variant], styles[size], isDisabled && styles.disabled, style]}
-      onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); onPress() }}
+      onPress={() => { haptics.selection(); onPress() }}
       disabled={isDisabled}
       activeOpacity={0.8}
     >

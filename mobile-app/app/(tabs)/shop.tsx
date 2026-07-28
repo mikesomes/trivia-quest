@@ -8,7 +8,7 @@ import {
   ActivityIndicator,
 } from 'react-native'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
-import * as Haptics from 'expo-haptics'
+import { haptics } from '../../src/lib/haptics'
 import { LinearGradient } from 'expo-linear-gradient'
 import { Coins, Minus, Plus } from 'phosphor-react-native'
 import { ScreenWrapper } from '../../src/components/ui/ScreenWrapper'
@@ -48,11 +48,11 @@ export default function ShopScreen() {
       shopApi.purchase(req),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.profile.all() })
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success)
+      haptics.reward()
     },
     onError: (err: Error) => {
       Alert.alert('Purchase failed', err.message || 'Could not complete purchase. Try again.')
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error)
+      haptics.failure()
     },
   })
 
@@ -72,13 +72,13 @@ export default function ShopScreen() {
         })
       }
       Alert.alert('Could not update loadout', err.message || 'Try again.')
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error)
+      haptics.failure()
     },
   })
 
   const handleBuy = (itemId: ShopItemId) => {
     if (!profile) return
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium)
+    haptics.confirm()
     purchaseMutation.mutate({ itemId, quantity: 1 })
   }
 
@@ -92,7 +92,7 @@ export default function ShopScreen() {
     const next = Math.max(0, Math.min(owned, current + delta))
     if (next === current) return
 
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)
+    haptics.selection()
     const newLoadout = { ...loadout, [equippedKey]: next }
     setLoadout(newLoadout)
     equipMutation.mutate(newLoadout)

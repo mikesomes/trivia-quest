@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react'
 import { Animated, Easing, StyleSheet, Text, View } from 'react-native'
-import * as Haptics from 'expo-haptics'
+import { haptics } from '../../lib/haptics'
 import { useAudioPlayer } from 'expo-audio'
 import { colors, fontSize, spacing } from '../../constants/theme'
 import { formatNumber } from '../../utils/format'
@@ -91,7 +91,7 @@ export function XpCounter({ finalXp, onLanded }: Props) {
 
     function land() {
       setLanded(true)
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success)
+      haptics.reward()
 
       Animated.sequence([
         Animated.timing(landingScale, {

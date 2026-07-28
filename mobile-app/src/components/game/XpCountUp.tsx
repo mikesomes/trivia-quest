@@ -1,7 +1,7 @@
 import React, { useEffect, useRef } from 'react'
 import { View, Text, StyleSheet } from 'react-native'
 import Animated, { useSharedValue, useAnimatedStyle, withSequence, withTiming } from 'react-native-reanimated'
-import * as Haptics from 'expo-haptics'
+import { haptics } from '../../lib/haptics'
 import { colors, spacing, fontSize } from '../../constants/theme'
 import { levelFromXp, MAX_PLAYER_LEVEL, xpRequiredForLevel } from '../../utils/scoring'
 import { getNextLevelUnlock } from '../../constants/progression'
@@ -85,7 +85,7 @@ export function XpCountUp({
     const resolvedLevel = levelFromXp(displayXp)
     if (resolvedLevel > displayedLevelRef.current) {
       displayedLevelRef.current = resolvedLevel
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => {})
+      haptics.reward()
       glowOpacity.value = withSequence(
         withTiming(0.9, { duration: 120 }),
         withTiming(0, { duration: 500 })

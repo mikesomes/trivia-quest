@@ -1,7 +1,7 @@
 import React from 'react'
 import { View, Text, StyleSheet, ScrollView } from 'react-native'
 import { LinearGradient } from 'expo-linear-gradient'
-import * as Haptics from 'expo-haptics'
+import { haptics } from '../../src/lib/haptics'
 import { ScreenWrapper } from '../../src/components/ui/ScreenWrapper'
 import { AnimatedPressable } from '../../src/components/ui/AnimatedPressable'
 import { router } from 'expo-router'
@@ -46,7 +46,7 @@ const MODES = [
 
 export default function ModeSelectScreen() {
   const handleSelect = (route: string) => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium)
+    haptics.confirm()
     router.push(route as Parameters<typeof router.push>[0])
   }
 

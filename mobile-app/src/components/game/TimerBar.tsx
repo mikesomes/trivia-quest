@@ -1,14 +1,26 @@
 import React, { useEffect, useRef } from 'react'
 import { Animated, Easing, StyleSheet, View } from 'react-native'
-import * as Haptics from 'expo-haptics'
 import { colors, spacing, fontSize, radius } from '../../constants/theme'
 import { GAME_CONFIG } from '../../constants/game'
+import { haptics, type HapticIntensity } from '../../lib/haptics'
 
 interface TimerBarProps {
   timeRemainingMs: number
   isPaused: boolean
   totalMs?: number
 }
+
+// Escalating heartbeat pulses — gaps shrink and intensity rises as time runs out
+const HAPTIC_THRESHOLDS: Array<{ ms: number; intensity: HapticIntensity }> = [
+  { ms: 5000, intensity: 'light' },
+  { ms: 4000, intensity: 'light' },
+  { ms: 3000, intensity: 'light' },
+  { ms: 2000, intensity: 'medium' },
+  { ms: 1500, intensity: 'medium' },
+  { ms: 1000, intensity: 'heavy' },
+  { ms: 650,  intensity: 'heavy' },
+  { ms: 300,  intensity: 'heavy' },
+]
 
 export function TimerBar({ timeRemainingMs, isPaused, totalMs = GAME_CONFIG.TIMER_SECONDS * 1000 }: TimerBarProps) {
   const progress = Math.max(0, timeRemainingMs / totalMs)
@@ -26,24 +38,12 @@ export function TimerBar({ timeRemainingMs, isPaused, totalMs = GAME_CONFIG.TIME
   const loopRef = useRef<Animated.CompositeAnimation | null>(null)
   const firedThresholds = useRef(new Set<number>())
 
-  // Escalating haptic pulses — gaps shrink as time runs out
-  const HAPTIC_THRESHOLDS: Array<{ ms: number; style: Haptics.ImpactFeedbackStyle }> = [
-    { ms: 5000, style: Haptics.ImpactFeedbackStyle.Light },
-    { ms: 4000, style: Haptics.ImpactFeedbackStyle.Light },
-    { ms: 3000, style: Haptics.ImpactFeedbackStyle.Light },
-    { ms: 2000, style: Haptics.ImpactFeedbackStyle.Medium },
-    { ms: 1500, style: Haptics.ImpactFeedbackStyle.Medium },
-    { ms: 1000, style: Haptics.ImpactFeedbackStyle.Heavy },
-    { ms: 650,  style: Haptics.ImpactFeedbackStyle.Heavy },
-    { ms: 300,  style: Haptics.ImpactFeedbackStyle.Heavy },
-  ]
-
   useEffect(() => {
     if (!isUrgent || isPaused) return
-    for (const { ms, style } of HAPTIC_THRESHOLDS) {
+    for (const { ms, intensity } of HAPTIC_THRESHOLDS) {
       if (timeRemainingMs <= ms && !firedThresholds.current.has(ms)) {
         firedThresholds.current.add(ms)
-        Haptics.impactAsync(style)
+        haptics.heartbeat(intensity)
       }
     }
   }, [timeRemainingMs, isUrgent, isPaused])

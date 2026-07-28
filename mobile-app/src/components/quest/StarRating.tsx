@@ -1,6 +1,6 @@
 import React, { useEffect, useRef } from 'react'
 import { View, Text, StyleSheet, Animated } from 'react-native'
-import * as Haptics from 'expo-haptics'
+import { haptics } from '../../lib/haptics'
 
 interface Props {
   stars: number
@@ -17,7 +17,7 @@ function AnimatedStar({ filled, size, delay }: { filled: boolean; size: number; 
   useEffect(() => {
     if (!filled) return
     const timer = setTimeout(() => {
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium).catch(() => {})
+      haptics.punch()
       Animated.parallel([
         Animated.timing(opacity, { toValue: 1, duration: 150, useNativeDriver: true }),
         Animated.sequence([

@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react'
 import { Animated, StyleSheet, Text, View, ActivityIndicator } from 'react-native'
-import * as Haptics from 'expo-haptics'
+import { haptics } from '../../lib/haptics'
 import { Gift } from 'phosphor-react-native'
 import { colors, fontSize, radius, spacing } from '../../constants/theme'
 import { useDailyRewardStatus, useClaimDailyReward } from '../../hooks/useDailyReward'
@@ -51,7 +51,7 @@ export function DailyChestCard() {
 
   const handleOpen = () => {
     if (claimReward.isPending) return
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium)
+    haptics.punch()
     claimReward.mutate(undefined, {
       onSuccess: (result) => {
         setModalTier(result.tier)

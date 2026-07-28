@@ -27,6 +27,7 @@ import { StreakTargetIndicator } from '../../src/components/game/StreakTargetInd
 import { PauseModal } from '../../src/components/game/PauseModal'
 import { ExtraLifeOverlay } from '../../src/components/game/ExtraLifeOverlay'
 import { HammerEarnedOverlay } from '../../src/components/game/HammerEarnedOverlay'
+import { RevealActions } from '../../src/components/game/RevealActions'
 import { colors, spacing, fontSize } from '../../src/constants/theme'
 import { GAME_CONFIG } from '../../src/constants/game'
 import { isShieldBreakResult, type AnswerOption, type Category } from '../../src/types/game'
@@ -527,39 +528,14 @@ export default function PlayScreen() {
               }}
             />
 
-            {/* Explanation — shown only on wrong answers when available */}
-            {answerState === 'revealed' && !pendingResult?.isCorrect && pendingResult?.explanation && (
-              <View style={styles.explanation}>
-                <Text style={styles.explanationLabel}>Did you know?</Text>
-                <Text style={styles.explanationText}>{pendingResult.explanation}</Text>
-              </View>
-            )}
-
-            {/* Next question button — shown after answer is revealed */}
+            {/* Explanation + Next/Flag actions — shown after answer is revealed */}
             {answerState === 'revealed' && (
-              <AnimatedPressable
-                style={[
-                  styles.nextButton,
-                  pendingResult?.isCorrect ? styles.nextButtonCorrect : styles.nextButtonIncorrect,
-                ]}
-                onPress={handleNextQuestion}
-                activeOpacity={0.85}
-              >
-                <Text style={styles.nextButtonText}>
-                  {pendingResult?.isRoundOver
-                    ? pendingResult.livesRemaining === 0
-                      ? 'Game Over'
-                      : isSuddenDeath ? 'Keep Going →' : 'See Results'
-                    : 'Next Question →'}
-                </Text>
-              </AnimatedPressable>
-            )}
-
-            {/* Flag / unflag question — shown after answer is revealed */}
-            {answerState === 'revealed' && currentQuestion && (
-              <AnimatedPressable
-                style={styles.flagButton}
-                onPress={() => {
+              <RevealActions
+                pendingResult={pendingResult}
+                isSuddenDeath={isSuddenDeath}
+                flagged={flaggedQuestionIds.has(currentQuestion.questionId)}
+                onNext={handleNextQuestion}
+                onToggleFlag={() => {
                   const qId = currentQuestion.questionId
                   if (flagQuestion.isPending || unflagQuestion.isPending) return
                   if (flaggedQuestionIds.has(qId)) {
@@ -568,12 +544,7 @@ export default function PlayScreen() {
                     flagQuestion.mutate(qId)
                   }
                 }}
-                activeOpacity={0.6}
-              >
-                <Text style={[styles.flagText, flaggedQuestionIds.has(currentQuestion.questionId) && styles.flagTextDone]}>
-                  {flaggedQuestionIds.has(currentQuestion.questionId) ? '🚩 Flagged — tap to unflag' : '🚩 Flag question'}
-                </Text>
-              </AnimatedPressable>
+              />
             )}
           </ScrollView>
         </Animated.View>
@@ -659,43 +630,6 @@ const styles = StyleSheet.create({
   scrollArea: { flex: 1 },
   scrollContent: { gap: spacing.md, paddingBottom: spacing.xl },
   loadingText: { color: colors.textSecondary, textAlign: 'center', marginTop: spacing.xl },
-  nextButton: {
-    paddingVertical: spacing.md,
-    borderRadius: 12,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  nextButtonCorrect: {
-    backgroundColor: colors.correct,
-  },
-  nextButtonIncorrect: {
-    backgroundColor: colors.primary,
-  },
-  nextButtonText: {
-    color: '#fff',
-    fontWeight: '700',
-    fontSize: fontSize.md,
-  },
-  explanation: {
-    backgroundColor: colors.incorrectBg,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: colors.incorrect,
-    padding: spacing.md,
-    gap: spacing.xs,
-  },
-  explanationLabel: {
-    fontSize: fontSize.xs,
-    fontWeight: '700',
-    color: colors.incorrect,
-    textTransform: 'uppercase',
-    letterSpacing: 1,
-  },
-  explanationText: {
-    fontSize: fontSize.sm,
-    color: colors.textPrimary,
-    lineHeight: 20,
-  },
   milestoneContainer: {
     ...StyleSheet.absoluteFillObject,
     alignItems: 'center',
@@ -716,18 +650,5 @@ const styles = StyleSheet.create({
         shadowRadius: 18,
       },
     }),
-  },
-  flagButton: {
-    alignItems: 'center',
-    paddingVertical: spacing.xs,
-  },
-  flagText: {
-    fontSize: fontSize.sm,
-    color: colors.textSecondary,
-    opacity: 0.6,
-  },
-  flagTextDone: {
-    opacity: 1,
-    color: colors.incorrect,
   },
 })

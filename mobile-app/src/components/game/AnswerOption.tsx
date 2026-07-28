@@ -1,8 +1,8 @@
 import React, { useEffect, useRef } from 'react'
 import { Animated, Easing, TouchableWithoutFeedback, Text, StyleSheet, View } from 'react-native'
-import * as Haptics from 'expo-haptics'
 import type { AnswerOption as AnswerOptionType, AnswerState } from '../../types/game'
 import { colors, spacing, radius, fontSize } from '../../constants/theme'
+import { haptics } from '../../lib/haptics'
 
 type EliminationEffect = 'hammer' | 'shield'
 
@@ -38,6 +38,7 @@ export function AnswerOption({
 
   const scale = useRef(new Animated.Value(1)).current
   const pulse = useRef(new Animated.Value(1)).current
+  const wrongShakeX = useRef(new Animated.Value(0)).current
 
   // Elimination animation values
   const strikeY = useRef(new Animated.Value(-64)).current
@@ -48,20 +49,22 @@ export function AnswerOption({
   const burstOpacity = useRef(new Animated.Value(0)).current
   const burstScale = useRef(new Animated.Value(0.6)).current
 
-  // Pulse animation when answer is revealed
+  // Reveal feedback — correct gets a springy pop, wrong gets a horizontal shake
   useEffect(() => {
     if (isCorrect) {
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success)
-      setTimeout(() => Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success), 150)
+      haptics.correctAnswer()
       Animated.sequence([
-        Animated.timing(pulse, { toValue: 1.03, duration: 120, useNativeDriver: true }),
-        Animated.spring(pulse, { toValue: 1, friction: 4, tension: 200, useNativeDriver: true }),
+        Animated.timing(pulse, { toValue: 1.12, duration: 130, easing: Easing.out(Easing.quad), useNativeDriver: true }),
+        Animated.spring(pulse, { toValue: 1, friction: 3.5, tension: 220, useNativeDriver: true }),
       ]).start()
     } else if (isWrong) {
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error)
+      haptics.wrongAnswer()
       Animated.sequence([
-        Animated.timing(pulse, { toValue: 1.03, duration: 120, useNativeDriver: true }),
-        Animated.spring(pulse, { toValue: 1, friction: 4, tension: 200, useNativeDriver: true }),
+        Animated.timing(wrongShakeX, { toValue: -8, duration: 55, useNativeDriver: true }),
+        Animated.timing(wrongShakeX, { toValue: 8,  duration: 55, useNativeDriver: true }),
+        Animated.timing(wrongShakeX, { toValue: -5, duration: 45, useNativeDriver: true }),
+        Animated.timing(wrongShakeX, { toValue: 5,  duration: 45, useNativeDriver: true }),
+        Animated.timing(wrongShakeX, { toValue: 0,  duration: 35, useNativeDriver: true }),
       ]).start()
     }
   }, [isCorrect, isWrong])
@@ -104,7 +107,7 @@ export function AnswerOption({
         }),
       ]).start(() => {
         // 2. Impact: heavy haptic + shake option
-        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy)
+        haptics.eliminationImpact()
 
         Animated.parallel([
           Animated.sequence([
@@ -154,7 +157,7 @@ export function AnswerOption({
 
   const handlePressIn = () => {
     if (disabled || eliminated || answerState !== 'idle') return
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)
+    haptics.optionPress()
     Animated.spring(scale, { toValue: 0.97, friction: 8, tension: 200, useNativeDriver: true }).start()
   }
 
@@ -218,7 +221,7 @@ export function AnswerOption({
             {
               opacity: eliminated ? eliminatedOpacity : 1,
               transform: [
-                { translateX: shakeX },
+                { translateX: Animated.add(shakeX, wrongShakeX) },
                 { scale: Animated.multiply(scale, pulse) },
               ],
             },

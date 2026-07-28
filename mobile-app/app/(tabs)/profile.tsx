@@ -5,7 +5,7 @@ import {
   Dimensions,
 } from 'react-native'
 import { LinearGradient } from 'expo-linear-gradient'
-import * as Haptics from 'expo-haptics'
+import { haptics } from '../../src/lib/haptics'
 import { ScreenWrapper } from '../../src/components/ui/ScreenWrapper'
 import { AnimatedPressable } from '../../src/components/ui/AnimatedPressable'
 import { colors, spacing, fontSize, radius } from '../../src/constants/theme'
@@ -177,7 +177,7 @@ export default function ProfileScreen() {
               <AnimatedPressable
                 key={f}
                 style={[styles.filterTab, achievementFilter === f && styles.filterTabActive]}
-                onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); setAchievementFilter(f) }}
+                onPress={() => { haptics.selection(); setAchievementFilter(f) }}
               >
                 <Text style={[styles.filterTabText, achievementFilter === f && styles.filterTabTextActive]}>
                   {f === 'earned' ? `Earned (${earnedCount})` : `All (${achievements.length})`}

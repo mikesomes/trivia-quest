@@ -1,5 +1,5 @@
-import React from 'react'
-import { View, Text, StyleSheet } from 'react-native'
+import React, { useEffect, useRef } from 'react'
+import { Animated, Easing, View, Text, StyleSheet } from 'react-native'
 import { colors, spacing, fontSize } from '../../constants/theme'
 
 const STREAK_THRESHOLD = 3
@@ -9,28 +9,44 @@ interface StreakIndicatorProps {
 }
 
 export function StreakIndicator({ streak }: StreakIndicatorProps) {
+  const scale = useRef(new Animated.Value(1)).current
+  const prevStreak = useRef(streak)
+
+  // Pop on every increment so the flame visibly reacts each time the streak grows
+  useEffect(() => {
+    if (streak > prevStreak.current) {
+      Animated.sequence([
+        Animated.timing(scale, { toValue: 1.25, duration: 110, easing: Easing.out(Easing.quad), useNativeDriver: true }),
+        Animated.spring(scale, { toValue: 1, friction: 4, tension: 200, useNativeDriver: true }),
+      ]).start()
+    }
+    prevStreak.current = streak
+  }, [streak])
+
   if (streak < 1) return null
 
   // Building toward streak — show a subtle progress hint
   if (streak < STREAK_THRESHOLD) {
     return (
-      <View style={styles.building}>
+      <Animated.View style={[styles.building, { transform: [{ scale }] }]}>
         <Text style={styles.buildingText}>
           {'🔥'.repeat(streak)}{'·'.repeat(STREAK_THRESHOLD - streak)}
         </Text>
         <Text style={styles.buildingLabel}>{STREAK_THRESHOLD - streak} more for streak</Text>
-      </View>
+      </Animated.View>
     )
   }
 
   const multiplier = streak >= 10 ? 2.0 : streak >= 8 ? 1.5 : streak >= 5 ? 1.25 : 1.1
+  // The flame itself grows larger at each power tier, on top of the per-tap pop
+  const flameSize = streak >= 10 ? fontSize.xl : streak >= 8 ? fontSize.lg : streak >= 5 ? fontSize.md : fontSize.sm
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.fire}>🔥</Text>
+    <Animated.View style={[styles.container, { transform: [{ scale }] }]}>
+      <Text style={[styles.fire, { fontSize: flameSize }]}>🔥</Text>
       <Text style={styles.label}>{streak} streak</Text>
       <Text style={styles.multiplier}>{multiplier.toFixed(1)}x</Text>
-    </View>
+    </Animated.View>
   )
 }
 
