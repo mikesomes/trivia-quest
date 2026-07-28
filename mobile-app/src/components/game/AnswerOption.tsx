@@ -37,6 +37,16 @@ export function AnswerOption({
   const isCorrect = isRevealed && option === correctOption
   const isWrong = isRevealed && isSelected && !isCorrect
 
+  const a11yStatus = eliminated
+    ? 'Eliminated'
+    : isCorrect
+    ? 'Correct answer'
+    : isWrong
+    ? 'Your answer, incorrect'
+    : isSelected
+    ? 'Selected'
+    : ''
+
   const scale = useRef(new Animated.Value(1)).current
   const pulse = useRef(new Animated.Value(1)).current
   const wrongShakeX = useRef(new Animated.Value(0)).current
@@ -185,6 +195,8 @@ export function AnswerOption({
           },
         ]}
         pointerEvents="none"
+        accessibilityElementsHidden
+        importantForAccessibility="no-hide-descendants"
       >
         {burstLabel}
       </Animated.Text>
@@ -202,6 +214,8 @@ export function AnswerOption({
           },
         ]}
         pointerEvents="none"
+        accessibilityElementsHidden
+        importantForAccessibility="no-hide-descendants"
       >
         <StrikeMark size={38} weight="fill" />
       </Animated.View>
@@ -213,6 +227,17 @@ export function AnswerOption({
         disabled={disabled || eliminated || answerState !== 'idle'}
       >
         <Animated.View
+          // Sighted players read correct/wrong from the green or red fill and
+          // the pop/shake. Screen reader users get nothing from either, so the
+          // outcome has to be part of the accessible name and state.
+          accessible
+          accessibilityRole="button"
+          accessibilityLabel={`Option ${option.toUpperCase()}. ${text}`}
+          accessibilityValue={{ text: a11yStatus }}
+          accessibilityState={{
+            disabled: disabled || eliminated || answerState !== 'idle',
+            selected: isSelected,
+          }}
           style={[
             styles.option,
             isSelected && !isRevealed && styles.selected,

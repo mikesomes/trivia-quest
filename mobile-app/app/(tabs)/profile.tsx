@@ -103,6 +103,8 @@ export default function ProfileScreen() {
             style={styles.nameRow}
             onPress={() => { setNameInput(profile.displayName); setShowNameModal(true) }}
             activeOpacity={0.7}
+            accessibilityLabel={`Player name, ${profile.displayName}`}
+            accessibilityHint="Opens a dialog to rename yourself"
           >
             <Text style={styles.heroName}>{profile.displayName}</Text>
             <GameIcon name="edit" size={14} />
@@ -181,6 +183,8 @@ export default function ProfileScreen() {
                 key={f}
                 style={[styles.filterTab, achievementFilter === f && styles.filterTabActive]}
                 onPress={() => { haptics.selection(); setAchievementFilter(f) }}
+                accessibilityRole="tab"
+                accessibilityState={{ selected: achievementFilter === f }}
               >
                 <Text style={[styles.filterTabText, achievementFilter === f && styles.filterTabTextActive]}>
                   {f === 'earned' ? `Earned (${earnedCount})` : `All (${achievements.length})`}

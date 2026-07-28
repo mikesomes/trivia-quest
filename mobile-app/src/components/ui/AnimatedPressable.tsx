@@ -22,6 +22,8 @@ export function AnimatedPressable({
   scaleTo = 0.97,
   activeOpacity = 1,
   disabled,
+  accessibilityRole = 'button',
+  accessibilityState,
   ...pressableProps
 }: Props) {
   const scale = useSharedValue(1)
@@ -38,6 +40,11 @@ export function AnimatedPressable({
       // always wins over the transient press opacity/scale.
       style={[animatedStyle, style]}
       disabled={disabled}
+      // Every touchable in the app funnels through here, so defaulting the role
+      // and disabled state means screen readers describe all of them correctly
+      // without each call site remembering to. Both stay overridable.
+      accessibilityRole={accessibilityRole}
+      accessibilityState={{ disabled: !!disabled, ...accessibilityState }}
       onPressIn={(e) => {
         scale.value = withSpring(scaleTo, motion.reanimatedSpringSnappy)
         opacity.value = withSpring(activeOpacity, motion.reanimatedSpringSnappy)

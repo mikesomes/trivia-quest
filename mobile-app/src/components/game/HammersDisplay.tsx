@@ -17,6 +17,8 @@ export function HammersDisplay({ hammers, onUse, canUse }: HammersDisplayProps) 
       style={styles.container}
       onPress={onUse}
       disabled={!canUse}
+      accessibilityLabel={`${hammers} hammer${hammers === 1 ? '' : 's'} available`}
+      accessibilityHint="Eliminates two wrong answers"
       activeOpacity={0.7}
     >
       {Array.from({ length: GAME_CONFIG.MAX_HAMMERS }, (_, i) => (

@@ -164,6 +164,8 @@ export default function ShopScreen() {
                         onPress={() => handleEquipChange(item.id, -1)}
                         disabled={equipped === 0 || equipMutation.isPending}
                         activeOpacity={0.7}
+                        accessibilityLabel={`Equip one fewer ${item.label}`}
+                        accessibilityValue={{ now: equipped, min: 0, max: owned }}
                       >
                         <Minus size={14} color={equipped === 0 ? colors.textSecondary : colors.textPrimary} weight="bold" />
                       </AnimatedPressable>
@@ -175,6 +177,8 @@ export default function ShopScreen() {
                         onPress={() => handleEquipChange(item.id, 1)}
                         disabled={equipped >= owned || equipMutation.isPending}
                         activeOpacity={0.7}
+                        accessibilityLabel={`Equip one more ${item.label}`}
+                        accessibilityValue={{ now: equipped, min: 0, max: owned }}
                       >
                         <Plus size={14} color={equipped >= owned ? colors.textSecondary : colors.textPrimary} weight="bold" />
                       </AnimatedPressable>

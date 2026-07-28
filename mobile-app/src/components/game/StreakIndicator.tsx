@@ -3,6 +3,7 @@ import { Animated, Easing, View, Text, StyleSheet } from 'react-native'
 import { colors, spacing, fontSize } from '../../constants/theme'
 import { tabularNums } from '../ui/Typography'
 import { FlameIcon } from '../icons'
+import { streakMessage } from '../../lib/a11y'
 
 const STREAK_THRESHOLD = 3
 
@@ -30,7 +31,12 @@ export function StreakIndicator({ streak }: StreakIndicatorProps) {
   // Building toward streak — show a subtle progress hint
   if (streak < STREAK_THRESHOLD) {
     return (
-      <Animated.View style={[styles.building, { transform: [{ scale }] }]}>
+      <Animated.View
+        style={[styles.building, { transform: [{ scale }] }]}
+        accessible
+        accessibilityRole="text"
+        accessibilityLabel={`${STREAK_THRESHOLD - streak} more correct for a streak`}
+      >
         <View style={styles.pips}>
           {Array.from({ length: STREAK_THRESHOLD }, (_, i) => (
             <FlameIcon
@@ -51,7 +57,12 @@ export function StreakIndicator({ streak }: StreakIndicatorProps) {
   const flameSize = streak >= 10 ? fontSize.xl : streak >= 8 ? fontSize.lg : streak >= 5 ? fontSize.md : fontSize.sm
 
   return (
-    <Animated.View style={[styles.container, { transform: [{ scale }] }]}>
+    <Animated.View
+      style={[styles.container, { transform: [{ scale }] }]}
+      accessible
+      accessibilityRole="text"
+      accessibilityLabel={`${streakMessage(streak)}, ${multiplier.toFixed(1)} times multiplier`}
+    >
       <FlameIcon size={flameSize} weight="fill" />
       <Text style={styles.label}>{streak} streak</Text>
       <Text style={styles.multiplier}>{multiplier.toFixed(1)}x</Text>

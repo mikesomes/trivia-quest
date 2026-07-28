@@ -31,9 +31,15 @@ export function Button({
       onPress={() => { haptics.selection(); onPress() }}
       disabled={isDisabled}
       activeOpacity={0.8}
+      accessibilityLabel={title}
+      accessibilityState={{ disabled: isDisabled, busy: !!loading }}
     >
       {loading ? (
-        <ActivityIndicator color={variant === 'primary' ? '#fff' : colors.primary} size="small" />
+        <ActivityIndicator
+          color={variant === 'primary' ? colors.textOnAccent : colors.primary}
+          size="small"
+          accessibilityLabel={`${title}, loading`}
+        />
       ) : (
         <Text style={[styles.text, styles[`${variant}Text`], styles[`${size}Text`]]}>{title}</Text>
       )}

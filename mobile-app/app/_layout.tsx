@@ -22,6 +22,7 @@ import { OfflineBanner } from '../src/components/ui/OfflineBanner'
 import { GestureHandlerRootView } from 'react-native-gesture-handler'
 import { initNotifications, rescheduleInactivityLadder } from '../src/lib/notifications'
 import { colors } from '../src/constants/theme'
+import { useSyncHapticsWithReducedMotion } from '../src/hooks/useReducedMotion'
 
 SplashScreen.preventAutoHideAsync()
 
@@ -111,6 +112,9 @@ function applyNunitoDefaults() {
 }
 
 function RootLayout() {
+  // Mirrors system Reduce Motion into the haptics facade for the whole app.
+  useSyncHapticsWithReducedMotion()
+
   const [fontsLoaded, fontError] = useFonts({
     NunitoSans_400Regular,
     NunitoSans_500Medium,

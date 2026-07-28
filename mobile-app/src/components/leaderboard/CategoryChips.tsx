@@ -27,6 +27,8 @@ export function CategoryChips({ activeCategory, onChange }: CategoryChipsProps) 
             key={cat.id}
             onPress={() => onChange(cat.id)}
             activeOpacity={0.7}
+            accessibilityRole="tab"
+            accessibilityState={{ selected: active }}
             style={[
               styles.chip,
               active && { backgroundColor: cat.color, borderColor: cat.color },

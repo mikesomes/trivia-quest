@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
+import { useReducedMotion } from './useReducedMotion'
 
 const DEFAULT_DURATION_MS = 700
 const DEFAULT_STEPS = 24
@@ -18,10 +19,15 @@ interface Options {
 
 /** Eased count-up from the previous value to `target`. Shared by every number
  * ticker in the app (live XP HUD, round-end XP summary) so the easing curve
- * and cadence stay identical everywhere. */
+ * and cadence stay identical everywhere.
+ *
+ * Honors Reduce Motion by jumping straight to the final value — the player
+ * still learns what they earned, just without the ticking. Because every
+ * ticker routes through here, no call site needs its own check. */
 export function useAnimatedNumber(target: number, options: Options = {}) {
   const [value, setValue] = useState(options.from ?? target)
   const prevTarget = useRef(options.from ?? target)
+  const reducedMotion = useReducedMotion()
 
   useEffect(() => {
     if (target === prevTarget.current) return
@@ -30,7 +36,7 @@ export function useAnimatedNumber(target: number, options: Options = {}) {
     const end = target
     prevTarget.current = end
 
-    if (end <= start) {
+    if (end <= start || reducedMotion) {
       setValue(end)
       return
     }
@@ -56,7 +62,7 @@ export function useAnimatedNumber(target: number, options: Options = {}) {
 
     return () => clearInterval(interval)
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [target])
+  }, [target, reducedMotion])
 
   return value
 }

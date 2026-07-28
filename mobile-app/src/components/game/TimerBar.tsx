@@ -4,6 +4,7 @@ import { colors, spacing, fontSize, radius } from '../../constants/theme'
 import { GAME_CONFIG } from '../../constants/game'
 import { haptics, type HapticIntensity } from '../../lib/haptics'
 import { tabularNums } from '../ui/Typography'
+import { timerMessage } from '../../lib/a11y'
 
 interface TimerBarProps {
   timeRemainingMs: number
@@ -98,7 +99,13 @@ export function TimerBar({ timeRemainingMs, isPaused, totalMs = GAME_CONFIG.TIME
   })
 
   return (
-    <View style={styles.container}>
+    <View
+      style={styles.container}
+      accessible
+      accessibilityRole="progressbar"
+      accessibilityLabel={timerMessage(secondsLeft)}
+      accessibilityValue={{ min: 0, max: Math.round(totalMs / 1000), now: secondsLeft }}
+    >
       <View style={styles.track}>
         <Animated.View
           style={[

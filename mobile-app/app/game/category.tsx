@@ -38,7 +38,7 @@ export default function CategoryScreen() {
     <ScreenWrapper>
       <ScrollView style={styles.container} contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
         <View style={styles.topRow}>
-          <AnimatedPressable style={styles.back} onPress={() => router.back()}>
+          <AnimatedPressable style={styles.back} onPress={() => router.back()} accessibilityLabel="Go back">
             <ArrowLeft weight="bold" size={24} color={colors.textPrimary} />
           </AnimatedPressable>
         </View>

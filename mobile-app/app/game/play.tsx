@@ -32,6 +32,8 @@ import { colors, spacing, fontSize } from '../../src/constants/theme'
 import { GAME_CONFIG } from '../../src/constants/game'
 import { isShieldBreakResult, type AnswerOption, type Category } from '../../src/types/game'
 import { getSurvivalMix, dominantDifficulty } from '../../src/utils/difficultyMix'
+import { announce, answerRevealMessage } from '../../src/lib/a11y'
+import { useReducedMotion } from '../../src/hooks/useReducedMotion'
 
 const SD_CATEGORIES: Category[] = ['general_knowledge', 'history', 'science', 'sports', 'movies_tv', 'geography']
 
@@ -93,6 +95,7 @@ export default function PlayScreen() {
   const xpScale = useRef(new Animated.Value(1)).current
   const xpGlowOpacity = useRef(new Animated.Value(0)).current
   const confettiRef = useRef<ConfettiCannon>(null)
+  const reducedMotion = useReducedMotion()
   const [showExtraLife, setShowExtraLife] = React.useState(false)
   const [showHammerEarned, setShowHammerEarned] = React.useState(false)
   const [streakMilestone, setStreakMilestone] = React.useState<StreakMilestone | null>(null)
@@ -148,6 +151,21 @@ export default function PlayScreen() {
       Animated.timing(xpGlowOpacity, { toValue: 0, duration: 500, easing: Easing.out(Easing.cubic), useNativeDriver: true }),
     ]).start()
   }, [xpEarnedInRound])
+
+  // Announce the reveal for screen readers — correct/wrong is otherwise carried
+  // only by the green/red fill and the pop/shake, which convey nothing here.
+  useEffect(() => {
+    if (answerState !== 'revealed' || !pendingResult) return
+    announce(
+      answerRevealMessage({
+        isCorrect: pendingResult.isCorrect,
+        correctAnswerText: pendingResult.correctOption && currentQuestion
+          ? currentQuestion.options[pendingResult.correctOption]
+          : undefined,
+        xpEarned: pendingResult.xpGained,
+      })
+    )
+  }, [answerState, pendingResult, currentQuestion])
 
   // Blitz: apply +5s time bonus when server returns streak milestone
   useEffect(() => {
@@ -249,7 +267,7 @@ export default function PlayScreen() {
         // recordAnswer fires via onSuccess — sets answerState: 'revealed' and pendingResult
         play(result.isCorrect ? 'correct' : 'wrong', result.isCorrect ? result.currentStreak : undefined)
         if (result.isCorrect) {
-          confettiRef.current?.start()
+          if (!reducedMotion) confettiRef.current?.start()
           if (result.currentStreak === 3) {
             correctGlowOpacity.setValue(0)
             Animated.sequence([

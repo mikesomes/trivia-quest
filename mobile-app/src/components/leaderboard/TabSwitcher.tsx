@@ -16,6 +16,8 @@ export function TabSwitcher<T extends string>({ tabs, activeTab, onTabChange }: 
         <AnimatedPressable
           key={tab.id}
           style={[styles.tab, activeTab === tab.id && styles.activeTab]}
+          accessibilityRole="tab"
+          accessibilityState={{ selected: activeTab === tab.id }}
           onPress={() => onTabChange(tab.id)}
           activeOpacity={0.7}
         >

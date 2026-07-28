@@ -27,5 +27,10 @@ export function Pulse({ active = true, children, scale = 1.04, durationMs = 900 
     return () => loop.stop()
   }, [active, scale, durationMs, value])
 
-  return <Animated.View style={{ transform: [{ scale: value }] }}>{children}</Animated.View>
+  // The pulse itself carries no meaning — whatever it wraps stays announced.
+  return (
+    <Animated.View style={{ transform: [{ scale: value }] }}>
+      {children}
+    </Animated.View>
+  )
 }

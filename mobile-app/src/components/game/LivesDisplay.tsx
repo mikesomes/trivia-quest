@@ -3,6 +3,7 @@ import { Animated, View, StyleSheet } from 'react-native'
 import { colors, spacing, fontSize } from '../../constants/theme'
 import { GAME_CONFIG } from '../../constants/game'
 import { LifeIcon, ShieldIcon, SparkleIcon } from '../icons'
+import { livesMessage } from '../../lib/a11y'
 
 const ICON_SIZE = fontSize.xl
 
@@ -71,7 +72,15 @@ export function LivesDisplay({
   const showShieldGroup = shieldsRemaining > 0 || shieldBreakToken > 0
 
   return (
-    <View style={styles.container}>
+    <View
+      style={styles.container}
+      accessible
+      accessibilityRole="text"
+      accessibilityLabel={
+        livesMessage(livesRemaining) +
+        (shieldsRemaining > 0 ? `, ${shieldsRemaining} shield${shieldsRemaining === 1 ? '' : 's'}` : '')
+      }
+    >
       {showShieldGroup && (
         <View style={styles.shieldGroup}>
           {Array.from({ length: shieldsRemaining }, (_, i) => (

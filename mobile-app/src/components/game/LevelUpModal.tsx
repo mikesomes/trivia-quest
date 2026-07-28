@@ -4,6 +4,7 @@ import { LinearGradient } from 'expo-linear-gradient'
 import { colors, fontSize, spacing } from '../../constants/theme'
 import { tabularNums } from '../ui/Typography'
 import { StarIcon, SparkleIcon } from '../icons'
+import { announce } from '../../lib/a11y'
 
 interface Props {
   visible: boolean
@@ -106,6 +107,7 @@ export function LevelUpModal({ visible, newLevel, onDismiss }: Props) {
   const [particleTrigger, setParticleTrigger] = React.useState(false)
 
   useEffect(() => {
+    if (visible) announce(`Level up! You reached level ${newLevel}.`)
     if (!visible) {
       overlayOpacity.setValue(0)
       cardScale.setValue(0.4)

@@ -7,6 +7,8 @@ import { colors, fontSize, radius, spacing, surfaces } from '../../constants/the
 import { CHEST_TIER_META, CHEST_REWARD_META } from '../../constants/chest'
 import type { ChestReward, ChestTier } from '../../api/dailyReward'
 import { GameIcon } from '../icons'
+import { useReducedMotion } from '../../hooks/useReducedMotion'
+import { announce } from '../../lib/a11y'
 
 interface Props {
   visible: boolean
@@ -26,6 +28,7 @@ export function ChestOpenModal({ visible, tier, reward, onDismiss }: Props) {
   const rewardOpacity = useRef(new Animated.Value(0)).current
   const confettiRef = useRef<ConfettiCannon>(null)
   const [revealed, setRevealed] = useState(false)
+  const reducedMotion = useReducedMotion()
 
   const chime = useAudioPlayer(require('../../../assets/sounds/extra-life.mp3'))
 
@@ -60,11 +63,23 @@ export function ChestOpenModal({ visible, tier, reward, onDismiss }: Props) {
       Animated.timing(shake, { toValue: 0, duration: 70, useNativeDriver: true }),
     ])
 
-    shakeAnim.start(() => {
+    const reveal = () => {
       haptics.reward()
-      confettiRef.current?.start()
+      if (!reducedMotion) confettiRef.current?.start()
       try { chime.seekTo(0); chime.play() } catch {}
       setRevealed(true)
+      if (reward && rewardMeta) {
+        announce(`${tierMeta.label} opened. ${rewardMeta.label(reward.amount)}`)
+      }
+
+      if (reducedMotion) {
+        // Snap to the revealed state — the reward still lands, it just doesn't
+        // fly in.
+        chestOpacity.setValue(0)
+        rewardScale.setValue(1)
+        rewardOpacity.setValue(1)
+        return
+      }
 
       Animated.parallel([
         Animated.timing(chestScale, { toValue: 1.4, duration: 220, easing: Easing.out(Easing.quad), useNativeDriver: true }),
@@ -72,7 +87,11 @@ export function ChestOpenModal({ visible, tier, reward, onDismiss }: Props) {
         Animated.spring(rewardScale, { toValue: 1, tension: 90, friction: 6, delay: 100, useNativeDriver: true }),
         Animated.timing(rewardOpacity, { toValue: 1, duration: 250, delay: 100, useNativeDriver: true }),
       ]).start()
-    })
+    }
+
+    // Skip the suspense shake entirely when motion is reduced.
+    if (reducedMotion) reveal()
+    else shakeAnim.start(reveal)
 
     const dismissTimer = setTimeout(onDismiss, 3400)
     return () => clearTimeout(dismissTimer)
