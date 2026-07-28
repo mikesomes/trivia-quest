@@ -2,6 +2,7 @@ import React, { useEffect, useRef } from 'react'
 import { Animated, StyleSheet, Text, View } from 'react-native'
 import { colors, fontSize, radius, spacing, surfaces } from '../../constants/theme'
 import type { Achievement } from '../../types/user'
+import { MedalIcon } from '../icons'
 
 const RARITY_COLORS: Record<string, string> = {
   common:    '#6b7280',
@@ -31,9 +32,12 @@ export function NewAchievementsToast({ achievements }: Props) {
 
   return (
     <Animated.View style={[styles.container, { opacity, transform: [{ translateY }] }]}>
-      <Text style={styles.header}>
-        🏅 {achievements.length === 1 ? 'Achievement Unlocked!' : `${achievements.length} Achievements Unlocked!`}
-      </Text>
+      <View style={styles.headerRow}>
+        <MedalIcon size={16} />
+        <Text style={styles.header}>
+          {achievements.length === 1 ? 'Achievement Unlocked!' : `${achievements.length} Achievements Unlocked!`}
+        </Text>
+      </View>
       {achievements.map((a) => {
         const color = RARITY_COLORS[a.rarity] ?? RARITY_COLORS.common
         return (
@@ -60,6 +64,7 @@ const styles = StyleSheet.create({
     padding: spacing.md,
     gap: spacing.sm,
   },
+  headerRow: { flexDirection: 'row', alignItems: 'center', gap: 6 },
   header: {
     fontSize: fontSize.md,
     fontWeight: '800',

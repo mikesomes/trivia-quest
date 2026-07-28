@@ -8,11 +8,12 @@ import { router } from 'expo-router'
 import { colors, spacing, fontSize, radius } from '../../src/constants/theme'
 import { ArrowLeft } from 'phosphor-react-native'
 import { GAME_CONFIG } from '../../src/constants/game'
+import { GameIcon, type GameIconName } from '../../src/components/icons'
 
 const MODES = [
   {
     id: 'classic',
-    emoji: '🧠',
+    icon: 'brain' as GameIconName,
     label: 'Classic',
     description: 'Pick a topic, 10 questions, earn XP',
     color: colors.primary,
@@ -20,7 +21,7 @@ const MODES = [
   },
   {
     id: 'blitz',
-    emoji: '⚡',
+    icon: 'xp' as GameIconName,
     label: 'Blitz',
     description: `${GAME_CONFIG.BLITZ_SECONDS} seconds, unlimited questions, no hammers`,
     color: colors.gold,
@@ -28,7 +29,7 @@ const MODES = [
   },
   {
     id: 'survival',
-    emoji: '💀',
+    icon: 'skull' as GameIconName,
     label: 'Survival',
     description: 'One life, endless rounds, go as far as you can',
     color: colors.incorrect,
@@ -36,7 +37,7 @@ const MODES = [
   },
   {
     id: 'odd_one_out',
-    emoji: '🧩',
+    icon: 'puzzle' as GameIconName,
     label: 'Odd One Out',
     description: 'Pick the item that does not belong',
     color: '#10B981',
@@ -83,7 +84,7 @@ export default function ModeSelectScreen() {
                 end={{ x: 1, y: 0 }}
               />
               <View style={styles.cardRow}>
-                <Text style={styles.emoji}>{mode.emoji}</Text>
+                <GameIcon name={mode.icon} size={34} />
                 <View style={styles.cardText}>
                   <Text style={styles.label}>{mode.label}</Text>
                   <Text style={styles.description}>{mode.description}</Text>

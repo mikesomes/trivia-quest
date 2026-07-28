@@ -2,6 +2,7 @@ import React from 'react'
 import { StyleSheet, Text, View } from 'react-native'
 import { colors, fontSize, radius, spacing } from '../../constants/theme'
 import type { AchievementCatalogueEntry } from '../../types/user'
+import { LockIcon } from '../icons'
 
 const RARITY_COLORS: Record<string, string> = {
   common:    '#6b7280',
@@ -24,7 +25,7 @@ export function AchievementBadge({ achievement }: Props) {
   return (
     <View style={[styles.badge, { borderColor: `${accentColor}55`, opacity: earned ? 1 : 0.6 }]}>
       <View style={[styles.iconWrap, { backgroundColor: `${accentColor}22` }]}>
-        <Text style={styles.icon}>{earned ? achievement.icon : '🔒'}</Text>
+        {earned ? <Text style={styles.icon}>{achievement.icon}</Text> : <LockIcon size={22} />}
       </View>
       <Text style={[styles.name, { color: earned ? colors.textPrimary : colors.textMuted }]} numberOfLines={1}>
         {achievement.name}

@@ -7,6 +7,8 @@ import { QUEST_CATEGORIES } from '../../src/config/questConfig'
 import { useQuestStore } from '../../src/store/questStore'
 import { buildCategoryStats } from '../../src/utils/questProgress'
 import { colors, spacing, fontSize, radius } from '../../src/constants/theme'
+import { CategoryBadge } from '../../src/components/ui/CategoryBadge'
+import { StarIcon } from '../../src/components/icons'
 
 export default function QuestHubScreen() {
   const categoryProgress = useQuestStore(s => s.categoryProgress)
@@ -43,7 +45,7 @@ export default function QuestHubScreen() {
                 <View style={[styles.accentBar, { backgroundColor: cat.color }]} />
 
                 <View style={styles.cardBody}>
-                  <Text style={styles.cardEmoji}>{cat.emoji}</Text>
+                  <CategoryBadge category={{ id: cat.category, color: cat.color }} size={44} />
                   <Text style={styles.cardName} numberOfLines={2}>{cat.name}</Text>
 
                   {/* Progress bar */}
@@ -64,9 +66,12 @@ export default function QuestHubScreen() {
                       {stats.completedCount}/{stats.totalCount} nodes
                     </Text>
                     {stats.totalStars > 0 && (
-                      <Text style={[styles.cardMetaText, { color: colors.streakActive }]}>
-                        ★ {stats.totalStars}
-                      </Text>
+                      <View style={styles.starTally}>
+                        <StarIcon size={12} />
+                        <Text style={[styles.cardMetaText, { color: colors.streakActive }]}>
+                          {stats.totalStars}
+                        </Text>
+                      </View>
                     )}
                   </View>
                 </View>
@@ -116,9 +121,7 @@ const styles = StyleSheet.create({
     padding: spacing.md,
     gap: spacing.xs,
   },
-  cardEmoji: {
-    fontSize: 32,
-  },
+  starTally: { flexDirection: 'row', alignItems: 'center', gap: 3 },
   cardName: {
     fontSize: fontSize.md,
     fontWeight: '700',

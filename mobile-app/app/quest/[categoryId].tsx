@@ -12,6 +12,9 @@ import { useGameStore } from '../../src/store/gameStore'
 import { roundsApi } from '../../src/api/rounds'
 import { colors, spacing, fontSize, radius } from '../../src/constants/theme'
 import type { QuestNode } from '../../src/types/quest'
+import { CategoryIcon } from '../../src/components/ui/CategoryBadge'
+import { GameIcon, type GameIconName } from '../../src/components/icons'
+import { StarRating } from '../../src/components/quest/StarRating'
 
 const MODE_LABELS: Record<string, string> = {
   classic:  'Classic',
@@ -20,11 +23,11 @@ const MODE_LABELS: Record<string, string> = {
   boss:     'Boss',
 }
 
-const MODE_EMOJI: Record<string, string> = {
-  classic:  '📝',
-  timed:    '⚡',
-  survival: '💀',
-  boss:     '🔥',
+const MODE_ICON: Record<string, string> = {
+  classic:  'note',
+  timed:    'xp',
+  survival: 'skull',
+  boss:     'flame',
 }
 
 const DIFF_COLOR: Record<string, string> = {
@@ -127,7 +130,7 @@ export default function CategoryMapScreen() {
             <Text style={styles.backText}>← Back</Text>
           </AnimatedPressable>
           <View style={styles.titleRow}>
-            <Text style={styles.emoji}>{category.emoji}</Text>
+            <CategoryIcon categoryId={category.id} size={26} color={category.color} />
             <Text style={styles.title}>{category.name}</Text>
           </View>
           {progress.categoryXp > 0 && (
@@ -157,7 +160,7 @@ export default function CategoryMapScreen() {
                 activeOpacity={0.8}
               >
                 <View style={styles.nodeLeft}>
-                  <Text style={styles.nodeModeEmoji}>{MODE_EMOJI[node.mode] ?? '📝'}</Text>
+                  <GameIcon name={(MODE_ICON[node.mode] ?? 'note') as GameIconName} size={14} />
                   <View style={styles.nodeInfo}>
                     <Text style={[styles.nodeTitle, isCompleted && styles.nodeTitleCompleted]}>
                       {node.title}
@@ -177,7 +180,7 @@ export default function CategoryMapScreen() {
                 <View style={styles.nodeRight}>
                   {isCompleted ? (
                     <Text style={styles.nodeStars}>
-                      {'★'.repeat(bestStars)}{'☆'.repeat(3 - bestStars)}
+                      <StarRating stars={bestStars} size={11} />
                     </Text>
                   ) : loading ? (
                     <ActivityIndicator size="small" color={category.color} />
@@ -235,7 +238,6 @@ const styles = StyleSheet.create({
     borderWidth: 2,
   },
   nodeLeft: { flex: 1, flexDirection: 'row', alignItems: 'center', gap: spacing.md },
-  nodeModeEmoji: { fontSize: 28 },
   nodeInfo: { flex: 1, gap: 3 },
   nodeTitle: { fontSize: fontSize.md, fontWeight: '700', color: colors.textPrimary },
   nodeTitleCompleted: { color: colors.textSecondary },

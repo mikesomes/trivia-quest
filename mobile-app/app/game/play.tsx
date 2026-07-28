@@ -582,7 +582,7 @@ export default function PlayScreen() {
         <View pointerEvents="none" style={styles.milestoneContainer}>
           <StreakMilestoneToast
             key={streakMilestone.key}
-            emoji={streakMilestone.emoji}
+            icon={streakMilestone.icon}
             label={streakMilestone.label}
             color={streakMilestone.color}
             onDone={() => setStreakMilestone(null)}
@@ -595,7 +595,7 @@ export default function PlayScreen() {
         <View pointerEvents="none" style={styles.milestoneContainer}>
           <StreakMilestoneToast
             key={blitzBonusKey}
-            emoji="⏱"
+            icon="timer"
             label="+5s"
             color={colors.timerNormal}
             onDone={() => setBlitzBonusKey(null)}

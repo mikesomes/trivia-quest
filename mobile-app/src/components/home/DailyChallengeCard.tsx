@@ -8,6 +8,8 @@ import { GradientCard } from '../ui/GradientCard'
 import { Pulse } from '../ui/Pulse'
 import { AnimatedPressable } from '../ui/AnimatedPressable'
 import { tabularNums } from '../ui/Typography'
+import { FlameIcon } from '../icons'
+import { CorrectIcon } from '../icons'
 
 export function DailyChallengeCard() {
   const { data: status, isLoading } = useDailyChallengeStatus()
@@ -44,7 +46,7 @@ export function DailyChallengeCard() {
         </View>
         {streak > 0 && (
           <View style={styles.streakBadge}>
-            <Text style={styles.streakFire}>🔥</Text>
+            <FlameIcon size={14} />
             <Text style={styles.streakCount}>{streak}</Text>
           </View>
         )}
@@ -54,7 +56,7 @@ export function DailyChallengeCard() {
         // Completed state
         <View style={styles.completedBody}>
           <View style={styles.completedRow}>
-            <Text style={styles.checkmark}>✓</Text>
+            <CorrectIcon size={14} weight="fill" />
             <View>
               <Text style={styles.completedText}>Completed!</Text>
               {status?.correctCount !== undefined && (
@@ -134,7 +136,6 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: `${colors.streakActive}44`,
   },
-  streakFire: { fontSize: 14 },
   streakCount: { ...tabularNums, fontSize: fontSize.md, fontWeight: '800', color: colors.streakActive },
   playButton: {
     backgroundColor: colors.primary,

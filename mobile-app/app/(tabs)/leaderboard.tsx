@@ -19,12 +19,13 @@ import { MyRankBanner } from '../../src/components/leaderboard/MyRankBanner'
 import { LeaderboardSkeletonList } from '../../src/components/leaderboard/LeaderboardRowSkeleton'
 import type { LeaderboardMode, LeaderboardPeriod } from '../../src/types/api'
 import { getXpGapToNextRank, getNextRankLabel } from '../../src/utils/leaderboard'
+import { GameIcon, WarningIcon, type GameIconName } from '../../src/components/icons'
 
-const MODE_TABS: Array<{ id: GameModeTab; label: string; icon: string }> = [
-  { id: 'xp',       label: 'XP',       icon: '🏆' },
-  { id: 'classic',  label: 'Classic',  icon: '🧠' },
-  { id: 'survival', label: 'Survival', icon: '💀' },
-  { id: 'blitz',    label: 'Blitz',    icon: '⚡' },
+const MODE_TABS: Array<{ id: GameModeTab; label: string; icon: GameIconName }> = [
+  { id: 'xp',       label: 'XP',       icon: 'trophy' as GameIconName },
+  { id: 'classic',  label: 'Classic',  icon: 'brain' as GameIconName },
+  { id: 'survival', label: 'Survival', icon: 'skull' as GameIconName },
+  { id: 'blitz',    label: 'Blitz',    icon: 'xp' as GameIconName },
 ]
 
 const XP_PERIOD_TABS: Array<{ id: LeaderboardPeriod; label: string }> = [
@@ -156,7 +157,7 @@ export default function LeaderboardScreen() {
               {isLoading && <LeaderboardSkeletonList />}
               {isError && (
                 <View style={styles.errorCard}>
-                  <Text style={styles.errorIcon}>⚠️</Text>
+                  <WarningIcon size={30} />
                   <Text style={styles.errorText}>Failed to load leaderboard.</Text>
                   <Text style={styles.errorHint}>Pull down to retry.</Text>
                 </View>
@@ -186,9 +187,7 @@ export default function LeaderboardScreen() {
           ListEmptyComponent={
             !isLoading && !isError ? (
               <View style={styles.emptyCard}>
-                <Text style={styles.emptyIcon}>
-                  {MODE_TABS.find((t) => t.id === activeGameMode)?.icon ?? '🏆'}
-                </Text>
+                <GameIcon name={MODE_TABS.find((t) => t.id === activeGameMode)?.icon ?? 'trophy'} size={30} />
                 <Text style={styles.emptyTitle}>No players ranked yet</Text>
                 <Text style={styles.emptyText}>
                   {effectivePeriod === 'alltime'

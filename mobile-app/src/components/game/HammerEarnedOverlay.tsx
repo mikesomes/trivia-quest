@@ -1,6 +1,7 @@
 import React, { useEffect, useRef } from 'react'
 import { Animated, Easing, Modal, StyleSheet, Text } from 'react-native'
 import { colors, fontSize, spacing } from '../../constants/theme'
+import { HammerIcon } from '../icons'
 
 interface Props {
   visible: boolean
@@ -51,7 +52,7 @@ export function HammerEarnedOverlay({ visible, onDismiss }: Props) {
     <Modal visible={visible} transparent animationType="none" statusBarTranslucent>
       <Animated.View style={[styles.overlay, { opacity: overlayOpacity }]} pointerEvents="none">
         <Animated.Text style={[styles.hammer, { transform: [{ scale: hammerScale }] }]}>
-          🔨
+          <HammerIcon size={44} />
         </Animated.Text>
         <Animated.View style={{ opacity: textOpacity, transform: [{ translateY: textTranslateY }] }}>
           <Text style={styles.title}>HAMMER!</Text>

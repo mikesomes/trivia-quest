@@ -2,6 +2,7 @@ import React, { useEffect, useRef } from 'react'
 import { Animated, Easing, View, Text, StyleSheet } from 'react-native'
 import { colors, spacing, fontSize } from '../../constants/theme'
 import { tabularNums } from '../ui/Typography'
+import { FlameIcon } from '../icons'
 
 const STREAK_THRESHOLD = 3
 
@@ -30,9 +31,16 @@ export function StreakIndicator({ streak }: StreakIndicatorProps) {
   if (streak < STREAK_THRESHOLD) {
     return (
       <Animated.View style={[styles.building, { transform: [{ scale }] }]}>
-        <Text style={styles.buildingText}>
-          {'🔥'.repeat(streak)}{'·'.repeat(STREAK_THRESHOLD - streak)}
-        </Text>
+        <View style={styles.pips}>
+          {Array.from({ length: STREAK_THRESHOLD }, (_, i) => (
+            <FlameIcon
+              key={i}
+              size={13}
+              weight={i < streak ? 'fill' : 'regular'}
+              color={i < streak ? colors.streakActive : colors.textDisabled}
+            />
+          ))}
+        </View>
         <Text style={styles.buildingLabel}>{STREAK_THRESHOLD - streak} more for streak</Text>
       </Animated.View>
     )
@@ -44,7 +52,7 @@ export function StreakIndicator({ streak }: StreakIndicatorProps) {
 
   return (
     <Animated.View style={[styles.container, { transform: [{ scale }] }]}>
-      <Text style={[styles.fire, { fontSize: flameSize }]}>🔥</Text>
+      <FlameIcon size={flameSize} weight="fill" />
       <Text style={styles.label}>{streak} streak</Text>
       <Text style={styles.multiplier}>{multiplier.toFixed(1)}x</Text>
     </Animated.View>
@@ -86,10 +94,7 @@ const styles = StyleSheet.create({
     borderColor: `${colors.streakActive}44`,
     backgroundColor: `${colors.streakActive}0a`,
   },
-  buildingText: {
-    fontSize: fontSize.sm,
-    letterSpacing: 2,
-  },
+  pips: { flexDirection: 'row', gap: 2 },
   buildingLabel: {
     fontSize: fontSize.xs,
     color: colors.textSecondary,

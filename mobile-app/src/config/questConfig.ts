@@ -61,7 +61,6 @@ export const QUEST_CATEGORIES: QuestCategory[] = [
   {
     id: 'general_knowledge',
     name: 'General Knowledge',
-    emoji: '🧠',
     color: '#4F7BF7',
     category: 'general_knowledge',
     nodes: [
@@ -75,7 +74,6 @@ export const QUEST_CATEGORIES: QuestCategory[] = [
   {
     id: 'history',
     name: 'History',
-    emoji: '📜',
     color: '#C2872C',
     category: 'history',
     nodes: [
@@ -89,7 +87,6 @@ export const QUEST_CATEGORIES: QuestCategory[] = [
   {
     id: 'science',
     name: 'Science',
-    emoji: '🔬',
     color: '#2BAB6F',
     category: 'science',
     nodes: [
@@ -103,7 +100,6 @@ export const QUEST_CATEGORIES: QuestCategory[] = [
   {
     id: 'sports',
     name: 'Sports',
-    emoji: '🏆',
     color: '#E84E3C',
     category: 'sports',
     nodes: [
@@ -117,7 +113,6 @@ export const QUEST_CATEGORIES: QuestCategory[] = [
   {
     id: 'movies_tv',
     name: 'Movies & TV',
-    emoji: '🎬',
     color: '#9B59B6',
     category: 'movies_tv',
     nodes: [
@@ -131,7 +126,6 @@ export const QUEST_CATEGORIES: QuestCategory[] = [
   {
     id: 'geography',
     name: 'Geography',
-    emoji: '🌍',
     color: '#27AE60',
     category: 'geography',
     nodes: [
@@ -145,7 +139,6 @@ export const QUEST_CATEGORIES: QuestCategory[] = [
   {
     id: 'nfl_football',
     name: 'NFL Football',
-    emoji: '🏈',
     color: '#1A5C2A',
     category: 'nfl_football',
     nodes: [
@@ -159,7 +152,6 @@ export const QUEST_CATEGORIES: QuestCategory[] = [
   {
     id: 'roman_history',
     name: 'Roman History',
-    emoji: '🏛️',
     color: '#8B4513',
     category: 'roman_history',
     nodes: [
@@ -173,7 +165,6 @@ export const QUEST_CATEGORIES: QuestCategory[] = [
   {
     id: 'harry_potter',
     name: 'Harry Potter',
-    emoji: '⚡',
     color: '#7B2FBE',
     category: 'harry_potter',
     nodes: [
@@ -187,7 +178,6 @@ export const QUEST_CATEGORIES: QuestCategory[] = [
   {
     id: 'famous_quotes',
     name: 'Famous Quotes',
-    emoji: '💬',
     color: '#2980B9',
     category: 'famous_quotes',
     nodes: [
@@ -201,7 +191,6 @@ export const QUEST_CATEGORIES: QuestCategory[] = [
   {
     id: 'music',
     name: 'Music',
-    emoji: '🎵',
     color: '#E91E8C',
     category: 'music',
     nodes: [

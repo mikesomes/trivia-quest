@@ -16,6 +16,7 @@ import { XpCountUp } from '../../src/components/game/XpCountUp'
 import { ArcadeNameEntry } from '../../src/components/leaderboard/ArcadeNameEntry'
 import { levelFromXp } from '../../src/utils/scoring'
 import { tabularNums } from '../../src/components/ui/Typography'
+import { TrophyIcon, FlameIcon } from '../../src/components/icons'
 
 function finiteNumber(value: unknown) {
   return typeof value === 'number' && Number.isFinite(value) ? value : undefined
@@ -141,7 +142,7 @@ export default function GameOverScreen() {
             />
             {xpResult?.newBestXp && (
               <View style={styles.newBestCard}>
-                <Text style={styles.newBest}>🏆 New personal best XP!</Text>
+                <TrophyIcon size={15} /><Text style={styles.newBest}>New personal best XP!</Text>
               </View>
             )}
           </>
@@ -168,7 +169,7 @@ export default function GameOverScreen() {
             <Text style={styles.statLabel}>Accuracy</Text>
           </View>
           <View style={styles.stat}>
-            <Text style={styles.statValue}>{roundResult.longestStreak}🔥</Text>
+            <View style={styles.inlineStat}><Text style={styles.statValue}>{roundResult.longestStreak}</Text><FlameIcon size={15} /></View>
             <Text style={styles.statLabel}>Best Streak</Text>
           </View>
         </View>
@@ -178,10 +179,10 @@ export default function GameOverScreen() {
           <View style={styles.bonusCard}>
             <Text style={styles.bonusTitle}>XP Details</Text>
             {roundResult.bonusSummary.totalSpeedBonus > 0 && (
-              <Text style={styles.bonusLine}>⚡ Speed bonus: +{roundResult.bonusSummary.totalSpeedBonus} XP</Text>
+              <Text style={styles.bonusLine}>Speed bonus: +{roundResult.bonusSummary.totalSpeedBonus} XP</Text>
             )}
             {roundResult.bonusSummary.totalStreakBonus > 0 && (
-              <Text style={styles.bonusLine}>🔥 Streak bonus: +{roundResult.bonusSummary.totalStreakBonus} XP</Text>
+              <Text style={styles.bonusLine}>Streak bonus: +{roundResult.bonusSummary.totalStreakBonus} XP</Text>
             )}
           </View>
         )}
@@ -258,6 +259,7 @@ const styles = StyleSheet.create({
   roundLabel: { fontSize: fontSize.sm, color: colors.textSecondary, textTransform: 'uppercase', letterSpacing: 0, fontWeight: '600' },
   gameOverText: { fontSize: 52, fontWeight: '900', color: colors.incorrect, letterSpacing: 0, marginTop: spacing.xs },
   livesLabel: { fontSize: fontSize.sm, color: colors.textMuted, marginTop: spacing.xs },
+  inlineStat: { flexDirection: 'row', alignItems: 'center', gap: 3 },
   statsRow: {
     flexDirection: 'row',
     backgroundColor: colors.bgCard,

@@ -1,6 +1,7 @@
 import React, { useEffect, useRef } from 'react'
 import { Animated, Easing, Modal, StyleSheet, Text, View } from 'react-native'
 import { colors, fontSize, spacing } from '../../constants/theme'
+import { LifeIcon } from '../icons'
 
 interface Props {
   visible: boolean
@@ -39,9 +40,9 @@ function HeartParticle({ angle, trigger }: { angle: number; trigger: boolean }) 
   const translateY = distance.interpolate({ inputRange: [0, 1], outputRange: [0, Math.sin(rad) * maxDist] })
 
   return (
-    <Animated.Text style={[styles.particle, { opacity, transform: [{ translateX }, { translateY }] }]}>
-      ❤️
-    </Animated.Text>
+    <Animated.View style={[styles.particle, { opacity, transform: [{ translateX }, { translateY }] }]}>
+      <LifeIcon size={20} weight="fill" />
+    </Animated.View>
   )
 }
 
@@ -122,9 +123,9 @@ export function ExtraLifeOverlay({ visible, onDismiss }: Props) {
         </View>
 
         {/* Heart */}
-        <Animated.Text style={[styles.heart, { transform: [{ scale: heartScale }] }]}>
-          ❤️
-        </Animated.Text>
+        <Animated.View style={[styles.heart, { transform: [{ scale: heartScale }] }]}>
+          <LifeIcon size={96} weight="fill" />
+        </Animated.View>
 
         {/* Text */}
         <Animated.View style={{ opacity: textOpacity, transform: [{ translateY: textTranslateY }] }}>
@@ -155,14 +156,13 @@ const styles = StyleSheet.create({
   },
   particle: {
     position: 'absolute',
-    fontSize: 20,
   },
   heart: {
-    fontSize: 96,
-    lineHeight: 112,
-    textShadowColor: colors.lifeActive,
-    textShadowOffset: { width: 0, height: 0 },
-    textShadowRadius: 32,
+    shadowColor: colors.lifeActive,
+    shadowOpacity: 0.9,
+    shadowRadius: 32,
+    shadowOffset: { width: 0, height: 0 },
+    elevation: 12,
   },
   title: {
     fontSize: fontSize.xxxl,

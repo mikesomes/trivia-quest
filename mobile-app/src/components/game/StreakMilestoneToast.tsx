@@ -1,10 +1,11 @@
 import React, { useEffect, useRef } from 'react'
 import { Animated, Easing, StyleSheet, Text, View } from 'react-native'
 import { colors, fontSize, radius, spacing } from '../../constants/theme'
+import { GameIcon, type GameIconName } from '../icons'
 
 export interface StreakMilestone {
   streak: number
-  emoji: string
+  icon: GameIconName
   label: string
   color: string
   /** Increments each trigger so React re-mounts even for the same streak */
@@ -12,19 +13,19 @@ export interface StreakMilestone {
 }
 
 export const STREAK_MILESTONES: Record<number, Omit<StreakMilestone, 'key'>> = {
-  3:  { streak: 3,  emoji: '🔥', label: 'Heating up',   color: colors.timerWarning },
-  6:  { streak: 6,  emoji: '⚡', label: 'On fire',       color: '#FFE033' },
-  10: { streak: 10, emoji: '👑', label: 'UNSTOPPABLE',  color: colors.gold },
+  3:  { streak: 3,  icon: 'flame' as GameIconName, label: 'Heating up',   color: colors.timerWarning },
+  6:  { streak: 6,  icon: 'xp' as GameIconName, label: 'On fire',       color: '#FFE033' },
+  10: { streak: 10, icon: 'crown' as GameIconName, label: 'UNSTOPPABLE',  color: colors.gold },
 }
 
 interface Props {
-  emoji: string
+  icon: GameIconName
   label: string
   color: string
   onDone: () => void
 }
 
-export function StreakMilestoneToast({ emoji, label, color, onDone }: Props) {
+export function StreakMilestoneToast({ icon, label, color, onDone }: Props) {
   const scale   = useRef(new Animated.Value(0.5)).current
   const opacity = useRef(new Animated.Value(0)).current
   const translateY = useRef(new Animated.Value(12)).current
@@ -91,7 +92,7 @@ export function StreakMilestoneToast({ emoji, label, color, onDone }: Props) {
         },
       ]}
     >
-      <Text style={styles.emoji}>{emoji}</Text>
+      <GameIcon name={icon} size={30} color={color} />
       <View style={styles.textBlock}>
         <Text style={[styles.label, { color }]}>{label}</Text>
       </View>

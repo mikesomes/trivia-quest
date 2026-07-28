@@ -5,6 +5,7 @@ import type { Question, AnswerOption, AnswerState, Difficulty, Category } from '
 import { AnswerOption as AnswerOptionComponent } from './AnswerOption'
 import { colors, spacing, fontSize, radius } from '../../constants/theme'
 import { CATEGORIES } from '../../constants/categories'
+import { CategoryIcon } from '../ui/CategoryBadge'
 
 type EliminationEffect = 'hammer' | 'shield'
 
@@ -71,8 +72,9 @@ export function QuestionCard({
         <View style={styles.badgeRow}>
           {categoryMeta && (
             <View style={[styles.categoryBadge, { backgroundColor: `${categoryMeta.color}22`, borderColor: `${categoryMeta.color}55` }]}>
+              <CategoryIcon categoryId={categoryMeta.id} size={13} color={categoryMeta.color} />
               <Text style={[styles.categoryLabel, { color: categoryMeta.color }]}>
-                {categoryMeta.emoji} {categoryMeta.label}
+                {categoryMeta.label}
               </Text>
             </View>
           )}

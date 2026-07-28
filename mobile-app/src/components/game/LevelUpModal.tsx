@@ -3,6 +3,7 @@ import { Animated, Easing, Modal, StyleSheet, Text, TouchableWithoutFeedback, Vi
 import { LinearGradient } from 'expo-linear-gradient'
 import { colors, fontSize, spacing } from '../../constants/theme'
 import { tabularNums } from '../ui/Typography'
+import { StarIcon, SparkleIcon } from '../icons'
 
 interface Props {
   visible: boolean
@@ -13,7 +14,7 @@ interface Props {
 // Eight particles, evenly spread around 360°
 const PARTICLE_COUNT = 8
 const PARTICLE_ANGLES = Array.from({ length: PARTICLE_COUNT }, (_, i) => (i * 360) / PARTICLE_COUNT)
-const PARTICLE_EMOJIS = ['⭐', '✨', '🌟', '💫', '⭐', '✨', '🌟', '💫']
+const PARTICLE_MARKS = [StarIcon, SparkleIcon, StarIcon, SparkleIcon, StarIcon, SparkleIcon, StarIcon, SparkleIcon]
 
 // Slowly rotating sunburst behind the card — the "full-screen takeover" feel.
 const RAY_COUNT = 12
@@ -88,9 +89,12 @@ function Particle({ angle, trigger }: { angle: number; trigger: boolean }) {
   const translateY = distance.interpolate({ inputRange: [0, 1], outputRange: [0, Math.sin(rad) * maxDist] })
 
   return (
-    <Animated.Text style={[styles.particle, { opacity, transform: [{ translateX }, { translateY }] }]}>
-      {PARTICLE_EMOJIS[PARTICLE_ANGLES.indexOf(angle) % PARTICLE_EMOJIS.length]}
-    </Animated.Text>
+    <Animated.View style={[styles.particle, { opacity, transform: [{ translateX }, { translateY }] }]}>
+      {(() => {
+        const Mark = PARTICLE_MARKS[PARTICLE_ANGLES.indexOf(angle) % PARTICLE_MARKS.length]
+        return <Mark size={20} weight="fill" />
+      })()}
+    </Animated.View>
   )
 }
 

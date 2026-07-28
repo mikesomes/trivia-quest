@@ -13,6 +13,7 @@ import { haptics } from '../../src/lib/haptics'
 import { colors, spacing, fontSize, radius } from '../../src/constants/theme'
 import { XpCounter } from '../../src/components/game/XpCounter'
 import { tabularNums } from '../../src/components/ui/Typography'
+import { SkullIcon } from '../../src/components/icons'
 
 export default function SuddenDeathOverScreen() {
   const sdBatchNumber = useGameStore((s) => s.sdBatchNumber)
@@ -68,7 +69,7 @@ export default function SuddenDeathOverScreen() {
         {/* Header */}
         <View style={styles.header}>
           <Text style={styles.eliminated}>ELIMINATED</Text>
-          <Text style={styles.emoji}>💀</Text>
+          <SkullIcon size={56} />
         </View>
 
         {/* Main stat */}
@@ -150,7 +151,6 @@ const styles = StyleSheet.create({
     color: colors.incorrect,
     letterSpacing: 6,
   },
-  emoji: { fontSize: 56 },
   mainCard: {
     backgroundColor: colors.bgCard,
     borderRadius: radius.lg,

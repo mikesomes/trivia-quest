@@ -32,6 +32,7 @@ import { Reveal } from '../../src/components/ui/Reveal'
 import { Pulse } from '../../src/components/ui/Pulse'
 import { WalletBadge } from '../../src/components/game/WalletBadge'
 import { tabularNums } from '../../src/components/ui/Typography'
+import { GameIcon, XpIcon, CalendarIcon, FlameIcon, TrophyIcon } from '../../src/components/icons'
 
 function formatMmSs(totalSeconds: number): string {
   const m = Math.floor(totalSeconds / 60)
@@ -126,7 +127,7 @@ function QuestResults({
       {questResult.passed && questResult.newlyRevealedNodeIds.length > 0 && (
         <Reveal delay={380}>
           <View style={styles.mapCompleteCard}>
-            <Text style={styles.mapCompleteEmoji}>🔓</Text>
+            <GameIcon name="unlock" size={34} />
             <Text style={styles.mapCompleteText}>New node{questResult.newlyRevealedNodeIds.length > 1 ? 's' : ''} unlocked!</Text>
             <Text style={styles.mapCompleteSub}>Continue in the category map to see what's next.</Text>
           </View>
@@ -379,7 +380,7 @@ export default function ResultsScreen() {
         <Reveal>
           {isBlitz && (
             <View style={[styles.dailyBadge, { borderColor: `${colors.streakActive}44`, backgroundColor: `${colors.streakActive}18` }]}>
-              <Text style={[styles.dailyBadgeText, { color: colors.streakActive }]}>⚡ Blitz Complete!</Text>
+              <XpIcon size={14} color={colors.streakActive} /><Text style={[styles.dailyBadgeText, { color: colors.streakActive }]}>Blitz Complete!</Text>
               <Text style={[styles.dailyStreakText, { color: colors.textSecondary }]}>
                 {roundResult.answers.length} questions answered in {GAME_CONFIG.BLITZ_SECONDS}s
               </Text>
@@ -388,9 +389,12 @@ export default function ResultsScreen() {
 
           {isDailyChallenge && (
             <View style={styles.dailyBadge}>
-              <Text style={styles.dailyBadgeText}>📅 Daily Challenge Complete!</Text>
+              <CalendarIcon size={14} /><Text style={styles.dailyBadgeText}>Daily Challenge Complete!</Text>
               {completeDailyChallenge.data && completeDailyChallenge.data.streak > 0 && (
-                <Text style={styles.dailyStreakText}>🔥 {completeDailyChallenge.data.streak} day streak</Text>
+                <View style={styles.badgeInline}>
+                  <FlameIcon size={13} />
+                  <Text style={styles.dailyStreakText}>{completeDailyChallenge.data.streak} day streak</Text>
+                </View>
               )}
             </View>
           )}
@@ -429,7 +433,10 @@ export default function ResultsScreen() {
               +{optimisticXpEarned.toLocaleString()} coins earned
             </Text>
             {xpResult?.xpBreakdown && roundResult?.xpBoosterApplied && (
-              <Text style={styles.boosterBadge}>⚡ XP Booster active</Text>
+              <View style={styles.badgeInline}>
+                <XpIcon size={13} />
+                <Text style={styles.boosterBadge}>XP Booster active</Text>
+              </View>
             )}
             {previousCoinsTotal !== undefined && newCoinsTotal !== undefined && (
               <WalletBadge previousCoins={previousCoinsTotal} newCoins={newCoinsTotal} />
@@ -448,7 +455,7 @@ export default function ResultsScreen() {
               <Text style={styles.statLabel}>Accuracy</Text>
             </View>
             <View style={styles.stat}>
-              <Text style={styles.statValue}>{roundResult.longestStreak}🔥</Text>
+              <View style={styles.inlineStat}><Text style={styles.statValue}>{roundResult.longestStreak}</Text><FlameIcon size={15} /></View>
               <Text style={styles.statLabel}>Best Streak</Text>
             </View>
           </View>
@@ -459,10 +466,10 @@ export default function ResultsScreen() {
             <View style={styles.bonusCard}>
               <Text style={styles.bonusTitle}>XP Details</Text>
               {roundResult.bonusSummary.totalSpeedBonus > 0 && (
-                <Text style={styles.bonusLine}>⚡ Speed bonus: +{roundResult.bonusSummary.totalSpeedBonus} XP</Text>
+                <Text style={styles.bonusLine}>Speed bonus: +{roundResult.bonusSummary.totalSpeedBonus} XP</Text>
               )}
               {roundResult.bonusSummary.totalStreakBonus > 0 && (
-                <Text style={styles.bonusLine}>🔥 Streak bonus: +{roundResult.bonusSummary.totalStreakBonus} XP</Text>
+                <Text style={styles.bonusLine}>Streak bonus: +{roundResult.bonusSummary.totalStreakBonus} XP</Text>
               )}
             </View>
           </Reveal>
@@ -471,7 +478,7 @@ export default function ResultsScreen() {
         {xpResult?.newBestXp && (
           <Reveal delay={460}>
             <View style={styles.newBestCard}>
-              <Text style={styles.newBest}>🏆 New personal best XP!</Text>
+              <TrophyIcon size={15} /><Text style={styles.newBest}>New personal best XP!</Text>
             </View>
           </Reveal>
         )}
@@ -507,7 +514,8 @@ export default function ResultsScreen() {
         {nextStepNudge && (
           <Reveal delay={620}>
             <View style={styles.nudgeCard}>
-              <Text style={styles.nudgeText}>{nextStepNudge}</Text>
+              <GameIcon name={nextStepNudge.icon} size={15} />
+              <Text style={styles.nudgeText}>{nextStepNudge.text}</Text>
             </View>
           </Reveal>
         )}
@@ -516,7 +524,7 @@ export default function ResultsScreen() {
           <Reveal delay={620}>
             <View style={styles.momentumChip}>
               <Text style={styles.momentumText}>
-                ⚡ Momentum: +{Math.round(GAME_CONFIG.MOMENTUM_BONUS_MULTIPLIER * 100)}% XP if you start within {formatMmSs(momentumSecondsLeft)}
+                Momentum: +{Math.round(GAME_CONFIG.MOMENTUM_BONUS_MULTIPLIER * 100)}% XP if you start within {formatMmSs(momentumSecondsLeft)}
               </Text>
             </View>
           </Reveal>
@@ -655,6 +663,8 @@ const styles = StyleSheet.create({
   mapCompleteSub: { fontSize: fontSize.sm, color: colors.textSecondary, textAlign: 'center' },
 
   // ── Regular mode styles ───────────────────────────────────────────────────
+  badgeInline: { flexDirection: 'row', alignItems: 'center', gap: 5 },
+  inlineStat: { flexDirection: 'row', alignItems: 'center', gap: 3 },
   statsRow: {
     flexDirection: 'row',
     backgroundColor: colors.bgCard,
@@ -740,6 +750,9 @@ const styles = StyleSheet.create({
     borderColor: `${colors.primary}44`,
     paddingVertical: spacing.md,
     paddingHorizontal: spacing.lg,
+    flexDirection: 'row',
+    gap: 7,
+    justifyContent: 'center',
     alignItems: 'center',
   },
   nudgeText: { fontSize: fontSize.sm, fontWeight: '700', color: colors.primaryLight, textAlign: 'center' },

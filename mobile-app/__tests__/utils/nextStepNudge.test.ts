@@ -54,7 +54,7 @@ describe('formatNextStepNudge', () => {
       newLevel: 11,
       challenges: [challenge({ progress: 18 })],
     })
-    expect(nudge).toBe('⚡ 40 XP from Level 12')
+    expect(nudge).toEqual({ icon: 'xp', text: '40 XP from Level 12' })
   })
 
   it('falls back to an almost-done challenge when the level is far off', () => {
@@ -63,7 +63,8 @@ describe('formatNextStepNudge', () => {
       newLevel: 11,
       challenges: [challenge({ progress: 18 })],
     })
-    expect(nudge).toContain('Answer 25 questions correctly')
+    expect(nudge?.icon).toBe('target')
+    expect(nudge?.text).toContain('Answer 25 questions correctly')
   })
 
   it('returns null when nothing is close', () => {

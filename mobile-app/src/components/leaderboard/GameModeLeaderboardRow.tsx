@@ -8,9 +8,9 @@ import { MovementBadge } from './MovementBadge'
 import { tabularNums } from '../ui/Typography'
 
 const RANK_META: Record<number, { color: string; bg: string; medal: string }> = {
-  1: { color: colors.gold, bg: 'rgba(255,215,0,0.08)',   medal: '🥇' },
-  2: { color: colors.silver, bg: 'rgba(192,192,192,0.07)', medal: '🥈' },
-  3: { color: colors.bronze, bg: 'rgba(205,127,50,0.08)',  medal: '🥉' },
+  1: { color: colors.gold, bg: 'rgba(255,215,0,0.08)',   medal: colors.gold },
+  2: { color: colors.silver, bg: 'rgba(192,192,192,0.07)', medal: colors.silver },
+  3: { color: colors.bronze, bg: 'rgba(205,127,50,0.08)',  medal: colors.bronze },
 }
 
 const MODE_ACCENT: Record<Exclude<GameModeTab, 'xp'>, { color: string; bg: string }> = {

@@ -42,6 +42,20 @@ const CATEGORY_ICONS: Record<string, React.ComponentType<IconProps>> = {
   pop_culture: Star,
 }
 
+interface CategoryIconProps {
+  categoryId: string
+  size?: number
+  color?: string
+  weight?: IconProps['weight']
+}
+
+/** The bare category mark, no tile. Use inline — chips, badges, title rows —
+ * where CategoryBadge's squircle would be too heavy. */
+export function CategoryIcon({ categoryId, size = 16, color, weight = 'duotone' }: CategoryIconProps) {
+  const Icon = CATEGORY_ICONS[categoryId] ?? Brain
+  return <Icon weight={weight} size={size} color={color ?? colors.textSecondary} />
+}
+
 interface CategoryBadgeProps {
   category: Pick<CategoryMeta, 'id' | 'color'>
   size?: number

@@ -3,6 +3,7 @@ import { View, Text, Animated } from 'react-native'
 import { getAvatarStage, AVATAR_STAGES } from '../../constants/quest'
 import { colors } from '../../constants/theme'
 import { HumanFaceSvg } from './HumanFaceSvg'
+import { CrownIcon } from '../icons'
 
 interface Props {
   level: number
@@ -98,7 +99,7 @@ export function PlayerAvatar({ level, size = 'lg' }: Props) {
     <View style={{ alignItems: 'center' }}>
       {/* Crown — tier 7 (Legend) and above */}
       {hasCrown && (
-        <Text style={{ fontSize: isLg ? 24 : 16, marginBottom: 4 }}>👑</Text>
+        <View style={{ marginBottom: 4 }}><CrownIcon size={isLg ? 24 : 16} weight="fill" /></View>
       )}
 
       <View style={{ width: containerSize, height: containerSize, alignItems: 'center', justifyContent: 'center' }}>

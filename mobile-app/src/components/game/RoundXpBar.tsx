@@ -3,6 +3,7 @@ import { View, Text, StyleSheet, Animated, Easing } from 'react-native'
 import { colors, spacing, fontSize } from '../../constants/theme'
 import { levelFromXp, MAX_PLAYER_LEVEL, xpRequiredForLevel } from '../../utils/scoring'
 import { tabularNums } from '../ui/Typography'
+import { SparkleIcon } from '../icons'
 
 interface Props {
   currentXp: number
@@ -73,7 +74,7 @@ export function RoundXpBar({
       <View style={styles.header}>
         <Text style={styles.levelLabel}>
           Level {displayLevel}
-          {leveledUp && <Text style={styles.leveledUpBadge}> ✨</Text>}
+          {leveledUp && <SparkleIcon size={13} />}
         </Text>
         <Text style={styles.xpLabel}>
           {hasRoundXp && <Text style={styles.roundXpLabel}>+{xpEarnedInRound} XP</Text>}

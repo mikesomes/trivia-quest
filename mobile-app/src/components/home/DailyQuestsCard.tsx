@@ -6,6 +6,7 @@ import { useChallenges } from '../../hooks/useChallenges'
 import type { Challenge } from '../../api/challenges'
 import { GradientCard } from '../ui/GradientCard'
 import { tabularNums } from '../ui/Typography'
+import { CorrectIcon } from '../icons'
 
 function QuestRow({ challenge }: { challenge: Challenge }) {
   const pct = Math.min(1, challenge.progress / challenge.target)
@@ -28,7 +29,7 @@ function QuestRow({ challenge }: { challenge: Challenge }) {
             {challenge.label}
           </Text>
           {challenge.isComplete ? (
-            <Text style={styles.doneCheck}>✓</Text>
+            <CorrectIcon size={14} weight="fill" />
           ) : (
             <Text style={styles.rewardChip}>+{challenge.xpReward.toLocaleString()} XP</Text>
           )}

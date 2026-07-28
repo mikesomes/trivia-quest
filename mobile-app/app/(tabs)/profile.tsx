@@ -20,6 +20,7 @@ import { MAX_PLAYER_LEVEL } from '../../src/utils/scoring'
 import { formatNumber, formatAccuracy, formatDate } from '../../src/utils/format'
 import { tabularNums } from '../../src/components/ui/Typography'
 import { GameIcon } from '../../src/components/icons'
+import { MedalIcon } from '../../src/components/icons'
 const { width: SCREEN_WIDTH } = Dimensions.get('window')
 
 const RARITY_ORDER = { legendary: 0, epic: 1, rare: 2, common: 3 }
@@ -104,7 +105,7 @@ export default function ProfileScreen() {
             activeOpacity={0.7}
           >
             <Text style={styles.heroName}>{profile.displayName}</Text>
-            <Text style={styles.editIcon}>✎</Text>
+            <GameIcon name="edit" size={14} />
           </AnimatedPressable>
           <View style={styles.heroBadgeRow}>
             <View style={[styles.stagePill, { backgroundColor: `${stage.color}22`, borderColor: `${stage.color}55` }]}>
@@ -140,32 +141,32 @@ export default function ProfileScreen() {
         <Text style={styles.sectionTitle}>Statistics</Text>
         <View style={styles.statsGrid}>
           <GradientCard accentColor={colors.primary} style={styles.statCard} contentStyle={styles.statContent}>
-            <Text style={styles.statEmoji}>🎮</Text>
+            <GameIcon name="games" size={24} color={colors.primary} />
             <Text style={[styles.statValue, { color: colors.primary }]}>{profile.totalGames}</Text>
             <Text style={styles.statLabel}>Games Played</Text>
           </GradientCard>
           <GradientCard accentColor={colors.streakActive} style={styles.statCard} contentStyle={styles.statContent}>
-            <Text style={styles.statEmoji}>🏆</Text>
+            <GameIcon name="trophy" size={24} color={colors.streakActive} />
             <Text style={[styles.statValue, { color: colors.streakActive }]}>{formatNumber(profile.bestXp)}</Text>
             <Text style={styles.statLabel}>Best XP</Text>
           </GradientCard>
           <GradientCard accentColor={colors.correct} style={styles.statCard} contentStyle={styles.statContent}>
-            <Text style={styles.statEmoji}>✅</Text>
+            <GameIcon name="correct" size={24} color={colors.correct} />
             <Text style={[styles.statValue, { color: colors.correct }]}>{profile.totalCorrect}</Text>
             <Text style={styles.statLabel}>Total Correct</Text>
           </GradientCard>
           <GradientCard accentColor={colors.medium} style={styles.statCard} contentStyle={styles.statContent}>
-            <Text style={styles.statEmoji}>🎯</Text>
+            <GameIcon name="target" size={24} color={colors.medium} />
             <Text style={[styles.statValue, { color: colors.medium }]}>{formatAccuracy(profile.accuracy)}</Text>
             <Text style={styles.statLabel}>Accuracy</Text>
           </GradientCard>
           <GradientCard accentColor={colors.streakActive} style={styles.statCard} contentStyle={styles.statContent}>
-            <Text style={styles.statEmoji}>🔥</Text>
+            <GameIcon name="flame" size={24} color={colors.streakActive} />
             <Text style={[styles.statValue, { color: colors.streakActive }]}>{profile.dayStreak ?? 0}</Text>
             <Text style={styles.statLabel}>Day Streak</Text>
           </GradientCard>
           <GradientCard accentColor={colors.incorrect} style={styles.statCard} contentStyle={styles.statContent}>
-            <Text style={styles.statEmoji}>📈</Text>
+            <GameIcon name="trendUp" size={24} color={colors.incorrect} />
             <Text style={[styles.statValue, { color: colors.incorrect }]}>{profile.longestDayStreak ?? 0}</Text>
             <Text style={styles.statLabel}>Longest Streak</Text>
           </GradientCard>
@@ -191,7 +192,7 @@ export default function ProfileScreen() {
 
         {filteredAchievements.length === 0 ? (
           <View style={styles.emptyAchievements}>
-            <Text style={styles.emptyEmoji}>🏅</Text>
+            <MedalIcon size={34} />
             <Text style={styles.emptyText}>No achievements yet — play more games!</Text>
           </View>
         ) : (

@@ -3,6 +3,7 @@ import { View, Text, StyleSheet } from 'react-native'
 import * as Sentry from '@sentry/react-native'
 import { colors, fontSize, spacing, radius } from '../../constants/theme'
 import { AnimatedPressable } from './AnimatedPressable'
+import { WarningIcon } from '../icons'
 
 interface State { hasError: boolean; eventId: string | null }
 
@@ -23,7 +24,7 @@ export class ErrorBoundary extends React.Component<{ children: React.ReactNode }
 
     return (
       <View style={styles.container}>
-        <Text style={styles.emoji}>⚠️</Text>
+        <WarningIcon size={44} />
         <Text style={styles.title}>Something went wrong</Text>
         <Text style={styles.subtitle}>The error has been reported. Try restarting the app.</Text>
         {this.state.eventId && (

@@ -3,6 +3,7 @@ import { View, Text, StyleSheet } from 'react-native'
 import { AnimatedPressable } from '../ui/AnimatedPressable'
 import { colors, spacing, fontSize } from '../../constants/theme'
 import type { AnswerResult } from '../../types/game'
+import { FlagIcon } from '../icons'
 
 interface Props {
   pendingResult: AnswerResult | null
@@ -43,8 +44,13 @@ export function RevealActions({ pendingResult, isSuddenDeath, flagged, onNext, o
       </AnimatedPressable>
 
       <AnimatedPressable style={styles.flagButton} onPress={onToggleFlag} activeOpacity={0.6}>
+        <FlagIcon
+          size={14}
+          weight={flagged ? 'fill' : 'regular'}
+          color={flagged ? colors.incorrect : colors.textSecondary}
+        />
         <Text style={[styles.flagText, flagged && styles.flagTextDone]}>
-          {flagged ? '🚩 Flagged — tap to unflag' : '🚩 Flag question'}
+          {flagged ? 'Flagged — tap to unflag' : 'Flag question'}
         </Text>
       </AnimatedPressable>
     </>
@@ -90,7 +96,10 @@ const styles = StyleSheet.create({
     lineHeight: 20,
   },
   flagButton: {
+    flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
     paddingVertical: spacing.xs,
   },
   flagText: {

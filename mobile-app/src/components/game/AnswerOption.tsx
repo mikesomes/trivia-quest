@@ -3,6 +3,7 @@ import { Animated, Easing, TouchableWithoutFeedback, Text, StyleSheet, View } fr
 import type { AnswerOption as AnswerOptionType, AnswerState } from '../../types/game'
 import { colors, spacing, radius, fontSize } from '../../constants/theme'
 import { haptics } from '../../lib/haptics'
+import { HammerIcon, ShieldIcon } from '../icons'
 
 type EliminationEffect = 'hammer' | 'shield'
 
@@ -171,7 +172,7 @@ export function AnswerOption({
   })
 
   const burstLabel = eliminationEffect === 'shield' ? 'BLOCK' : 'POW'
-  const strikeGlyph = eliminationEffect === 'shield' ? '🛡️' : '🔨'
+  const StrikeMark = eliminationEffect === 'shield' ? ShieldIcon : HammerIcon
 
   return (
     <View style={styles.wrapper}>
@@ -189,7 +190,7 @@ export function AnswerOption({
       </Animated.Text>
 
       {/* Strike effect — swings down from above the option */}
-      <Animated.Text
+      <Animated.View
         style={[
           styles.hammerStrike,
           {
@@ -202,8 +203,8 @@ export function AnswerOption({
         ]}
         pointerEvents="none"
       >
-        {strikeGlyph}
-      </Animated.Text>
+        <StrikeMark size={38} weight="fill" />
+      </Animated.View>
 
       <TouchableWithoutFeedback
         onPress={() => onPress(option)}

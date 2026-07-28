@@ -113,7 +113,7 @@ export function XpCountUp({
       <View style={styles.header}>
         <Text style={styles.title}>XP Earned</Text>
         {leveledUp && (
-          <Text style={styles.levelUpBadge}>Level {displayLevel} 🎉</Text>
+          <Text style={styles.levelUpBadge}>Level {displayLevel}</Text>
         )}
       </View>
 
@@ -133,7 +133,7 @@ export function XpCountUp({
           <BreakdownLine label="No Lives Lost" value={breakdown.noLivesLostBonus} />
           <BreakdownLine label="Daily Challenge" value={breakdown.dailyChallengeBonus} />
           <BreakdownLine label="First Round Today" value={breakdown.firstRoundBonus} />
-          <BreakdownLine label="⚡ Momentum Bonus" value={breakdown.momentumBonus ?? 0} highlight />
+          <BreakdownLine label="Momentum Bonus" value={breakdown.momentumBonus ?? 0} highlight />
         </View>
       )}
 

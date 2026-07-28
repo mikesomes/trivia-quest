@@ -5,6 +5,8 @@ import type { Category, Difficulty } from '../../types/game'
 import { CATEGORIES } from '../../constants/categories'
 import { colors, screenGradient } from '../../constants/theme'
 import { tabularNums } from '../ui/Typography'
+import { CategoryIcon } from '../ui/CategoryBadge'
+import { XpIcon, FlameIcon, CalendarIcon } from '../icons'
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -52,7 +54,7 @@ export function ShareCard({ data }: { data: ShareCardData }) {
     <LinearGradient colors={screenGradient} style={styles.card}>
       {/* App header */}
       <View style={styles.appHeader}>
-        <Text style={styles.appName}>⚡ TRIVIA QUEST</Text>
+        <View style={styles.wordmark}><XpIcon size={15} color={colors.textOnAccent} /><Text style={styles.appName}>TRIVIA QUEST</Text></View>
         {data.mode === 'daily' && (
           <View style={[styles.modeBadge, { backgroundColor: '#6c63ff33', borderColor: '#6c63ff55' }]}>
             <Text style={[styles.modeBadgeText, { color: colors.primaryLight }]}>DAILY CHALLENGE</Text>
@@ -63,7 +65,7 @@ export function ShareCard({ data }: { data: ShareCardData }) {
       {/* Category + difficulty */}
       {catMeta && (
         <View style={styles.categoryRow}>
-          <Text style={styles.categoryEmoji}>{catMeta.emoji}</Text>
+          <CategoryIcon categoryId={catMeta.id} size={16} color={catColor} />
           <View style={[styles.categoryPill, { backgroundColor: `${catColor}22`, borderColor: `${catColor}55` }]}>
             <Text style={[styles.categoryLabel, { color: catColor }]}>{catMeta.label.toUpperCase()}</Text>
           </View>
@@ -114,13 +116,13 @@ export function ShareCard({ data }: { data: ShareCardData }) {
         )}
         {data.longestStreak !== undefined && data.longestStreak > 0 && (
           <View style={styles.stat}>
-            <Text style={styles.statValue}>🔥{data.longestStreak}</Text>
+            <View style={styles.inlineStat}><FlameIcon size={14} /><Text style={styles.statValue}>{data.longestStreak}</Text></View>
             <Text style={styles.statLabel}>Streak</Text>
           </View>
         )}
         {data.mode === 'daily' && data.dailyStreak !== undefined && data.dailyStreak > 0 && (
           <View style={styles.stat}>
-            <Text style={styles.statValue}>📅{data.dailyStreak}</Text>
+            <View style={styles.inlineStat}><CalendarIcon size={14} /><Text style={styles.statValue}>{data.dailyStreak}</Text></View>
             <Text style={styles.statLabel}>Days</Text>
           </View>
         )}
@@ -143,9 +145,9 @@ function SuddenDeathCard({ data }: { data: ShareCardData }) {
   return (
     <LinearGradient colors={[colors.bg, '#1a0f0f']} style={styles.card}>
       <View style={styles.appHeader}>
-        <Text style={styles.appName}>⚡ TRIVIA QUEST</Text>
+        <View style={styles.wordmark}><XpIcon size={15} color={colors.textOnAccent} /><Text style={styles.appName}>TRIVIA QUEST</Text></View>
         <View style={[styles.modeBadge, { backgroundColor: '#F4433622', borderColor: '#F4433655' }]}>
-          <Text style={[styles.modeBadgeText, { color: colors.incorrect }]}>🔥 SURVIVAL MODE</Text>
+          <View style={styles.inlineStat}><FlameIcon size={11} color={colors.incorrect} /><Text style={[styles.modeBadgeText, { color: colors.incorrect }]}>SURVIVAL MODE</Text></View>
         </View>
       </View>
 
@@ -183,6 +185,8 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: colors.border,
   },
+  wordmark: { flexDirection: 'row', alignItems: 'center', gap: 5 },
+  inlineStat: { flexDirection: 'row', alignItems: 'center', gap: 3 },
   appHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -211,7 +215,6 @@ const styles = StyleSheet.create({
     gap: 8,
     flexWrap: 'wrap',
   },
-  categoryEmoji: { fontSize: 18 },
   categoryPill: {
     borderRadius: 99,
     paddingHorizontal: 10,

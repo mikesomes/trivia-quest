@@ -4,6 +4,7 @@ import { CATEGORIES } from '../../constants/categories'
 import { AnimatedPressable } from '../ui/AnimatedPressable'
 import type { Category } from '../../types/game'
 import { colors, spacing, radius, fontSize } from '../../constants/theme'
+import { CategoryIcon } from '../ui/CategoryBadge'
 
 interface CategoryChipsProps {
   activeCategory: Category
@@ -32,7 +33,7 @@ export function CategoryChips({ activeCategory, onChange }: CategoryChipsProps) 
             ]}
           >
             <View style={styles.chipInner}>
-              <Text style={styles.emoji}>{cat.emoji}</Text>
+              <CategoryIcon categoryId={cat.id} size={15} color={active ? colors.textOnAccent : cat.color} />
               <Text style={[styles.label, active && styles.labelActive]} numberOfLines={1}>
                 {cat.label}
               </Text>

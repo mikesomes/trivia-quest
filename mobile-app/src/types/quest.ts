@@ -29,7 +29,6 @@ export interface QuestNode {
 export interface QuestCategory {
   id: string
   name: string
-  emoji: string
   color: string
   category: Category
   nodes: QuestNode[]

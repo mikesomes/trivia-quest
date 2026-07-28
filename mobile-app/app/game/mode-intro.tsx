@@ -9,71 +9,72 @@ import { colors, spacing, fontSize, radius } from '../../src/constants/theme'
 import type { Category } from '../../src/types/game'
 import { getClassicProgressionMix, getSurvivalMix, dominantDifficulty } from '../../src/utils/difficultyMix'
 import { GAME_CONFIG } from '../../src/constants/game'
+import { GameIcon, type GameIconName } from '../../src/components/icons'
 
 type Mode = 'classic' | 'blitz' | 'survival' | 'odd_one_out'
 
 const CATEGORIES: Category[] = ['general_knowledge', 'history', 'science', 'sports', 'movies_tv', 'geography']
 
 const INTRO_CONFIG: Record<Mode, {
-  emoji: string
+  icon: GameIconName
   title: string
   subtitle: string
-  rules: { icon: string; text: string }[]
+  rules: { icon: GameIconName; text: string }[]
   ctaLabel: string
   nextRoute?: string
 }> = {
   classic: {
-    emoji: '🧠',
+    icon: 'brain' as GameIconName,
     title: 'Classic Mode',
     subtitle: '10 questions. Pick your battle.',
     rules: [
-      { icon: '📋', text: '10 questions per round' },
-      { icon: '⏱️', text: '15 seconds per question' },
-      { icon: '🎯', text: 'Choose your topic and difficulty' },
-      { icon: '⭐', text: 'Earn XP based on speed and accuracy' },
-      { icon: '🔨', text: 'Use hammers to eliminate wrong answers' },
+      { icon: 'list' as GameIconName, text: '10 questions per round' },
+      { icon: 'timer' as GameIconName, text: '15 seconds per question' },
+      { icon: 'target' as GameIconName, text: 'Choose your topic and difficulty' },
+      { icon: 'star' as GameIconName, text: 'Earn XP based on speed and accuracy' },
+      { icon: 'hammer' as GameIconName, text: 'Use hammers to eliminate wrong answers' },
     ],
     ctaLabel: 'Choose a Topic',
     nextRoute: '/game/category',
   },
   blitz: {
-    emoji: '⚡',
+    icon: 'xp' as GameIconName,
     title: 'Blitz Mode',
     subtitle: '45 seconds. Unlimited questions.',
     rules: [
-      { icon: '⏱️', text: '45 seconds on the clock — answer as many as you can' },
-      { icon: '🔀', text: 'Categories rotate automatically between questions' },
-      { icon: '⚡', text: 'Correct streaks add bonus time to the clock' },
-      { icon: '❌', text: 'Wrong answers cost 5 seconds' },
-      { icon: '🚫', text: 'No hammers — raw knowledge only' },
-      { icon: '🏆', text: 'Score is based on questions answered correctly' },
+      { icon: 'timer' as GameIconName, text: '45 seconds on the clock — answer as many as you can' },
+      { icon: 'shuffle' as GameIconName, text: 'Categories rotate automatically between questions' },
+      { icon: 'xp' as GameIconName, text: 'Correct streaks add bonus time to the clock' },
+      { icon: 'wrong' as GameIconName, text: 'Wrong answers cost 5 seconds' },
+      { icon: 'prohibit' as GameIconName, text: 'No hammers — raw knowledge only' },
+      { icon: 'trophy' as GameIconName, text: 'Score is based on questions answered correctly' },
     ],
     ctaLabel: 'Choose a Topic',
     nextRoute: '/game/blitz-category',
   },
   survival: {
-    emoji: '🔥',
+    icon: 'flame' as GameIconName,
     title: 'Survival Mode',
     subtitle: 'How far can you go?',
     rules: [
-      { icon: '💀', text: 'One wrong answer ends your run' },
-      { icon: '♾️', text: 'Endless questions, no round limit' },
-      { icon: '📈', text: 'Difficulty ramps progressively as you go' },
-      { icon: '🔀', text: 'Categories rotate for maximum variety' },
-      { icon: '🏆', text: 'Ranked by questions answered, then run XP' },
+      { icon: 'skull' as GameIconName, text: 'One wrong answer ends your run' },
+      { icon: 'endless' as GameIconName, text: 'Endless questions, no round limit' },
+      { icon: 'trendUp' as GameIconName, text: 'Difficulty ramps progressively as you go' },
+      { icon: 'shuffle' as GameIconName, text: 'Categories rotate for maximum variety' },
+      { icon: 'trophy' as GameIconName, text: 'Ranked by questions answered, then run XP' },
     ],
     ctaLabel: 'Start Survival Mode',
   },
   odd_one_out: {
-    emoji: '🧩',
+    icon: 'puzzle' as GameIconName,
     title: 'Odd One Out',
     subtitle: 'Four items. One does not fit.',
     rules: [
-      { icon: '🧩', text: 'Each puzzle shows four items' },
-      { icon: '👀', text: 'Pick the one that does not belong' },
-      { icon: '⏱️', text: '15 seconds per puzzle' },
-      { icon: '💡', text: 'Explanations reveal the shared pattern' },
-      { icon: '⭐', text: 'Earn XP based on speed and accuracy' },
+      { icon: 'puzzle' as GameIconName, text: 'Each puzzle shows four items' },
+      { icon: 'eye' as GameIconName, text: 'Pick the one that does not belong' },
+      { icon: 'timer' as GameIconName, text: '15 seconds per puzzle' },
+      { icon: 'idea' as GameIconName, text: 'Explanations reveal the shared pattern' },
+      { icon: 'star' as GameIconName, text: 'Earn XP based on speed and accuracy' },
     ],
     ctaLabel: 'Start Odd One Out',
   },
@@ -139,7 +140,7 @@ export default function ModeIntroScreen() {
     <ScreenWrapper>
       <ScrollView style={styles.container} contentContainerStyle={styles.content}>
         <View style={styles.titleSection}>
-          <Text style={styles.emoji}>{config.emoji}</Text>
+          <GameIcon name={config.icon} size={56} />
           <Text style={styles.title}>{config.title}</Text>
           <Text style={styles.subtitle}>{config.subtitle}</Text>
         </View>
@@ -170,7 +171,7 @@ export default function ModeIntroScreen() {
         <View style={styles.card}>
           {config.rules.map((rule, i) => (
             <View key={i} style={styles.ruleRow}>
-              <Text style={styles.ruleIcon}>{rule.icon}</Text>
+              <View style={styles.ruleIcon}><GameIcon name={rule.icon} size={20} /></View>
               <Text style={styles.ruleText}>{rule.text}</Text>
             </View>
           ))}
@@ -198,7 +199,6 @@ const styles = StyleSheet.create({
   container: { flex: 1 },
   content: { padding: spacing.lg, gap: spacing.lg, paddingBottom: spacing.xxl },
   titleSection: { alignItems: 'center', paddingVertical: spacing.xl, gap: spacing.sm },
-  emoji: { fontSize: 64 },
   title: { fontSize: 40, fontWeight: '900', color: colors.textPrimary, letterSpacing: 1 },
   subtitle: { fontSize: fontSize.lg, color: colors.textSecondary },
   card: {
@@ -216,7 +216,7 @@ const styles = StyleSheet.create({
   ladderLabel: { flex: 1, fontSize: fontSize.sm, color: colors.textSecondary },
   ladderLevel: { fontSize: fontSize.xs, fontWeight: '800', letterSpacing: 1 },
   ruleRow: { flexDirection: 'row', alignItems: 'flex-start', gap: spacing.md },
-  ruleIcon: { fontSize: 20, width: 28 },
+  ruleIcon: { width: 28, alignItems: 'center' },
   ruleText: { flex: 1, fontSize: fontSize.sm, color: colors.textSecondary, lineHeight: 20 },
   actions: { gap: spacing.sm },
 })

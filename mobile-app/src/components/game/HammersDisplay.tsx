@@ -1,8 +1,9 @@
 import React from 'react'
-import { Text, StyleSheet } from 'react-native'
+import { Text, StyleSheet, View } from 'react-native'
 import { spacing } from '../../constants/theme'
 import { GAME_CONFIG } from '../../constants/game'
 import { AnimatedPressable } from '../ui/AnimatedPressable'
+import { HammerIcon } from '../icons'
 
 interface HammersDisplayProps {
   hammers: number
@@ -19,12 +20,9 @@ export function HammersDisplay({ hammers, onUse, canUse }: HammersDisplayProps) 
       activeOpacity={0.7}
     >
       {Array.from({ length: GAME_CONFIG.MAX_HAMMERS }, (_, i) => (
-        <Text
-          key={i}
-          style={[styles.hammer, i < hammers ? styles.active : styles.empty]}
-        >
-          🔨
-        </Text>
+        <View key={i} style={i < hammers ? styles.active : styles.empty}>
+          <HammerIcon size={16} weight={i < hammers ? 'fill' : 'regular'} />
+        </View>
       ))}
     </AnimatedPressable>
   )

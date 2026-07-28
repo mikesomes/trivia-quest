@@ -12,13 +12,14 @@ import { AnimatedPressable } from '../src/components/ui/AnimatedPressable'
 import { profileApi } from '../src/api/profile'
 import { storage } from '../src/utils/storage'
 import { useAuthStore } from '../src/store/authStore'
+import { GameIcon, type GameIconName } from '../src/components/icons'
 
 // ─── Slide definitions ────────────────────────────────────────────────────────
 
 const SLIDES = [
   {
     key: 'welcome',
-    emoji: '🧠',
+    icon: 'brain' as GameIconName,
     accentColor: '#6c63ff',
     gradientColors: ['#1a1040', '#0f0f1a'] as const,
     title: 'Welcome to\nTrivia Quest',
@@ -27,33 +28,33 @@ const SLIDES = [
   },
   {
     key: 'xp',
-    emoji: '⚡',
+    icon: 'xp' as GameIconName,
     accentColor: '#FFD700',
     gradientColors: ['#1a1500', '#0f0f1a'] as const,
     title: 'Earn XP.\nLevel Up.',
     body: 'Every correct answer earns XP. Harder questions and fast answers earn bonus XP. Climb from Novice all the way to Immortal.',
     extras: [
-      { emoji: '🌱', label: 'Novice',     color: '#4CAF50' },
-      { emoji: '⭐', label: 'Scholar',    color: '#FFC107' },
-      { emoji: '🔥', label: 'Master',     color: '#FF5722' },
-      { emoji: '⚡', label: 'Champion',   color: '#9C27B0' },
-      { emoji: '👑', label: 'Immortal',   color: '#B71C1C' },
+      { icon: 'seedling' as GameIconName, label: 'Novice',     color: '#4CAF50' },
+      { icon: 'star' as GameIconName, label: 'Scholar',    color: '#FFC107' },
+      { icon: 'flame' as GameIconName, label: 'Master',     color: '#FF5722' },
+      { icon: 'xp' as GameIconName, label: 'Champion',   color: '#9C27B0' },
+      { icon: 'crown' as GameIconName, label: 'Immortal',   color: '#B71C1C' },
     ],
   },
   {
     key: 'quest',
-    emoji: '🗺️',
+    icon: 'target' as GameIconName,
     accentColor: '#4CAF50',
     gradientColors: ['#0a1a0a', '#0f0f1a'] as const,
     title: 'Conquer the\nQuest Map',
     body: 'Journey through 6 category zones. Master each one to unlock the next, building up to the ultimate Trivia Gauntlet.',
     extras: [
-      { emoji: '📚', label: 'General',       color: '#7B68EE' },
-      { emoji: '🏛️', label: 'History',        color: '#FF9800' },
-      { emoji: '🔬', label: 'Science',        color: '#2196F3' },
-      { emoji: '🏆', label: 'Sports',         color: '#4CAF50' },
-      { emoji: '🎬', label: 'Entertainment',  color: '#9C27B0' },
-      { emoji: '⭐', label: 'Special',        color: '#FFD700' },
+      { icon: 'brain' as GameIconName, label: 'General',       color: '#7B68EE' },
+      { icon: 'trophy' as GameIconName, label: 'History',        color: '#FF9800' },
+      { icon: 'idea' as GameIconName, label: 'Science',        color: '#2196F3' },
+      { icon: 'trophy' as GameIconName, label: 'Sports',         color: '#4CAF50' },
+      { icon: 'games' as GameIconName, label: 'Entertainment',  color: '#9C27B0' },
+      { icon: 'star' as GameIconName, label: 'Special',        color: '#FFD700' },
     ],
   },
 ] as const
@@ -74,7 +75,7 @@ function InfoSlide({ slide, width }: { slide: typeof SLIDES[number]; width: numb
       {/* Emoji glow */}
       <View style={styles.emojiWrap}>
         <View style={[styles.emojiGlow, { backgroundColor: `${slide.accentColor}22` }]} />
-        <Text style={styles.emoji}>{slide.emoji}</Text>
+        <GameIcon name={slide.icon} size={72} color={slide.accentColor} />
       </View>
 
       {/* Text */}
@@ -86,7 +87,7 @@ function InfoSlide({ slide, width }: { slide: typeof SLIDES[number]; width: numb
         <View style={styles.pills}>
           {slide.extras.map((item) => (
             <View key={item.label} style={[styles.pill, { borderColor: `${item.color}66`, backgroundColor: `${item.color}18` }]}>
-              <Text style={styles.pillEmoji}>{item.emoji}</Text>
+              <GameIcon name={item.icon} size={14} color={item.color} />
               <Text style={[styles.pillLabel, { color: item.color }]}>{item.label}</Text>
             </View>
           ))}
@@ -143,7 +144,7 @@ function NameSlide({ width, onDone }: { width: number; onDone: () => void }) {
     >
       <LinearGradient colors={['#110d2e', '#0f0f1a']} style={StyleSheet.absoluteFill} />
 
-      <Text style={styles.emoji}>🎮</Text>
+      <GameIcon name="games" size={64} />
       <Text style={styles.title}>{'What\'s your\nplayer name?'}</Text>
       <Text style={styles.body}>
         This is how you'll appear on leaderboards. You can change it later in your profile.
@@ -301,7 +302,6 @@ const styles = StyleSheet.create({
     height: 140,
     borderRadius: 70,
   },
-  emoji: { fontSize: 80 },
 
   title: {
     fontSize: 36,
@@ -335,7 +335,6 @@ const styles = StyleSheet.create({
     borderRadius: radius.full,
     borderWidth: 1,
   },
-  pillEmoji: { fontSize: 14 },
   pillLabel: { fontSize: fontSize.sm, fontWeight: '700' },
 
   // Name slide

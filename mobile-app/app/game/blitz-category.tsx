@@ -13,6 +13,7 @@ import { ArrowLeft } from 'phosphor-react-native'
 import { getBlitzSegments } from '../../src/utils/difficultyMix'
 import { GAME_CONFIG } from '../../src/constants/game'
 import { CategoryBadge } from '../../src/components/ui/CategoryBadge'
+import { XpIcon } from '../../src/components/icons'
 
 const CARD_WIDTH = (Dimensions.get('window').width - spacing.lg * 2 - spacing.md) / 2
 
@@ -45,7 +46,7 @@ export default function BlitzCategoryScreen() {
           </AnimatedPressable>
         </View>
 
-        <Text style={styles.title}>⚡ Blitz</Text>
+        <View style={styles.titleRow}><XpIcon size={24} color={colors.timerWarning} /><Text style={styles.title}>Blitz</Text></View>
         <Text style={styles.subtitle}>Choose a topic — {GAME_CONFIG.BLITZ_SECONDS} seconds on the clock</Text>
 
         <View style={styles.grid}>
@@ -116,6 +117,7 @@ const styles = StyleSheet.create({
   content: { padding: spacing.lg, gap: spacing.lg, paddingBottom: spacing.xxl },
   topRow: { flexDirection: 'row', alignItems: 'center' },
   back: { padding: spacing.sm, alignSelf: 'flex-start', marginBottom: spacing.xs },
+  titleRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   title: { fontSize: fontSize.xxxl, fontWeight: '800', color: colors.textPrimary },
   subtitle: { fontSize: fontSize.md, color: colors.textSecondary, marginTop: -spacing.sm },
   grid: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.md },

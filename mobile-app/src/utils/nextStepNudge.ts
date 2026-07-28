@@ -23,29 +23,38 @@ export function pickAlmostDoneChallenge(challenges: Challenge[]): Challenge | nu
   return best?.challenge ?? null
 }
 
+export interface NextStepNudge {
+  /** Which mark the results screen should draw beside the text. */
+  icon: 'xp' | 'target'
+  text: string
+}
+
 /**
  * Picks a single "just one more step" nudge for the results screen: how close
  * the player is to leveling up, falling back to the nearest-to-complete
  * challenge. Returns null when nothing is close enough to be worth surfacing.
+ *
+ * The icon is returned as data rather than baked into the string so the screen
+ * can render a real icon component next to it.
  */
 export function formatNextStepNudge(params: {
   xpToNextLevel?: number
   newLevel?: number
   challenges: Challenge[]
-}): string | null {
+}): NextStepNudge | null {
   if (
     typeof params.xpToNextLevel === 'number' &&
     typeof params.newLevel === 'number' &&
     params.xpToNextLevel > 0 &&
     params.xpToNextLevel <= LEVEL_NUDGE_THRESHOLD_XP
   ) {
-    return `⚡ ${params.xpToNextLevel} XP from Level ${params.newLevel + 1}`
+    return { icon: 'xp', text: `${params.xpToNextLevel} XP from Level ${params.newLevel + 1}` }
   }
 
   const challenge = pickAlmostDoneChallenge(params.challenges)
   if (challenge) {
     const remaining = challenge.target - challenge.progress
-    return `🎯 ${remaining} more to complete "${challenge.label}"`
+    return { icon: 'target', text: `${remaining} more to complete "${challenge.label}"` }
   }
 
   return null
