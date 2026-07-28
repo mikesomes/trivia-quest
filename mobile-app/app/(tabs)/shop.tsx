@@ -20,6 +20,7 @@ import { queryKeys } from '../../src/constants/queryKeys'
 import { useProfile } from '../../src/hooks/useProfile'
 import type { EquipItemsRequest } from '../../src/types/api'
 import { tabularNums } from '../../src/components/ui/Typography'
+import { GameIcon } from '../../src/components/icons'
 
 export default function ShopScreen() {
   const { data: profile, isLoading } = useProfile()
@@ -152,7 +153,7 @@ export default function ShopScreen() {
                 const equipped = loadout[equippedKey]
                 return (
                   <View key={item.id} style={styles.loadoutRow}>
-                    <Text style={styles.loadoutEmoji}>{item.emoji}</Text>
+                    <GameIcon name={item.icon} size={26} />
                     <View style={styles.loadoutInfo}>
                       <Text style={styles.loadoutLabel}>{item.label}</Text>
                       <Text style={styles.loadoutOwned}>×{owned} in bag</Text>
@@ -205,7 +206,7 @@ export default function ShopScreen() {
                 />
 
                 <View style={styles.itemLeft}>
-                  <Text style={styles.itemEmoji}>{item.emoji}</Text>
+                  <GameIcon name={item.icon} size={30} />
                   <View style={styles.itemText}>
                     <Text style={styles.itemLabel}>{item.label}</Text>
                     <Text style={styles.itemDescription}>{item.description}</Text>
@@ -304,7 +305,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: spacing.md,
   },
-  loadoutEmoji: { fontSize: 26 },
   loadoutInfo: { flex: 1, gap: 1 },
   loadoutLabel: { fontSize: fontSize.sm, fontWeight: '700', color: colors.textPrimary },
   loadoutOwned: { ...tabularNums, fontSize: fontSize.xs, color: colors.textSecondary },
@@ -361,7 +361,6 @@ const styles = StyleSheet.create({
     gap: spacing.md,
   },
   itemLeft: { flex: 1, flexDirection: 'row', alignItems: 'center', gap: spacing.md },
-  itemEmoji: { fontSize: 34 },
   itemText: { flex: 1, gap: 2 },
   itemLabel: { fontSize: fontSize.md, fontWeight: '800', color: colors.textPrimary },
   itemDescription: { fontSize: fontSize.xs, color: colors.textSecondary, lineHeight: 16 },

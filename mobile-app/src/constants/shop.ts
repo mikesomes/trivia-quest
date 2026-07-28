@@ -1,7 +1,9 @@
+import type { GameIconName } from '../components/icons'
+
 export const SHOP_ITEMS = [
   {
     id: 'life' as const,
-    emoji: '❤️',
+    icon: 'life' as GameIconName,
     label: 'Extra Life',
     cost: 500,
     description: 'Start your next round with +1 life',
@@ -10,7 +12,7 @@ export const SHOP_ITEMS = [
   },
   {
     id: 'hammer' as const,
-    emoji: '🔨',
+    icon: 'hammer' as GameIconName,
     label: 'Hammer',
     cost: 400,
     description: 'Start your next round with +1 hammer',
@@ -19,7 +21,7 @@ export const SHOP_ITEMS = [
   },
   {
     id: 'shield' as const,
-    emoji: '🛡️',
+    icon: 'shield' as GameIconName,
     label: 'Shield',
     cost: 300,
     description: 'Start your next round with +1 shield',
@@ -28,7 +30,7 @@ export const SHOP_ITEMS = [
   },
   {
     id: 'xp_booster' as const,
-    emoji: '⚡',
+    icon: 'xp' as GameIconName,
     label: 'XP Booster',
     cost: 600,
     description: '1.5× XP earned on your next round',
@@ -37,7 +39,7 @@ export const SHOP_ITEMS = [
   },
   {
     id: 'streak_freeze' as const,
-    emoji: '🧊',
+    icon: 'freeze' as GameIconName,
     label: 'Streak Freeze',
     cost: 800,
     description: 'Automatically saves your day streak if you miss a day',

@@ -1,14 +1,16 @@
+import type { GameIconName } from '../components/icons'
+
 export const CHEST_TIER_META = {
-  wood:   { label: 'Wood Chest',   color: '#B08D57', emoji: '📦' },
-  silver: { label: 'Silver Chest', color: '#C0C0C0', emoji: '🎁' },
-  gold:   { label: 'Gold Chest',   color: '#FFD700', emoji: '🏆' },
+  wood:   { label: 'Wood Chest',   color: '#B08D57', icon: 'chest'  as GameIconName },
+  silver: { label: 'Silver Chest', color: '#C0C0C0', icon: 'gift'   as GameIconName },
+  gold:   { label: 'Gold Chest',   color: '#FFD700', icon: 'trophy' as GameIconName },
 } as const
 
-export const CHEST_REWARD_META: Record<string, { emoji: string; label: (amount: number) => string }> = {
-  coins:      { emoji: '💰', label: (n) => `+${n} Coins` },
-  jackpot:    { emoji: '💎', label: (n) => `Jackpot! +${n} Coins` },
-  life:       { emoji: '❤️', label: () => 'Extra Life' },
-  hammer:     { emoji: '🔨', label: () => 'Hammer' },
-  shield:     { emoji: '🛡️', label: () => 'Shield' },
-  xp_booster: { emoji: '⚡', label: () => 'XP Booster' },
+export const CHEST_REWARD_META: Record<string, { icon: GameIconName; label: (amount: number) => string }> = {
+  coins:      { icon: 'coin',    label: (n) => `+${n} Coins` },
+  jackpot:    { icon: 'jackpot', label: (n) => `Jackpot! +${n} Coins` },
+  life:       { icon: 'life',    label: () => 'Extra Life' },
+  hammer:     { icon: 'hammer',  label: () => 'Hammer' },
+  shield:     { icon: 'shield',  label: () => 'Shield' },
+  xp_booster: { icon: 'xp',      label: () => 'XP Booster' },
 }

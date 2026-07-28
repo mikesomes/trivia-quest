@@ -1,7 +1,10 @@
 import React, { useEffect, useRef } from 'react'
-import { Animated, View, Text, StyleSheet } from 'react-native'
-import { spacing, fontSize } from '../../constants/theme'
+import { Animated, View, StyleSheet } from 'react-native'
+import { colors, spacing, fontSize } from '../../constants/theme'
 import { GAME_CONFIG } from '../../constants/game'
+import { LifeIcon, ShieldIcon, SparkleIcon } from '../icons'
+
+const ICON_SIZE = fontSize.xl
 
 interface LivesDisplayProps {
   livesRemaining: number
@@ -72,14 +75,9 @@ export function LivesDisplay({
       {showShieldGroup && (
         <View style={styles.shieldGroup}>
           {Array.from({ length: shieldsRemaining }, (_, i) => (
-            <Text
-              key={`shield-${i}`}
-              style={[styles.shield, styles.active]}
-            >
-              🛡️
-            </Text>
+            <ShieldIcon key={`shield-${i}`} size={ICON_SIZE} weight="fill" />
           ))}
-          <Animated.Text
+          <Animated.View
             pointerEvents="none"
             style={[
               styles.shieldBurst,
@@ -89,19 +87,23 @@ export function LivesDisplay({
               },
             ]}
           >
-            💥
-          </Animated.Text>
+            <SparkleIcon size={ICON_SIZE} weight="fill" color={colors.primaryLight} />
+          </Animated.View>
         </View>
       )}
 
-      {Array.from({ length: GAME_CONFIG.MAX_LIVES }, (_, i) => (
-        <Text
-          key={i}
-          style={[styles.heart, i < livesRemaining ? styles.active : styles.empty]}
-        >
-          ❤️
-        </Text>
-      ))}
+      {Array.from({ length: GAME_CONFIG.MAX_LIVES }, (_, i) => {
+        const spent = i >= livesRemaining
+        return (
+          <View key={i} style={spent ? styles.empty : styles.active}>
+            <LifeIcon
+              size={ICON_SIZE}
+              weight={spent ? 'regular' : 'fill'}
+              color={spent ? colors.textDisabled : colors.lifeActive}
+            />
+          </View>
+        )
+      })}
     </View>
   )
 }
@@ -119,16 +121,9 @@ const styles = StyleSheet.create({
     minWidth: 24,
     marginRight: spacing.xs,
   },
-  heart: {
-    fontSize: fontSize.lg,
-  },
-  shield: {
-    fontSize: fontSize.lg,
-  },
   shieldBurst: {
     position: 'absolute',
     left: 0,
-    fontSize: fontSize.lg,
   },
   active: {
     opacity: 1,

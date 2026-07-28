@@ -18,6 +18,7 @@ import { useQuestStore } from '../../src/store/questStore'
 import { QUEST_CATEGORIES } from '../../src/config/questConfig'
 import { GAME_CONFIG } from '../../src/constants/game'
 import { tabularNums } from '../../src/components/ui/Typography'
+import { CoinIcon, FlameIcon } from '../../src/components/icons'
 
 export default function HomeScreen() {
   const { data: profile } = useProfile()
@@ -63,10 +64,21 @@ export default function HomeScreen() {
               <Text style={styles.greetingName}>{profile?.displayName ?? ''}!</Text>
             </AnimatedPressable>
             {profile && (
-              <Text style={styles.metaRow}>
-                {formatLevel(profile.level)} · 💰 {profile.coins.toLocaleString()}
-                {(profile.dayStreak ?? 0) > 0 && ` · 🔥 ${profile.dayStreak} day${profile.dayStreak === 1 ? '' : 's'}`}
-              </Text>
+              <View style={styles.metaRow}>
+                <Text style={styles.metaText}>{formatLevel(profile.level)}</Text>
+                <Text style={styles.metaDot}>·</Text>
+                <CoinIcon size={14} />
+                <Text style={styles.metaText}>{profile.coins.toLocaleString()}</Text>
+                {(profile.dayStreak ?? 0) > 0 && (
+                  <>
+                    <Text style={styles.metaDot}>·</Text>
+                    <FlameIcon size={14} />
+                    <Text style={styles.metaText}>
+                      {profile.dayStreak} day{profile.dayStreak === 1 ? '' : 's'}
+                    </Text>
+                  </>
+                )}
+              </View>
             )}
           </View>
 
@@ -162,12 +174,19 @@ const styles = StyleSheet.create({
   header: { gap: spacing.xs },
   greeting: { fontSize: fontSize.xl, fontWeight: '600', color: colors.textSecondary },
   greetingName: { fontSize: fontSize.xxxl, fontWeight: '900', color: colors.textPrimary },
-  metaRow: { ...tabularNums,
+  metaRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
+    marginTop: spacing.xs,
+  },
+  metaText: {
+    ...tabularNums,
     fontSize: fontSize.md,
     color: colors.textSecondary,
     fontWeight: '600',
-    marginTop: spacing.xs,
   },
+  metaDot: { fontSize: fontSize.md, color: colors.textMuted },
   modesSection: { gap: spacing.sm },
   sectionLabel: {
     fontSize: fontSize.xs,

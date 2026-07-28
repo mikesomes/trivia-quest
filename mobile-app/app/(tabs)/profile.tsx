@@ -19,6 +19,7 @@ import { getAvatarStage } from '../../src/constants/quest'
 import { MAX_PLAYER_LEVEL } from '../../src/utils/scoring'
 import { formatNumber, formatAccuracy, formatDate } from '../../src/utils/format'
 import { tabularNums } from '../../src/components/ui/Typography'
+import { GameIcon } from '../../src/components/icons'
 const { width: SCREEN_WIDTH } = Dimensions.get('window')
 
 const RARITY_ORDER = { legendary: 0, epic: 1, rare: 2, common: 3 }
@@ -107,7 +108,7 @@ export default function ProfileScreen() {
           </AnimatedPressable>
           <View style={styles.heroBadgeRow}>
             <View style={[styles.stagePill, { backgroundColor: `${stage.color}22`, borderColor: `${stage.color}55` }]}>
-              <Text style={styles.stageEmoji}>{stage.emoji}</Text>
+              <GameIcon name={stage.icon} size={15} color={stage.color} />
               <Text style={[styles.stageTitle, { color: stage.color }]}>{stage.title}</Text>
             </View>
             <View style={[styles.levelPill, { backgroundColor: stage.color }]}>
@@ -281,7 +282,6 @@ const styles = StyleSheet.create({
     borderRadius: radius.full,
     borderWidth: 1,
   },
-  stageEmoji: { fontSize: 14 },
   stageTitle: { fontSize: fontSize.sm, fontWeight: '700' },
   levelPill: {
     paddingHorizontal: spacing.md,

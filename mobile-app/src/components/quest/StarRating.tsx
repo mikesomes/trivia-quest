@@ -1,6 +1,7 @@
 import React, { useEffect, useRef } from 'react'
-import { View, Text, StyleSheet, Animated } from 'react-native'
+import { View, StyleSheet, Animated } from 'react-native'
 import { haptics } from '../../lib/haptics'
+import { StarIcon } from '../icons'
 
 interface Props {
   stars: number
@@ -30,7 +31,9 @@ function AnimatedStar({ filled, size, delay }: { filled: boolean; size: number; 
   }, [filled, delay, opacity, scale])
 
   return (
-    <Animated.Text style={{ fontSize: size, opacity, transform: [{ scale }] }}>⭐</Animated.Text>
+    <Animated.View style={{ opacity, transform: [{ scale }] }}>
+      <StarIcon size={size} weight="fill" />
+    </Animated.View>
   )
 }
 
@@ -39,7 +42,9 @@ export function StarRating({ stars, maxStars = 3, size = 14, animated = false }:
     return (
       <View style={styles.row}>
         {Array.from({ length: maxStars }, (_, i) => (
-          <Text key={i} style={{ fontSize: size, opacity: i < stars ? 1 : 0.2 }}>⭐</Text>
+          <View key={i} style={{ opacity: i < stars ? 1 : 0.2 }}>
+            <StarIcon size={size} weight="fill" />
+          </View>
         ))}
       </View>
     )

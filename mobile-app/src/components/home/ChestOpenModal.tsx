@@ -6,6 +6,7 @@ import { useAudioPlayer, setAudioModeAsync } from 'expo-audio'
 import { colors, fontSize, radius, spacing, surfaces } from '../../constants/theme'
 import { CHEST_TIER_META, CHEST_REWARD_META } from '../../constants/chest'
 import type { ChestReward, ChestTier } from '../../api/dailyReward'
+import { GameIcon } from '../icons'
 
 interface Props {
   visible: boolean
@@ -85,14 +86,11 @@ export function ChestOpenModal({ visible, tier, reward, onDismiss }: Props) {
         <Animated.View style={[styles.overlay, { opacity: overlayOpacity }]}>
           <View style={styles.stage} pointerEvents="none">
             {!revealed && (
-              <Animated.Text
-                style={[
-                  styles.chestEmoji,
-                  { transform: [{ rotate }, { scale: chestScale }], opacity: chestOpacity },
-                ]}
+              <Animated.View
+                style={{ transform: [{ rotate }, { scale: chestScale }], opacity: chestOpacity }}
               >
-                {tierMeta.emoji}
-              </Animated.Text>
+                <GameIcon name={tierMeta.icon} size={72} color={tierMeta.color} />
+              </Animated.View>
             )}
 
             {revealed && reward && rewardMeta && (
@@ -103,7 +101,7 @@ export function ChestOpenModal({ visible, tier, reward, onDismiss }: Props) {
                 ]}
               >
                 <Text style={[styles.tierLabel, { color: tierMeta.color }]}>{tierMeta.label}</Text>
-                <Text style={styles.rewardEmoji}>{rewardMeta.emoji}</Text>
+                <GameIcon name={rewardMeta.icon} size={44} />
                 <Text style={styles.rewardLabel}>{rewardMeta.label(reward.amount)}</Text>
                 <Text style={styles.hint}>Tap to continue</Text>
               </Animated.View>
@@ -138,9 +136,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     minHeight: 260,
   },
-  chestEmoji: {
-    fontSize: 96,
-  },
   rewardCard: {
     alignItems: 'center',
     gap: spacing.xs,
@@ -155,10 +150,6 @@ const styles = StyleSheet.create({
     fontWeight: '800',
     letterSpacing: 1.5,
     textTransform: 'uppercase',
-  },
-  rewardEmoji: {
-    fontSize: 56,
-    marginVertical: spacing.xs,
   },
   rewardLabel: {
     fontSize: fontSize.xl,

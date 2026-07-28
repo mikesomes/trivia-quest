@@ -11,6 +11,7 @@ import { AnimatedPressable } from '../ui/AnimatedPressable'
 import { ChestOpenModal } from './ChestOpenModal'
 import type { ChestReward, ChestTier } from '../../api/dailyReward'
 import { tabularNums } from '../ui/Typography'
+import { GameIcon } from '../icons'
 
 export function DailyChestCard() {
   const { data: status, isLoading } = useDailyRewardStatus()
@@ -87,7 +88,7 @@ export function DailyChestCard() {
           <View style={styles.claimedBody}>
             {status.reward && (
               <View style={styles.claimedRow}>
-                <Text style={styles.claimedEmoji}>{CHEST_REWARD_META[status.reward.type].emoji}</Text>
+                <GameIcon name={CHEST_REWARD_META[status.reward.type].icon} size={20} />
                 <Text style={styles.claimedText}>
                   {CHEST_REWARD_META[status.reward.type].label(status.reward.amount)}
                 </Text>
@@ -105,9 +106,9 @@ export function DailyChestCard() {
             activeOpacity={0.85}
             style={styles.openRow}
           >
-            <Animated.Text style={[styles.chestEmoji, { transform: [{ rotate }] }]}>
-              {tierMeta.emoji}
-            </Animated.Text>
+            <Animated.View style={{ transform: [{ rotate }] }}>
+              <GameIcon name={tierMeta.icon} size={34} color={tierMeta.color} />
+            </Animated.View>
             <View style={styles.openTextCol}>
               <Text style={styles.openTitle}>
                 {claimReward.isPending ? 'Opening…' : 'Tap to open'}
@@ -159,9 +160,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: spacing.md,
   },
-  chestEmoji: {
-    fontSize: 44,
-  },
   openTextCol: { flex: 1, gap: 2 },
   openTitle: { fontSize: fontSize.md, fontWeight: '800', color: colors.textPrimary },
   openHint: { fontSize: fontSize.xs, color: colors.textSecondary },
@@ -171,7 +169,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: spacing.sm,
   },
-  claimedEmoji: { fontSize: 28 },
   claimedText: { fontSize: fontSize.md, fontWeight: '700', color: colors.textPrimary },
   nextRow: {
     flexDirection: 'row',
