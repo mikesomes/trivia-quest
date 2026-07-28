@@ -3,6 +3,7 @@ import { View, Text, StyleSheet } from 'react-native'
 import type { LeaderboardPeriod } from '../../types/api'
 import { colors, spacing, radius, fontSize } from '../../constants/theme'
 import { getResetMs, formatCountdown } from '../../utils/leaderboard'
+import { tabularNums } from '../ui/Typography'
 
 interface Props {
   period: LeaderboardPeriod
@@ -54,7 +55,7 @@ const styles = StyleSheet.create({
     color: colors.textSecondary,
     fontWeight: '500',
   },
-  time: {
+  time: { ...tabularNums,
     color: colors.primary,
     fontWeight: '700',
   },

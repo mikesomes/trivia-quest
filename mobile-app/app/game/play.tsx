@@ -574,7 +574,7 @@ export default function PlayScreen() {
         fadeOut
         explosionSpeed={180}
         fallSpeed={3500}
-        colors={['#6c63ff', '#FFD700', '#4CAF50']}
+        colors={[colors.primary, colors.gold, colors.correct]}
       />
 
       {/* Streak milestone toast — floats above gameplay, non-blocking */}

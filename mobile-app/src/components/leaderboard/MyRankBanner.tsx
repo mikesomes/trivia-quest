@@ -5,6 +5,7 @@ import { formatNumber } from '../../utils/format'
 import { getRankMovement } from '../../utils/leaderboard'
 import { MovementBadge } from './MovementBadge'
 import type { LeaderboardEntry } from '../../types/api'
+import { tabularNums } from '../ui/Typography'
 
 interface Props {
   userEntry: { rank: number; primaryValue: number; previousRank?: number | null } | null
@@ -71,10 +72,10 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.sm,
     paddingVertical: 4,
   },
-  rankText: {
+  rankText: { ...tabularNums,
     fontSize: fontSize.sm,
     fontWeight: '800',
-    color: '#fff',
+    color: colors.textOnAccent,
   },
   info: {
     flex: 1,
@@ -93,7 +94,7 @@ const styles = StyleSheet.create({
     alignItems: 'flex-end',
     gap: 4,
   },
-  value: {
+  value: { ...tabularNums,
     fontSize: fontSize.md,
     fontWeight: '800',
     color: colors.primaryLight,

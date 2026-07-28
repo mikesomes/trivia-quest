@@ -19,6 +19,7 @@ import { shopApi } from '../../src/api/shop'
 import { queryKeys } from '../../src/constants/queryKeys'
 import { useProfile } from '../../src/hooks/useProfile'
 import type { EquipItemsRequest } from '../../src/types/api'
+import { tabularNums } from '../../src/components/ui/Typography'
 
 export default function ShopScreen() {
   const { data: profile, isLoading } = useProfile()
@@ -119,7 +120,7 @@ export default function ShopScreen() {
         <View style={styles.header}>
           <Text style={styles.title}>Shop</Text>
           <View style={styles.coinBadge}>
-            <Coins weight="duotone" size={20} color="#FFD700" />
+            <Coins weight="duotone" size={20} color={colors.gold} />
             <Text style={styles.coinBalance}>
               {isLoading ? '—' : coins.toLocaleString()}
             </Text>
@@ -228,7 +229,7 @@ export default function ShopScreen() {
                     <Text style={[styles.buyButtonText, styles.buyButtonDisabledText]}>Full</Text>
                   ) : (
                     <>
-                      <Coins weight="duotone" size={13} color={canAfford ? '#FFD700' : colors.textSecondary} />
+                      <Coins weight="duotone" size={13} color={canAfford ? colors.gold : colors.textSecondary} />
                       <Text style={[styles.buyButtonText, !canAfford && styles.buyButtonDisabledText]}>
                         {item.cost.toLocaleString()}
                       </Text>
@@ -270,10 +271,10 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#FFD70033',
   },
-  coinBalance: {
+  coinBalance: { ...tabularNums,
     fontSize: fontSize.lg,
     fontWeight: '800',
-    color: '#FFD700',
+    color: colors.gold,
   },
 
   loadoutCard: {
@@ -306,7 +307,7 @@ const styles = StyleSheet.create({
   loadoutEmoji: { fontSize: 26 },
   loadoutInfo: { flex: 1, gap: 1 },
   loadoutLabel: { fontSize: fontSize.sm, fontWeight: '700', color: colors.textPrimary },
-  loadoutOwned: { fontSize: fontSize.xs, color: colors.textSecondary },
+  loadoutOwned: { ...tabularNums, fontSize: fontSize.xs, color: colors.textSecondary },
 
   stepper: {
     flexDirection: 'row',
@@ -327,14 +328,14 @@ const styles = StyleSheet.create({
   stepBtnDisabled: {
     backgroundColor: '#ffffff08',
   },
-  stepCount: {
+  stepCount: { ...tabularNums,
     fontSize: fontSize.md,
     fontWeight: '800',
     color: colors.textSecondary,
     minWidth: 20,
     textAlign: 'center',
   },
-  stepCountActive: {
+  stepCountActive: { ...tabularNums,
     color: colors.primary,
   },
 
@@ -383,7 +384,7 @@ const styles = StyleSheet.create({
   buyButtonText: {
     fontSize: fontSize.sm,
     fontWeight: '800',
-    color: '#fff',
+    color: colors.textOnAccent,
   },
   buyButtonDisabledText: {
     color: colors.textSecondary,

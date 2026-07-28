@@ -77,7 +77,7 @@ const styles = StyleSheet.create({
   title: {
     fontSize: fontSize.xxxl,
     fontWeight: '900',
-    color: '#FFD700',
+    color: colors.gold,
     letterSpacing: 4,
     textAlign: 'center',
     textShadowColor: 'rgba(255,215,0,0.5)',

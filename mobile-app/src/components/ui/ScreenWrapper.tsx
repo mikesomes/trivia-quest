@@ -2,6 +2,7 @@ import React from 'react'
 import { StyleSheet } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { LinearGradient } from 'expo-linear-gradient'
+import { screenGradient } from '../../constants/theme'
 
 interface Props {
   children: React.ReactNode
@@ -9,7 +10,7 @@ interface Props {
 
 export function ScreenWrapper({ children }: Props) {
   return (
-    <LinearGradient colors={['#0f0f1a', '#16103a']} style={styles.gradient}>
+    <LinearGradient colors={screenGradient} style={styles.gradient}>
       <SafeAreaView style={styles.safe}>
         {children}
       </SafeAreaView>

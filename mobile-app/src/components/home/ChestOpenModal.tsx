@@ -3,7 +3,7 @@ import { Animated, Dimensions, Easing, Modal, StyleSheet, Text, TouchableWithout
 import { haptics } from '../../lib/haptics'
 import ConfettiCannon from 'react-native-confetti-cannon'
 import { useAudioPlayer, setAudioModeAsync } from 'expo-audio'
-import { colors, fontSize, radius, spacing } from '../../constants/theme'
+import { colors, fontSize, radius, spacing, surfaces } from '../../constants/theme'
 import { CHEST_TIER_META, CHEST_REWARD_META } from '../../constants/chest'
 import type { ChestReward, ChestTier } from '../../api/dailyReward'
 
@@ -148,7 +148,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.xxl,
     borderWidth: 1.5,
     borderRadius: radius.xl,
-    backgroundColor: colors.bgCard,
+    backgroundColor: surfaces.surface3,
   },
   tierLabel: {
     fontSize: fontSize.sm,

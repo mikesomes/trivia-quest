@@ -1,6 +1,7 @@
 import React, { useEffect, useRef } from 'react'
 import { Animated, Easing, View, Text, StyleSheet } from 'react-native'
 import { colors, spacing, fontSize } from '../../constants/theme'
+import { tabularNums } from '../ui/Typography'
 
 const STREAK_THRESHOLD = 3
 
@@ -63,12 +64,12 @@ const styles = StyleSheet.create({
     borderColor: colors.streakActive,
   },
   fire: { fontSize: fontSize.sm },
-  label: {
+  label: { ...tabularNums,
     fontSize: fontSize.sm,
     fontWeight: '700',
     color: colors.streakActive,
   },
-  multiplier: {
+  multiplier: { ...tabularNums,
     fontSize: fontSize.sm,
     fontWeight: '800',
     color: colors.streakActive,

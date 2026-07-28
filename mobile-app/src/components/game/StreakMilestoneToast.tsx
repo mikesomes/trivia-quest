@@ -1,6 +1,6 @@
 import React, { useEffect, useRef } from 'react'
 import { Animated, Easing, StyleSheet, Text, View } from 'react-native'
-import { fontSize, radius, spacing } from '../../constants/theme'
+import { colors, fontSize, radius, spacing } from '../../constants/theme'
 
 export interface StreakMilestone {
   streak: number
@@ -12,9 +12,9 @@ export interface StreakMilestone {
 }
 
 export const STREAK_MILESTONES: Record<number, Omit<StreakMilestone, 'key'>> = {
-  3:  { streak: 3,  emoji: '🔥', label: 'Heating up',   color: '#FF9800' },
+  3:  { streak: 3,  emoji: '🔥', label: 'Heating up',   color: colors.timerWarning },
   6:  { streak: 6,  emoji: '⚡', label: 'On fire',       color: '#FFE033' },
-  10: { streak: 10, emoji: '👑', label: 'UNSTOPPABLE',  color: '#FFD700' },
+  10: { streak: 10, emoji: '👑', label: 'UNSTOPPABLE',  color: colors.gold },
 }
 
 interface Props {

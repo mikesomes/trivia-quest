@@ -5,17 +5,18 @@ import type { GameModeTab } from '../../store/leaderboardStore'
 import { colors, spacing, fontSize, radius } from '../../constants/theme'
 import { getRankMovement } from '../../utils/leaderboard'
 import { MovementBadge } from './MovementBadge'
+import { tabularNums } from '../ui/Typography'
 
 const RANK_META: Record<number, { color: string; bg: string; medal: string }> = {
-  1: { color: '#FFD700', bg: 'rgba(255,215,0,0.08)',   medal: '🥇' },
-  2: { color: '#C0C0C0', bg: 'rgba(192,192,192,0.07)', medal: '🥈' },
-  3: { color: '#CD7F32', bg: 'rgba(205,127,50,0.08)',  medal: '🥉' },
+  1: { color: colors.gold, bg: 'rgba(255,215,0,0.08)',   medal: '🥇' },
+  2: { color: colors.silver, bg: 'rgba(192,192,192,0.07)', medal: '🥈' },
+  3: { color: colors.bronze, bg: 'rgba(205,127,50,0.08)',  medal: '🥉' },
 }
 
 const MODE_ACCENT: Record<Exclude<GameModeTab, 'xp'>, { color: string; bg: string }> = {
   classic:  { color: '#4A9EFF', bg: 'rgba(74,158,255,0.15)' },
   survival: { color: '#FF6B35', bg: 'rgba(255,107,53,0.15)' },
-  blitz:    { color: '#FFD700', bg: 'rgba(255,215,0,0.15)'  },
+  blitz:    { color: colors.gold, bg: 'rgba(255,215,0,0.15)'  },
 }
 
 function formatProgress(entry: LeaderboardEntry, mode: Exclude<GameModeTab, 'xp'>): string {
@@ -135,12 +136,12 @@ const styles = StyleSheet.create({
   currentUserRankBadge: {
     backgroundColor: `${colors.primary}30`,
   },
-  rankText: {
+  rankText: { ...tabularNums,
     fontSize: fontSize.xs,
     fontWeight: '700',
     color: colors.textSecondary,
   },
-  currentUserRankText: {
+  currentUserRankText: { ...tabularNums,
     color: colors.primaryLight,
   },
   infoCol: {
@@ -163,7 +164,7 @@ const styles = StyleSheet.create({
     fontWeight: '800',
   },
   currentUserName: {
-    color: '#fff',
+    color: colors.textOnAccent,
   },
   youPill: {
     backgroundColor: colors.primary,
@@ -174,7 +175,7 @@ const styles = StyleSheet.create({
   youPillText: {
     fontSize: 9,
     fontWeight: '800',
-    color: '#fff',
+    color: colors.textOnAccent,
     letterSpacing: 0.5,
   },
   subtitle: {

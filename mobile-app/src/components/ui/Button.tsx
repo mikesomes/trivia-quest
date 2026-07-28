@@ -63,7 +63,7 @@ const styles = StyleSheet.create({
   lg: { paddingVertical: spacing.lg, paddingHorizontal: spacing.xl },
   disabled: { opacity: 0.5 },
   text: { fontWeight: '700' },
-  primaryText: { color: '#fff' },
+  primaryText: { color: colors.textOnAccent },
   secondaryText: { color: colors.textPrimary },
   ghostText: { color: colors.primary },
   smText: { fontSize: fontSize.sm },

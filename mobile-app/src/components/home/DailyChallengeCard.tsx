@@ -7,6 +7,7 @@ import { useEasternMidnightCountdown } from '../../hooks/useEasternMidnightCount
 import { GradientCard } from '../ui/GradientCard'
 import { Pulse } from '../ui/Pulse'
 import { AnimatedPressable } from '../ui/AnimatedPressable'
+import { tabularNums } from '../ui/Typography'
 
 export function DailyChallengeCard() {
   const { data: status, isLoading } = useDailyChallengeStatus()
@@ -134,14 +135,14 @@ const styles = StyleSheet.create({
     borderColor: `${colors.streakActive}44`,
   },
   streakFire: { fontSize: 14 },
-  streakCount: { fontSize: fontSize.md, fontWeight: '800', color: colors.streakActive },
+  streakCount: { ...tabularNums, fontSize: fontSize.md, fontWeight: '800', color: colors.streakActive },
   playButton: {
     backgroundColor: colors.primary,
     borderRadius: radius.md,
     paddingVertical: spacing.md,
     alignItems: 'center',
   },
-  playText: { fontSize: fontSize.md, fontWeight: '700', color: '#fff' },
+  playText: { fontSize: fontSize.md, fontWeight: '700', color: colors.textOnAccent },
   completedBody: { gap: spacing.sm },
   completedRow: {
     flexDirection: 'row',
@@ -167,5 +168,5 @@ const styles = StyleSheet.create({
     paddingVertical: spacing.xs,
   },
   nextLabel: { fontSize: fontSize.xs, color: colors.textSecondary },
-  countdown: { fontSize: fontSize.sm, fontWeight: '700', color: colors.textPrimary, fontVariant: ['tabular-nums'] },
+  countdown: { ...tabularNums, fontSize: fontSize.sm, fontWeight: '700', color: colors.textPrimary, fontVariant: ['tabular-nums'] },
 })

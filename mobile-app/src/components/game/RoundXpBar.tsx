@@ -2,6 +2,7 @@ import React, { useEffect, useRef } from 'react'
 import { View, Text, StyleSheet, Animated, Easing } from 'react-native'
 import { colors, spacing, fontSize } from '../../constants/theme'
 import { levelFromXp, MAX_PLAYER_LEVEL, xpRequiredForLevel } from '../../utils/scoring'
+import { tabularNums } from '../ui/Typography'
 
 interface Props {
   currentXp: number
@@ -134,7 +135,7 @@ const styles = StyleSheet.create({
     color: colors.primary,
     fontSize: fontSize.sm,
   },
-  xpLabel: {
+  xpLabel: { ...tabularNums,
     fontSize: fontSize.xs,
     color: colors.textSecondary,
   },

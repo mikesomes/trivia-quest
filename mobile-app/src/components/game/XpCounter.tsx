@@ -4,6 +4,7 @@ import { haptics } from '../../lib/haptics'
 import { useAudioPlayer } from 'expo-audio'
 import { colors, fontSize, spacing } from '../../constants/theme'
 import { formatNumber } from '../../utils/format'
+import { tabularNums } from '../ui/Typography'
 
 const COUNT_DURATION_MS = 2000
 const TICK_INTERVAL_MS = 60
@@ -206,7 +207,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.streakActive,
     alignSelf: 'center',
   },
-  xp: {
+  xp: { ...tabularNums,
     fontSize: 76,
     fontWeight: '900',
     letterSpacing: 0,

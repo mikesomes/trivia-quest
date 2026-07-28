@@ -19,7 +19,7 @@ import {
   Star,
   type IconProps,
 } from 'phosphor-react-native'
-import { radius } from '../../constants/theme'
+import { colors, radius } from '../../constants/theme'
 import type { CategoryMeta } from '../../constants/categories'
 
 // Replaces emoji-as-iconography: one duotone mark per category on a gradient
@@ -50,7 +50,7 @@ interface CategoryBadgeProps {
 
 export function CategoryBadge({ category, size = 48, muted = false }: CategoryBadgeProps) {
   const Icon = CATEGORY_ICONS[category.id] ?? Brain
-  const color = muted ? '#888888' : category.color
+  const color = muted ? colors.textDisabled : category.color
   const iconSize = Math.round(size * 0.55)
 
   return (

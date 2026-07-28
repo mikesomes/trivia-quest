@@ -1,7 +1,8 @@
 import React from 'react'
 import { View, Text, StyleSheet, Modal } from 'react-native'
-import { colors, spacing, radius, fontSize } from '../../constants/theme'
+import { colors, spacing, radius, fontSize, surfaces } from '../../constants/theme'
 import { Button } from '../ui/Button'
+import { tabularNums } from '../ui/Typography'
 
 interface PauseModalProps {
   visible: boolean
@@ -37,7 +38,7 @@ const styles = StyleSheet.create({
     padding: spacing.xl,
   },
   modal: {
-    backgroundColor: colors.bgCard,
+    backgroundColor: surfaces.surface3,
     borderRadius: radius.xl,
     padding: spacing.xl,
     width: '100%',
@@ -51,7 +52,7 @@ const styles = StyleSheet.create({
     color: colors.textPrimary,
     textAlign: 'center',
   },
-  xpText: {
+  xpText: { ...tabularNums,
     fontSize: fontSize.md,
     color: colors.textSecondary,
     textAlign: 'center',

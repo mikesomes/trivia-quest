@@ -3,13 +3,15 @@ import { View, Text, StyleSheet } from 'react-native'
 import { LinearGradient } from 'expo-linear-gradient'
 import type { Category, Difficulty } from '../../types/game'
 import { CATEGORIES } from '../../constants/categories'
+import { colors, screenGradient } from '../../constants/theme'
+import { tabularNums } from '../ui/Typography'
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
 
 const DIFFICULTY_COLOR: Record<string, string> = {
-  easy:   '#4CAF50',
-  medium: '#FF9800',
-  hard:   '#F44336',
+  easy:   colors.correct,
+  medium: colors.timerWarning,
+  hard:   colors.incorrect,
 }
 
 function getCategoryMeta(category: Category | null) {
@@ -39,7 +41,7 @@ export interface ShareCardData {
 
 export function ShareCard({ data }: { data: ShareCardData }) {
   const catMeta = getCategoryMeta(data.category ?? null)
-  const catColor = catMeta?.color ?? '#6c63ff'
+  const catColor = catMeta?.color ?? colors.primary
   const diffColor = DIFFICULTY_COLOR[data.difficulty ?? 'medium']
 
   if (data.mode === 'sudden-death') {
@@ -47,13 +49,13 @@ export function ShareCard({ data }: { data: ShareCardData }) {
   }
 
   return (
-    <LinearGradient colors={['#0f0f1a', '#16103a']} style={styles.card}>
+    <LinearGradient colors={screenGradient} style={styles.card}>
       {/* App header */}
       <View style={styles.appHeader}>
         <Text style={styles.appName}>⚡ TRIVIA QUEST</Text>
         {data.mode === 'daily' && (
           <View style={[styles.modeBadge, { backgroundColor: '#6c63ff33', borderColor: '#6c63ff55' }]}>
-            <Text style={[styles.modeBadgeText, { color: '#8b83ff' }]}>DAILY CHALLENGE</Text>
+            <Text style={[styles.modeBadgeText, { color: colors.primaryLight }]}>DAILY CHALLENGE</Text>
           </View>
         )}
       </View>
@@ -88,7 +90,7 @@ export function ShareCard({ data }: { data: ShareCardData }) {
           {data.answers.map((correct, i) => (
             <View
               key={i}
-              style={[styles.gridSquare, { backgroundColor: correct ? '#4CAF50' : '#F44336' }]}
+              style={[styles.gridSquare, { backgroundColor: correct ? colors.correct : colors.incorrect }]}
             />
           ))}
         </View>
@@ -136,14 +138,14 @@ export function ShareCard({ data }: { data: ShareCardData }) {
 function SuddenDeathCard({ data }: { data: ShareCardData }) {
   const questionsAnswered = data.questionsAnswered ?? 0
   const difficultyReached = questionsAnswered >= 40 ? 'HARD' : questionsAnswered >= 20 ? 'MEDIUM' : 'EASY'
-  const diffColor = questionsAnswered >= 40 ? '#F44336' : questionsAnswered >= 20 ? '#FF9800' : '#4CAF50'
+  const diffColor = questionsAnswered >= 40 ? colors.incorrect : questionsAnswered >= 20 ? colors.timerWarning : colors.correct
 
   return (
-    <LinearGradient colors={['#0f0f1a', '#1a0f0f']} style={styles.card}>
+    <LinearGradient colors={[colors.bg, '#1a0f0f']} style={styles.card}>
       <View style={styles.appHeader}>
         <Text style={styles.appName}>⚡ TRIVIA QUEST</Text>
         <View style={[styles.modeBadge, { backgroundColor: '#F4433622', borderColor: '#F4433655' }]}>
-          <Text style={[styles.modeBadgeText, { color: '#F44336' }]}>🔥 SURVIVAL MODE</Text>
+          <Text style={[styles.modeBadgeText, { color: colors.incorrect }]}>🔥 SURVIVAL MODE</Text>
         </View>
       </View>
 
@@ -179,7 +181,7 @@ const styles = StyleSheet.create({
     padding: 24,
     gap: 18,
     borderWidth: 1,
-    borderColor: '#2d2d44',
+    borderColor: colors.border,
   },
   appHeader: {
     flexDirection: 'row',
@@ -189,7 +191,7 @@ const styles = StyleSheet.create({
   appName: {
     fontSize: 15,
     fontWeight: '900',
-    color: '#ffffff',
+    color: colors.textOnAccent,
     letterSpacing: 1,
   },
   modeBadge: {
@@ -225,10 +227,10 @@ const styles = StyleSheet.create({
     alignSelf: 'flex-start',
   },
   diffLabel: { fontSize: 10, fontWeight: '800', letterSpacing: 1 },
-  roundLabel: { fontSize: 12, color: '#a0aec0', fontWeight: '600' },
+  roundLabel: { fontSize: 12, color: colors.textSecondary, fontWeight: '600' },
   xpSection: { alignItems: 'center', gap: 2 },
-  xp: { fontSize: 56, fontWeight: '900', color: '#ffffff', lineHeight: 62 },
-  xpLabel: { fontSize: 14, color: '#a0aec0', fontWeight: '600' },
+  xp: { ...tabularNums, fontSize: 56, fontWeight: '900', color: colors.textOnAccent, lineHeight: 62 },
+  xpLabel: { fontSize: 14, color: colors.textSecondary, fontWeight: '600' },
   grid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
@@ -247,19 +249,19 @@ const styles = StyleSheet.create({
     marginTop: -4,
   },
   stat: { alignItems: 'center', gap: 2 },
-  statValue: { fontSize: 18, fontWeight: '800', color: '#ffffff' },
-  statLabel: { fontSize: 10, color: '#a0aec0', textTransform: 'uppercase', letterSpacing: 0.5 },
+  statValue: { ...tabularNums, fontSize: 18, fontWeight: '800', color: colors.textOnAccent },
+  statLabel: { fontSize: 10, color: colors.textSecondary, textTransform: 'uppercase', letterSpacing: 0.5 },
   footer: {
     borderTopWidth: 1,
-    borderTopColor: '#2d2d44',
+    borderTopColor: colors.border,
     paddingTop: 14,
     alignItems: 'center',
     gap: 3,
   },
-  footerCta: { fontSize: 13, fontWeight: '700', color: '#ffffff' },
-  footerApp: { fontSize: 11, color: '#a0aec0' },
+  footerCta: { fontSize: 13, fontWeight: '700', color: colors.textOnAccent },
+  footerApp: { fontSize: 11, color: colors.textSecondary },
   // Sudden death
   sdMain: { alignItems: 'center', gap: 4 },
-  sdCount: { fontSize: 80, fontWeight: '900', color: '#ffffff', lineHeight: 88 },
-  sdCountLabel: { fontSize: 14, color: '#a0aec0', fontWeight: '600' },
+  sdCount: { ...tabularNums, fontSize: 80, fontWeight: '900', color: colors.textOnAccent, lineHeight: 88 },
+  sdCountLabel: { fontSize: 14, color: colors.textSecondary, fontWeight: '600' },
 })

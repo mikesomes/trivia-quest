@@ -5,6 +5,7 @@ import { colors, fontSize, radius, spacing } from '../../constants/theme'
 import { useChallenges } from '../../hooks/useChallenges'
 import type { Challenge } from '../../api/challenges'
 import { GradientCard } from '../ui/GradientCard'
+import { tabularNums } from '../ui/Typography'
 
 function QuestRow({ challenge }: { challenge: Challenge }) {
   const pct = Math.min(1, challenge.progress / challenge.target)
@@ -130,7 +131,7 @@ const styles = StyleSheet.create({
   },
   title: { fontSize: fontSize.lg, fontWeight: '800', color: colors.textPrimary },
   subtitle: { fontSize: fontSize.xs, color: colors.textSecondary, marginTop: 2 },
-  counter: {
+  counter: { ...tabularNums,
     fontSize: fontSize.md,
     fontWeight: '800',
     color: colors.streakActive,

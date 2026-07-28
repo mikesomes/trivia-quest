@@ -1,6 +1,7 @@
 import React from 'react'
 import { View, Text, StyleSheet } from 'react-native'
 import { colors, fontSize } from '../../constants/theme'
+import { tabularNums } from '../ui/Typography'
 
 interface StreakTargetIndicatorProps {
   streak: number
@@ -51,12 +52,12 @@ const styles = StyleSheet.create({
     textTransform: 'uppercase',
     letterSpacing: 1,
   },
-  count: {
+  count: { ...tabularNums,
     fontSize: fontSize.sm,
     fontWeight: '800',
     color: colors.textPrimary,
   },
-  countReached: {
+  countReached: { ...tabularNums,
     color: colors.correct,
   },
   barOuter: {

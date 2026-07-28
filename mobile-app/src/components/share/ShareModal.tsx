@@ -97,7 +97,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   shareButtonText: {
-    color: '#fff',
+    color: colors.textOnAccent,
     fontSize: fontSize.md,
     fontWeight: '700',
   },

@@ -6,6 +6,7 @@ import {
 import { colors, spacing, fontSize, radius } from '../../constants/theme'
 import { profileApi } from '../../api/profile'
 import { AnimatedPressable } from '../ui/AnimatedPressable'
+import { tabularNums } from '../ui/Typography'
 
 const MAX_NAME_LENGTH = 12
 
@@ -125,7 +126,7 @@ const styles = StyleSheet.create({
     paddingVertical: spacing.lg,
     paddingHorizontal: spacing.lg,
   },
-  counter: {
+  counter: { ...tabularNums,
     color: colors.textMuted,
     fontSize: fontSize.xs,
     letterSpacing: 1,
@@ -147,7 +148,7 @@ const styles = StyleSheet.create({
   },
   btnDisabled: { opacity: 0.4 },
   btnText: {
-    color: '#fff',
+    color: colors.textOnAccent,
     fontWeight: '900',
     fontSize: fontSize.md,
     letterSpacing: 3,

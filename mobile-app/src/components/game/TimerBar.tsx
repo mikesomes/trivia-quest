@@ -3,6 +3,7 @@ import { Animated, Easing, StyleSheet, View } from 'react-native'
 import { colors, spacing, fontSize, radius } from '../../constants/theme'
 import { GAME_CONFIG } from '../../constants/game'
 import { haptics, type HapticIntensity } from '../../lib/haptics'
+import { tabularNums } from '../ui/Typography'
 
 interface TimerBarProps {
   timeRemainingMs: number
@@ -139,7 +140,7 @@ const styles = StyleSheet.create({
     height: '100%',
     borderRadius: radius.full,
   },
-  label: {
+  label: { ...tabularNums,
     fontSize: fontSize.md,
     fontWeight: '700',
     minWidth: 28,

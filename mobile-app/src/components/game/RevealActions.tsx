@@ -65,7 +65,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.primary,
   },
   nextButtonText: {
-    color: '#fff',
+    color: colors.textOnAccent,
     fontWeight: '700',
     fontSize: fontSize.md,
   },

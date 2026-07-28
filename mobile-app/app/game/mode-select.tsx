@@ -23,7 +23,7 @@ const MODES = [
     emoji: '⚡',
     label: 'Blitz',
     description: `${GAME_CONFIG.BLITZ_SECONDS} seconds, unlimited questions, no hammers`,
-    color: '#FFD700',
+    color: colors.gold,
     route: '/game/mode-intro?mode=blitz',
   },
   {
@@ -31,7 +31,7 @@ const MODES = [
     emoji: '💀',
     label: 'Survival',
     description: 'One life, endless rounds, go as far as you can',
-    color: '#F44336',
+    color: colors.incorrect,
     route: '/game/mode-intro?mode=survival',
   },
   {

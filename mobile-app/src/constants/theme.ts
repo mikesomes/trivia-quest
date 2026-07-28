@@ -18,7 +18,17 @@ export const colors = {
   // Text
   textPrimary: '#ffffff',
   textSecondary: '#a0aec0',
-  textMuted: '#4a5568',
+  textMuted: '#7d8ba1',
+  /** Text/icons sitting on a filled accent surface (primary buttons, pills). */
+  textOnAccent: '#ffffff',
+  /** Unavailable or locked copy — dim, but still legible on surface0. */
+  textDisabled: '#888888',
+
+  // Currency + placement
+  /** Coins and first place. */
+  gold: '#FFD700',
+  silver: '#C0C0C0',
+  bronze: '#CD7F32',
 
   // Difficulty colors
   easy: '#4CAF50',
@@ -91,6 +101,9 @@ export const surfaces = {
   surface2: '#1a1a2e', // cards (== colors.bgCard)
   surface3: '#222240', // raised elements: modals, toasts, popovers
 } as const
+
+/** The app-wide background wash. Use instead of re-declaring the stops. */
+export const screenGradient = ['#0f0f1a', '#16103a'] as const
 
 /** Shared animation timings/springs so all motion has the same physics. */
 export const motion = {

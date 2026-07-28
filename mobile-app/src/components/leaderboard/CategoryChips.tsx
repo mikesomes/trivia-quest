@@ -72,6 +72,6 @@ const styles = StyleSheet.create({
     color: colors.textSecondary,
   },
   labelActive: {
-    color: '#fff',
+    color: colors.textOnAccent,
   },
 })

@@ -10,6 +10,7 @@ import { GradientCard } from '../ui/GradientCard'
 import { AnimatedPressable } from '../ui/AnimatedPressable'
 import { ChestOpenModal } from './ChestOpenModal'
 import type { ChestReward, ChestTier } from '../../api/dailyReward'
+import { tabularNums } from '../ui/Typography'
 
 export function DailyChestCard() {
   const { data: status, isLoading } = useDailyRewardStatus()
@@ -182,5 +183,5 @@ const styles = StyleSheet.create({
     paddingVertical: spacing.xs,
   },
   nextLabel: { fontSize: fontSize.xs, color: colors.textSecondary },
-  countdown: { fontSize: fontSize.sm, fontWeight: '700', color: colors.textPrimary, fontVariant: ['tabular-nums'] },
+  countdown: { ...tabularNums, fontSize: fontSize.sm, fontWeight: '700', color: colors.textPrimary, fontVariant: ['tabular-nums'] },
 })

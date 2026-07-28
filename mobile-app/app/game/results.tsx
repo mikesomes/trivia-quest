@@ -31,6 +31,7 @@ import { formatNextStepNudge } from '../../src/utils/nextStepNudge'
 import { Reveal } from '../../src/components/ui/Reveal'
 import { Pulse } from '../../src/components/ui/Pulse'
 import { WalletBadge } from '../../src/components/game/WalletBadge'
+import { tabularNums } from '../../src/components/ui/Typography'
 
 function formatMmSs(totalSeconds: number): string {
   const m = Math.floor(totalSeconds / 60)
@@ -423,7 +424,7 @@ export default function ResultsScreen() {
 
         {showRegularXpSummary && optimisticXpEarned > 0 && (
           <Reveal delay={220} style={styles.coinsEarnedRow}>
-            <Coins weight="duotone" size={16} color="#FFD700" />
+            <Coins weight="duotone" size={16} color={colors.gold} />
             <Text style={styles.coinsEarnedText}>
               +{optimisticXpEarned.toLocaleString()} coins earned
             </Text>
@@ -598,7 +599,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   questStat: { flex: 1, alignItems: 'center', gap: 4 },
-  questStatValue: { fontSize: fontSize.xl, fontWeight: '800', color: colors.textPrimary },
+  questStatValue: { ...tabularNums, fontSize: fontSize.xl, fontWeight: '800', color: colors.textPrimary },
   questStatLabel: { fontSize: fontSize.xs, color: colors.textSecondary, textTransform: 'uppercase', letterSpacing: 0.5 },
   questStatDivider: { width: 1, height: 32, backgroundColor: colors.border },
   questTotalCard: {
@@ -611,7 +612,7 @@ const styles = StyleSheet.create({
     gap: 4,
   },
   questTotalLabel: { fontSize: fontSize.xs, color: colors.textSecondary, textTransform: 'uppercase', letterSpacing: 0.5 },
-  questTotalValue: { fontSize: fontSize.lg, fontWeight: '900', color: colors.primary },
+  questTotalValue: { ...tabularNums, fontSize: fontSize.lg, fontWeight: '900', color: colors.primary },
   questBonusText: { fontSize: fontSize.xs, color: colors.textSecondary },
 
   nextSection: { gap: spacing.md },
@@ -638,7 +639,7 @@ const styles = StyleSheet.create({
   nextCardTitle: { fontSize: fontSize.xs, fontWeight: '700', color: colors.textPrimary, textAlign: 'center' },
   nextCardDiff: { fontSize: fontSize.xs, fontWeight: '800', letterSpacing: 1 },
   nextCardMode: { fontSize: fontSize.xs, color: colors.textSecondary },
-  nextCardXp: { fontSize: fontSize.xs, fontWeight: '800' },
+  nextCardXp: { ...tabularNums, fontSize: fontSize.xs, fontWeight: '800' },
 
   mapCompleteCard: {
     backgroundColor: `${colors.streakActive}15`,
@@ -663,7 +664,7 @@ const styles = StyleSheet.create({
     borderColor: colors.border,
   },
   stat: { flex: 1, alignItems: 'center', gap: 4 },
-  statValue: { fontSize: fontSize.xl, fontWeight: '800', color: colors.textPrimary },
+  statValue: { ...tabularNums, fontSize: fontSize.xl, fontWeight: '800', color: colors.textPrimary },
   statLabel: { fontSize: fontSize.xs, color: colors.textSecondary, textTransform: 'uppercase', letterSpacing: 0.5 },
   bonusCard: {
     backgroundColor: colors.bgCard,
@@ -695,7 +696,7 @@ const styles = StyleSheet.create({
   newBest: { fontSize: fontSize.md, fontWeight: '700', color: colors.streakActive },
   xpText: { fontSize: fontSize.sm, color: colors.textSecondary },
   coinsEarnedRow: { alignItems: 'center', gap: 4 },
-  coinsEarnedText: { fontSize: fontSize.md, fontWeight: '700', color: '#FFD700' },
+  coinsEarnedText: { ...tabularNums, fontSize: fontSize.md, fontWeight: '700', color: colors.gold },
   boosterBadge: { fontSize: fontSize.xs, color: colors.primary, fontWeight: '700' },
   sessionCard: {
     backgroundColor: `${colors.streakActive}10`,
@@ -718,7 +719,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   sessionStat: { flex: 1, alignItems: 'center', gap: 4 },
-  sessionValue: { fontSize: fontSize.xl, fontWeight: '800', color: colors.textPrimary },
+  sessionValue: { ...tabularNums, fontSize: fontSize.xl, fontWeight: '800', color: colors.textPrimary },
   sessionLabel: { fontSize: fontSize.xs, color: colors.textSecondary, textTransform: 'uppercase', letterSpacing: 0.5 },
   sessionDivider: { width: 1, height: 32, backgroundColor: `${colors.streakActive}30` },
   rankCard: {
@@ -731,7 +732,7 @@ const styles = StyleSheet.create({
     borderColor: colors.border,
   },
   rankLabel: { fontSize: fontSize.xs, color: colors.textSecondary, textTransform: 'uppercase', letterSpacing: 2, fontWeight: '600' },
-  rankNumber: { fontSize: 52, fontWeight: '900', color: colors.textPrimary },
+  rankNumber: { ...tabularNums, fontSize: 52, fontWeight: '900', color: colors.textPrimary },
   nudgeCard: {
     backgroundColor: `${colors.primary}12`,
     borderRadius: radius.lg,

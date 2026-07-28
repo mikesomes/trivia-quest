@@ -148,7 +148,7 @@ const styles = StyleSheet.create({
   comingSoonBadgeText: { color: '#999999' },
   emojiDisabled: { opacity: 0.6 },
   labelDisabled: { color: colors.textSecondary },
-  descriptionDisabled: { color: '#888888' },
+  descriptionDisabled: { color: colors.textDisabled },
   spinner: { marginTop: spacing.xs },
   error: { color: colors.incorrect, textAlign: 'center' },
 })

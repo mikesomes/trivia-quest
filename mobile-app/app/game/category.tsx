@@ -202,7 +202,7 @@ const styles = StyleSheet.create({
     color: colors.textSecondary,
   },
   descriptionDisabled: {
-    color: '#888888',
+    color: colors.textDisabled,
   },
   spinner: { marginTop: spacing.xs },
   error: { color: colors.incorrect, textAlign: 'center' },

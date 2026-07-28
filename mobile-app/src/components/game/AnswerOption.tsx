@@ -349,7 +349,7 @@ const styles = StyleSheet.create({
     paddingVertical: 2,
   },
   knockedOutText: {
-    color: '#fff',
+    color: colors.textOnAccent,
     fontSize: fontSize.xs,
     fontWeight: '900',
     letterSpacing: 0,

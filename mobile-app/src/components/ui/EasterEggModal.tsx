@@ -1,6 +1,6 @@
 import React, { useEffect, useRef } from 'react'
 import { Animated, Easing, Modal, StyleSheet, Text, TouchableWithoutFeedback } from 'react-native'
-import { colors, fontSize, radius, spacing } from '../../constants/theme'
+import { colors, fontSize, radius, spacing, surfaces } from '../../constants/theme'
 
 const MESSAGES = [
   { emoji: '🧠', title: 'Big Brain Energy', body: "You tapped a greeting seven times.\nWe respect the curiosity." },
@@ -85,7 +85,7 @@ const styles = StyleSheet.create({
     padding: spacing.xl,
   },
   card: {
-    backgroundColor: colors.bgCard,
+    backgroundColor: surfaces.surface3,
     borderRadius: radius.xl,
     borderWidth: 1,
     borderColor: colors.border,

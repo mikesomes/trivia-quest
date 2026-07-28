@@ -12,6 +12,7 @@ import { useAudioPlayer, setAudioModeAsync } from 'expo-audio'
 import { haptics } from '../../src/lib/haptics'
 import { colors, spacing, fontSize, radius } from '../../src/constants/theme'
 import { XpCounter } from '../../src/components/game/XpCounter'
+import { tabularNums } from '../../src/components/ui/Typography'
 
 export default function SuddenDeathOverScreen() {
   const sdBatchNumber = useGameStore((s) => s.sdBatchNumber)
@@ -166,7 +167,7 @@ const styles = StyleSheet.create({
     textTransform: 'uppercase',
     letterSpacing: 2,
   },
-  questionsCount: { fontSize: 80, fontWeight: '900', color: colors.textPrimary, lineHeight: 88 },
+  questionsCount: { ...tabularNums, fontSize: 80, fontWeight: '900', color: colors.textPrimary, lineHeight: 88 },
   difficultyRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
   difficultyLabel: { fontSize: fontSize.sm, color: colors.textSecondary },
   difficultyValue: { fontSize: fontSize.sm, fontWeight: '800', letterSpacing: 1 },
@@ -195,7 +196,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: spacing.sm,
   },
-  xpEarned: { fontSize: fontSize.xxl, fontWeight: '900', color: colors.primary },
+  xpEarned: { ...tabularNums, fontSize: fontSize.xxl, fontWeight: '900', color: colors.primary },
   savingText: { fontSize: fontSize.sm, color: colors.textSecondary },
   rankCard: {
     backgroundColor: colors.bgCard,
@@ -213,7 +214,7 @@ const styles = StyleSheet.create({
     textTransform: 'uppercase',
     letterSpacing: 2,
   },
-  rankNumber: { fontSize: 52, fontWeight: '900', color: colors.textPrimary },
+  rankNumber: { ...tabularNums, fontSize: 52, fontWeight: '900', color: colors.textPrimary },
   actions: { gap: spacing.sm },
   toastContainer: { position: 'absolute', bottom: spacing.xl, left: spacing.lg, right: spacing.lg },
 })

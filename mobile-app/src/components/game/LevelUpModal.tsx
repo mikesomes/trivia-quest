@@ -2,6 +2,7 @@ import React, { useEffect, useRef } from 'react'
 import { Animated, Easing, Modal, StyleSheet, Text, TouchableWithoutFeedback, View } from 'react-native'
 import { LinearGradient } from 'expo-linear-gradient'
 import { colors, fontSize, spacing } from '../../constants/theme'
+import { tabularNums } from '../ui/Typography'
 
 interface Props {
   visible: boolean
@@ -237,7 +238,7 @@ const styles = StyleSheet.create({
     letterSpacing: 4,
     textTransform: 'uppercase',
   },
-  levelNumber: {
+  levelNumber: { ...tabularNums,
     fontSize: 96,
     fontWeight: '900',
     color: colors.textPrimary,

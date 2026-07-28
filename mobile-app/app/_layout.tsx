@@ -21,6 +21,7 @@ import { ErrorBoundary } from '../src/components/ui/ErrorBoundary'
 import { OfflineBanner } from '../src/components/ui/OfflineBanner'
 import { GestureHandlerRootView } from 'react-native-gesture-handler'
 import { initNotifications, rescheduleInactivityLadder } from '../src/lib/notifications'
+import { colors } from '../src/constants/theme'
 
 SplashScreen.preventAutoHideAsync()
 
@@ -134,7 +135,7 @@ function RootLayout() {
         <QueryClientProvider client={queryClient}>
           <AuthInitializer>
             <StatusBar style="light" />
-            <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: '#0f0f1a' } }}>
+            <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: colors.bg } }}>
               <Stack.Screen name="index" options={{ animation: 'fade' }} />
               <Stack.Screen name="onboarding" options={{ animation: 'fade', gestureEnabled: false }} />
               <Stack.Screen name="(tabs)" options={{ animation: 'fade' }} />

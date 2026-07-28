@@ -4,6 +4,7 @@ import { ProgressBar } from '../ui/ProgressBar'
 import { colors, spacing, fontSize } from '../../constants/theme'
 import { MAX_PLAYER_LEVEL, xpRequiredForLevel } from '../../utils/scoring'
 import { getKnowledgeRank, getNextLevelUnlock } from '../../constants/progression'
+import { tabularNums } from '../ui/Typography'
 
 interface XpProgressBarProps {
   currentXp: number
@@ -37,7 +38,7 @@ export function XpProgressBar({ currentXp, level, xpToNextLevel }: XpProgressBar
 const styles = StyleSheet.create({
   container: { gap: spacing.sm },
   header: { flexDirection: 'row', justifyContent: 'space-between' },
-  levelLabel: { fontSize: fontSize.sm, fontWeight: '700', color: colors.textPrimary },
-  xpLabel: { fontSize: fontSize.sm, color: colors.textSecondary },
+  levelLabel: { ...tabularNums, fontSize: fontSize.sm, fontWeight: '700', color: colors.textPrimary },
+  xpLabel: { ...tabularNums, fontSize: fontSize.sm, color: colors.textSecondary },
   unlockLabel: { fontSize: fontSize.xs, color: colors.streakActive, fontWeight: '700' },
 })

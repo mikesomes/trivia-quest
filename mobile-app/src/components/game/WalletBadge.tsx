@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useState } from 'react'
 import { Animated, StyleSheet, Text } from 'react-native'
 import { Coins } from 'phosphor-react-native'
 import { colors, fontSize, radius, spacing } from '../../constants/theme'
+import { tabularNums } from '../ui/Typography'
 
 interface Props {
   previousCoins: number
@@ -46,7 +47,7 @@ export function WalletBadge({ previousCoins, newCoins }: Props) {
 
   return (
     <Animated.View style={[styles.badge, { transform: [{ scale: bump }] }]}>
-      <Coins weight="duotone" size={14} color="#FFD700" />
+      <Coins weight="duotone" size={14} color={colors.gold} />
       <Text style={styles.text}>{displayCoins.toLocaleString()}</Text>
     </Animated.View>
   )
@@ -66,5 +67,5 @@ const styles = StyleSheet.create({
     borderColor: '#FFD70033',
     marginTop: spacing.xs,
   },
-  text: { fontSize: fontSize.sm, fontWeight: '800', color: '#FFD700' },
+  text: { ...tabularNums, fontSize: fontSize.sm, fontWeight: '800', color: colors.gold },
 })

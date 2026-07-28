@@ -17,6 +17,7 @@ import { QuestHeroCard } from '../../src/components/home/QuestHeroCard'
 import { useQuestStore } from '../../src/store/questStore'
 import { QUEST_CATEGORIES } from '../../src/config/questConfig'
 import { GAME_CONFIG } from '../../src/constants/game'
+import { tabularNums } from '../../src/components/ui/Typography'
 
 export default function HomeScreen() {
   const { data: profile } = useProfile()
@@ -161,7 +162,7 @@ const styles = StyleSheet.create({
   header: { gap: spacing.xs },
   greeting: { fontSize: fontSize.xl, fontWeight: '600', color: colors.textSecondary },
   greetingName: { fontSize: fontSize.xxxl, fontWeight: '900', color: colors.textPrimary },
-  metaRow: {
+  metaRow: { ...tabularNums,
     fontSize: fontSize.md,
     color: colors.textSecondary,
     fontWeight: '600',

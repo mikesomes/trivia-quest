@@ -3,6 +3,7 @@ import { View, Text, StyleSheet } from 'react-native'
 import { colors, fontSize, spacing, radius } from '../../constants/theme'
 import { getAvatarStage } from '../../constants/quest'
 import { PlayerAvatar } from '../profile/PlayerAvatar'
+import { tabularNums } from '../ui/Typography'
 
 interface Props {
   level: number
@@ -45,5 +46,5 @@ const styles = StyleSheet.create({
     paddingVertical: 4,
     borderRadius: radius.sm,
   },
-  levelText: { fontSize: fontSize.sm, fontWeight: '800', color: '#fff' },
+  levelText: { ...tabularNums, fontSize: fontSize.sm, fontWeight: '800', color: colors.textOnAccent },
 })

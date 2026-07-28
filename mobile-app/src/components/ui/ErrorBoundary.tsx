@@ -40,7 +40,7 @@ export class ErrorBoundary extends React.Component<{ children: React.ReactNode }
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#0f0f1a',
+    backgroundColor: colors.bg,
     alignItems: 'center',
     justifyContent: 'center',
     padding: spacing.xl,
@@ -57,5 +57,5 @@ const styles = StyleSheet.create({
     paddingVertical: spacing.md,
     borderRadius: radius.lg,
   },
-  buttonText: { color: '#fff', fontWeight: '700', fontSize: fontSize.md },
+  buttonText: { color: colors.textOnAccent, fontWeight: '700', fontSize: fontSize.md },
 })

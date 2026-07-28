@@ -15,6 +15,7 @@ import { Button } from '../../src/components/ui/Button'
 import { XpCountUp } from '../../src/components/game/XpCountUp'
 import { ArcadeNameEntry } from '../../src/components/leaderboard/ArcadeNameEntry'
 import { levelFromXp } from '../../src/utils/scoring'
+import { tabularNums } from '../../src/components/ui/Typography'
 
 function finiteNumber(value: unknown) {
   return typeof value === 'number' && Number.isFinite(value) ? value : undefined
@@ -266,7 +267,7 @@ const styles = StyleSheet.create({
     borderColor: colors.border,
   },
   stat: { flex: 1, alignItems: 'center', gap: 4 },
-  statValue: { fontSize: fontSize.xl, fontWeight: '800', color: colors.textPrimary },
+  statValue: { ...tabularNums, fontSize: fontSize.xl, fontWeight: '800', color: colors.textPrimary },
   statLabel: { fontSize: fontSize.xs, color: colors.textSecondary, textTransform: 'uppercase', letterSpacing: 0.5 },
   bonusCard: {
     backgroundColor: colors.bgCard,
@@ -307,7 +308,7 @@ const styles = StyleSheet.create({
     borderColor: colors.border,
   },
   rankLabel: { fontSize: fontSize.xs, color: colors.textSecondary, textTransform: 'uppercase', letterSpacing: 2, fontWeight: '600' },
-  rankNumber: { fontSize: 52, fontWeight: '900', color: colors.textPrimary },
+  rankNumber: { ...tabularNums, fontSize: 52, fontWeight: '900', color: colors.textPrimary },
   rankName: { fontSize: fontSize.md, color: colors.textSecondary, fontWeight: '600' },
   actions: { gap: spacing.sm, paddingBottom: spacing.xl },
   toastContainer: { position: 'absolute', bottom: spacing.xl, left: spacing.lg, right: spacing.lg },

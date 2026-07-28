@@ -7,6 +7,7 @@ import { levelFromXp, MAX_PLAYER_LEVEL, xpRequiredForLevel } from '../../utils/s
 import { getNextLevelUnlock } from '../../constants/progression'
 import { useAnimatedNumber } from '../../hooks/useAnimatedNumber'
 import type { XpAwardBreakdown } from '../../types/user'
+import { tabularNums } from '../ui/Typography'
 
 interface Props {
   xpEarned: number
@@ -240,7 +241,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: spacing.xs,
   },
-  count: {
+  count: { ...tabularNums,
     fontSize: 56,
     fontWeight: '900',
     color: colors.primary,
@@ -312,7 +313,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: `${colors.primary}44`,
   },
-  counterBadgeText: {
+  counterBadgeText: { ...tabularNums,
     fontSize: fontSize.sm,
     fontWeight: '900',
     color: colors.primary,

@@ -1,8 +1,9 @@
 import { Stack } from 'expo-router'
+import { colors } from '../../src/constants/theme'
 
 export default function GameLayout() {
   return (
-    <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: '#0f0f1a' } }}>
+    <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: colors.bg } }}>
       {/* Forward flow: slide right */}
       <Stack.Screen name="category" options={{ animation: 'slide_from_right' }} />
       {/* Entering gameplay: fade for immersion */}

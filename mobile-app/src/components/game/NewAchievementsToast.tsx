@@ -1,6 +1,6 @@
 import React, { useEffect, useRef } from 'react'
 import { Animated, StyleSheet, Text, View } from 'react-native'
-import { colors, fontSize, radius, spacing } from '../../constants/theme'
+import { colors, fontSize, radius, spacing, surfaces } from '../../constants/theme'
 import type { Achievement } from '../../types/user'
 
 const RARITY_COLORS: Record<string, string> = {
@@ -53,7 +53,7 @@ export function NewAchievementsToast({ achievements }: Props) {
 
 const styles = StyleSheet.create({
   container: {
-    backgroundColor: colors.bgCard,
+    backgroundColor: surfaces.surface3,
     borderRadius: radius.lg,
     borderWidth: 1,
     borderColor: colors.border,

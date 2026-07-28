@@ -53,6 +53,6 @@ const styles = StyleSheet.create({
     color: colors.textSecondary,
   },
   activeLabel: {
-    color: '#fff',
+    color: colors.textOnAccent,
   },
 })

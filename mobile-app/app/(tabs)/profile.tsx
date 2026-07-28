@@ -18,6 +18,7 @@ import { GradientCard } from '../../src/components/ui/GradientCard'
 import { getAvatarStage } from '../../src/constants/quest'
 import { MAX_PLAYER_LEVEL } from '../../src/utils/scoring'
 import { formatNumber, formatAccuracy, formatDate } from '../../src/utils/format'
+import { tabularNums } from '../../src/components/ui/Typography'
 const { width: SCREEN_WIDTH } = Dimensions.get('window')
 
 const RARITY_ORDER = { legendary: 0, epic: 1, rare: 2, common: 3 }
@@ -287,7 +288,7 @@ const styles = StyleSheet.create({
     paddingVertical: 5,
     borderRadius: radius.full,
   },
-  levelPillText: { fontSize: fontSize.sm, fontWeight: '800', color: '#fff' },
+  levelPillText: { ...tabularNums, fontSize: fontSize.sm, fontWeight: '800', color: colors.textOnAccent },
 
   // XP
   xpCardContent: { padding: spacing.lg, gap: spacing.sm },
@@ -313,7 +314,7 @@ const styles = StyleSheet.create({
   statCard: { width: (SCREEN_WIDTH - spacing.lg * 2 - spacing.md) / 2 },
   statContent: { padding: spacing.lg, alignItems: 'center', gap: spacing.xs },
   statEmoji: { fontSize: 28 },
-  statValue: { fontSize: fontSize.xxl, fontWeight: '900' },
+  statValue: { ...tabularNums, fontSize: fontSize.xxl, fontWeight: '900' },
   statLabel: {
     fontSize: fontSize.xs,
     color: colors.textSecondary,
@@ -338,7 +339,7 @@ const styles = StyleSheet.create({
     borderColor: colors.primary,
   },
   filterTabText: { fontSize: fontSize.xs, fontWeight: '700', color: colors.textSecondary },
-  filterTabTextActive: { color: '#fff' },
+  filterTabTextActive: { color: colors.textOnAccent },
   achievementsGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
@@ -413,5 +414,5 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   saveBtnDisabled: { opacity: 0.5 },
-  saveBtnText: { fontSize: fontSize.md, color: '#fff', fontWeight: '700' },
+  saveBtnText: { fontSize: fontSize.md, color: colors.textOnAccent, fontWeight: '700' },
 })
