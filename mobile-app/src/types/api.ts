@@ -76,7 +76,7 @@ export interface SubmitAnswerRequest {
   useShield?: boolean
 }
 
-export type LeaderboardMode = 'global' | 'category' | 'xp'
+export type LeaderboardMode = 'global' | 'category' | 'xp' | 'classic' | 'survival' | 'blitz'
 export type LeaderboardPeriod = 'today' | 'weekly' | 'alltime'
 
 export interface LeaderboardEntry {
@@ -87,6 +87,10 @@ export interface LeaderboardEntry {
   primaryValue: number
   gamesPlayed?: number
   previousRank?: number | null
+  sessionRound?: number
+  totalQuestions?: number
+  questionsAnswered?: number
+  correctCount?: number
 }
 
 export interface LeaderboardResponse {
@@ -99,7 +103,7 @@ export interface LeaderboardResponse {
 }
 
 export interface PurchaseItemRequest {
-  itemId: 'life' | 'hammer' | 'shield' | 'xp_booster'
+  itemId: 'life' | 'hammer' | 'shield' | 'xp_booster' | 'streak_freeze'
   quantity: number
 }
 

@@ -1,6 +1,6 @@
 import 'react-native-gesture-handler'
 import React, { useEffect } from 'react'
-import { Text, TextInput } from 'react-native'
+import { AppState, Text, TextInput } from 'react-native'
 import { Stack } from 'expo-router'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { StatusBar } from 'expo-status-bar'
@@ -20,6 +20,7 @@ import { initSentry, Sentry } from '../src/lib/sentry'
 import { ErrorBoundary } from '../src/components/ui/ErrorBoundary'
 import { OfflineBanner } from '../src/components/ui/OfflineBanner'
 import { GestureHandlerRootView } from 'react-native-gesture-handler'
+import { initNotifications, rescheduleInactivityLadder } from '../src/lib/notifications'
 
 SplashScreen.preventAutoHideAsync()
 
@@ -43,6 +44,17 @@ function AuthInitializer({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     initializeAuth()
+  }, [])
+
+  // Each open/foreground pushes the inactivity reminders back out, so they
+  // only fire after genuinely being away that long.
+  useEffect(() => {
+    initNotifications()
+    rescheduleInactivityLadder()
+    const sub = AppState.addEventListener('change', (state) => {
+      if (state === 'active') rescheduleInactivityLadder()
+    })
+    return () => sub.remove()
   }, [])
 
   if (!isInitialized) return null

@@ -6,6 +6,10 @@ import { buildUserPrompt, SYSTEM_PROMPT } from './prompts.ts'
 import { validateBatch } from './validator.ts'
 import { computeContentHash, deduplicateQuestions } from './deduplicator.ts'
 import { OPENAI_QUESTION_JSON_SCHEMA } from './schema.ts'
+import { verifyQuestions } from './verifier.ts'
+
+// Categories where LLM recall is less reliable — run a verification pass and request more upfront
+const VERIFICATION_CATEGORIES: Category[] = ['harry_potter', 'famous_quotes']
 
 export interface GenerateQuestionsOptions {
   category: Category
@@ -17,6 +21,8 @@ export interface GenerateQuestionsOptions {
     userPrompt: string
     jsonSchema: Record<string, unknown>
     schemaName: string
+    model?: string
+    temperature?: number
   }) => Promise<string>
 }
 
@@ -39,8 +45,11 @@ export async function generateQuestions(
 ): Promise<GeneratedQuestion[]> {
   const { category, difficulty, count, existingHashes = new Set(), openaiChat } = opts
 
-  // Request slightly more than needed to account for validation failures
-  const batchSize = Math.ceil(count * 1.3) + 2
+  const needsVerification = VERIFICATION_CATEGORIES.includes(category)
+  // Request more upfront for categories that go through verification (expect ~30-40% rejection rate)
+  const batchSize = needsVerification
+    ? Math.ceil(count * 2) + 2
+    : Math.ceil(count * 1.3) + 2
   const recentHashSamples = Array.from(existingHashes).slice(0, 20).map(h => h.substring(0, 16))
 
   const attemptGeneration = async (diversityBoost = false): Promise<GeneratedQuestion[]> => {
@@ -65,7 +74,11 @@ export async function generateQuestions(
       console.warn(`[generator] Deduped ${duplicates.length} duplicate questions`)
     }
 
-    return unique.map(q => ({
+    const verified = needsVerification
+      ? await verifyQuestions(unique, category, openaiChat)
+      : unique
+
+    return verified.map(q => ({
       category,
       difficulty,
       question_text: q.questionText,

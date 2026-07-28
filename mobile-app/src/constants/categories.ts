@@ -7,6 +7,7 @@ export interface CategoryMeta {
   description: string
   color: string
   comingSoon?: boolean
+  modeOnly?: boolean
 }
 
 export const CATEGORIES: CategoryMeta[] = [
@@ -21,6 +22,7 @@ export const CATEGORIES: CategoryMeta[] = [
   { id: 'harry_potter',     label: 'Harry Potter',      emoji: '🪄', description: 'Wizards, spells & Hogwarts', color: '#7C3AED' },
   { id: 'famous_quotes',   label: 'Famous Quotes',     emoji: '💬', description: 'Who said it?',               color: '#0EA5E9' },
   { id: 'music',            label: 'Music',             emoji: '🎵', description: 'Songs and artists',          color: '#8B5CF6' },
+  { id: 'odd_one_out',      label: 'Odd One Out',       emoji: '🧩', description: 'Find what does not fit',      color: '#10B981', modeOnly: true },
   { id: 'art_history',      label: 'Art History',       emoji: '🎨', description: 'Masterpieces & movements',   color: '#F97316', comingSoon: true },
   { id: 'movie_quotes',     label: 'Movie Quotes',      emoji: '🎞️', description: 'Iconic movie moments',        color: '#EF4444', comingSoon: true },
   { id: 'pop_culture',      label: 'Pop Culture',       emoji: '⭐', description: 'Trends and celebrities',      color: '#F43F5E', comingSoon: true },

@@ -1,7 +1,8 @@
 import React from 'react'
-import { TouchableOpacity, Text, StyleSheet, ActivityIndicator, type ViewStyle } from 'react-native'
+import { Text, StyleSheet, ActivityIndicator, type ViewStyle } from 'react-native'
 import * as Haptics from 'expo-haptics'
 import { colors, spacing, radius, fontSize } from '../../constants/theme'
+import { AnimatedPressable } from './AnimatedPressable'
 
 interface ButtonProps {
   title: string
@@ -25,7 +26,7 @@ export function Button({
   const isDisabled = disabled || loading
 
   return (
-    <TouchableOpacity
+    <AnimatedPressable
       style={[styles.base, styles[variant], styles[size], isDisabled && styles.disabled, style]}
       onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); onPress() }}
       disabled={isDisabled}
@@ -36,7 +37,7 @@ export function Button({
       ) : (
         <Text style={[styles.text, styles[`${variant}Text`], styles[`${size}Text`]]}>{title}</Text>
       )}
-    </TouchableOpacity>
+    </AnimatedPressable>
   )
 }
 

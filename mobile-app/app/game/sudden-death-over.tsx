@@ -4,6 +4,7 @@ import { router } from 'expo-router'
 import { ScreenWrapper } from '../../src/components/ui/ScreenWrapper'
 import { Button } from '../../src/components/ui/Button'
 import { LevelUpModal } from '../../src/components/game/LevelUpModal'
+import { NewAchievementsToast } from '../../src/components/game/NewAchievementsToast'
 import { ShareModal } from '../../src/components/share/ShareModal'
 import { useGameStore } from '../../src/store/gameStore'
 import { useSubmitSuddenDeath } from '../../src/hooks/useSuddenDeath'
@@ -117,6 +118,11 @@ export default function SuddenDeathOverScreen() {
         </View>
       </ScrollView>
 
+      {submitSuddenDeath.data?.newAchievements && submitSuddenDeath.data.newAchievements.length > 0 && (
+        <View style={styles.toastContainer}>
+          <NewAchievementsToast achievements={submitSuddenDeath.data.newAchievements} />
+        </View>
+      )}
       <LevelUpModal
         visible={showLevelUp}
         newLevel={submitSuddenDeath.data?.newLevel ?? 0}
@@ -211,4 +217,5 @@ const styles = StyleSheet.create({
   },
   rankNumber: { fontSize: 52, fontWeight: '900', color: colors.textPrimary },
   actions: { gap: spacing.sm },
+  toastContainer: { position: 'absolute', bottom: spacing.xl, left: spacing.lg, right: spacing.lg },
 })

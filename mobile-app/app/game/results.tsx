@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react'
-import { View, Text, StyleSheet, ScrollView, ActivityIndicator, TouchableOpacity, Alert } from 'react-native'
+import { View, Text, StyleSheet, ScrollView, ActivityIndicator, Alert } from 'react-native'
 import { ScreenWrapper } from '../../src/components/ui/ScreenWrapper'
 import { LevelUpModal } from '../../src/components/game/LevelUpModal'
 import { NewAchievementsToast } from '../../src/components/game/NewAchievementsToast'
@@ -24,6 +24,19 @@ import { levelFromXp } from '../../src/utils/scoring'
 import type { QuestRoundResult } from '../../src/types/quest'
 import { getClassicProgressionMix, dominantDifficulty } from '../../src/utils/difficultyMix'
 import { GAME_CONFIG } from '../../src/constants/game'
+import { maybeAskForPermission } from '../../src/lib/notifications'
+import { useChallenges } from '../../src/hooks/useChallenges'
+import { useCountdownSeconds } from '../../src/hooks/useCountdownSeconds'
+import { formatNextStepNudge } from '../../src/utils/nextStepNudge'
+import { Reveal } from '../../src/components/ui/Reveal'
+import { Pulse } from '../../src/components/ui/Pulse'
+import { WalletBadge } from '../../src/components/game/WalletBadge'
+
+function formatMmSs(totalSeconds: number): string {
+  const m = Math.floor(totalSeconds / 60)
+  const s = totalSeconds % 60
+  return `${m}:${String(s).padStart(2, '0')}`
+}
 
 function finiteNumber(value: unknown) {
   return typeof value === 'number' && Number.isFinite(value) ? value : undefined
@@ -35,11 +48,13 @@ function QuestResults({
   totalXp,
   onRetry,
   onQuestMap,
+  onNextNode,
 }: {
   questResult: QuestRoundResult | null
   totalXp?: number
   onRetry: () => void
   onQuestMap: () => void
+  onNextNode: (nodeId: string) => void
 }) {
   const roundResult = useGameStore((s) => s.roundResult)
 
@@ -59,63 +74,84 @@ function QuestResults({
   return (
     <View style={styles.questSection}>
       {/* Pass / Fail header */}
-      <View style={styles.questHeader}>
-        {questResult.passed ? (
-          <>
-            <Text style={styles.passedText}>LEVEL COMPLETE</Text>
-            <StarRating stars={questResult.stars} size={32} />
-          </>
-        ) : (
-          <>
-            <Text style={styles.failedText}>NOT QUITE</Text>
-            <Text style={styles.failedSub}>
-              {`${questResult.correctCount}/${questResult.totalAnswered} correct — keep practicing`}
-            </Text>
-          </>
-        )}
-      </View>
+      <Reveal>
+        <View style={styles.questHeader}>
+          {questResult.passed ? (
+            <>
+              <Text style={styles.passedText}>LEVEL COMPLETE</Text>
+              <StarRating stars={questResult.stars} size={32} animated />
+            </>
+          ) : (
+            <>
+              <Text style={styles.failedText}>NOT QUITE</Text>
+              <Text style={styles.failedSub}>
+                {`${questResult.correctCount}/${questResult.totalAnswered} correct — keep practicing`}
+              </Text>
+            </>
+          )}
+        </View>
+      </Reveal>
 
       {/* Stats + XP row */}
-      <View style={styles.questStats}>
-        <View style={styles.questStat}>
-          <Text style={styles.questStatValue}>{questResult.correctCount}/{questResult.totalAnswered}</Text>
-          <Text style={styles.questStatLabel}>Correct</Text>
+      <Reveal delay={150}>
+        <View style={styles.questStats}>
+          <View style={styles.questStat}>
+            <Text style={styles.questStatValue}>{questResult.correctCount}/{questResult.totalAnswered}</Text>
+            <Text style={styles.questStatLabel}>Correct</Text>
+          </View>
+          <View style={styles.questStatDivider} />
+          <View style={styles.questStat}>
+            <Text style={styles.questStatValue}>{accuracy}%</Text>
+            <Text style={styles.questStatLabel}>Accuracy</Text>
+          </View>
+          <View style={styles.questStatDivider} />
+          <View style={styles.questStat}>
+            <Text style={[styles.questStatValue, { color: colors.primary }]}>+{questResult.xpEarned}</Text>
+            <Text style={styles.questStatLabel}>XP Earned</Text>
+          </View>
         </View>
-        <View style={styles.questStatDivider} />
-        <View style={styles.questStat}>
-          <Text style={styles.questStatValue}>{accuracy}%</Text>
-          <Text style={styles.questStatLabel}>Accuracy</Text>
-        </View>
-        <View style={styles.questStatDivider} />
-        <View style={styles.questStat}>
-          <Text style={[styles.questStatValue, { color: colors.primary }]}>+{questResult.xpEarned}</Text>
-          <Text style={styles.questStatLabel}>XP Earned</Text>
-        </View>
-      </View>
+      </Reveal>
 
       {totalXp !== undefined && (
-        <View style={styles.questTotalCard}>
-          <Text style={styles.questTotalLabel}>Total XP</Text>
-          <Text style={styles.questTotalValue}>{totalXp.toLocaleString()} XP</Text>
-        </View>
+        <Reveal delay={250}>
+          <View style={styles.questTotalCard}>
+            <Text style={styles.questTotalLabel}>Total XP</Text>
+            <Text style={styles.questTotalValue}>{totalXp.toLocaleString()} XP</Text>
+          </View>
+        </Reveal>
       )}
 
       {/* Newly revealed nodes */}
       {questResult.passed && questResult.newlyRevealedNodeIds.length > 0 && (
-        <View style={styles.mapCompleteCard}>
-          <Text style={styles.mapCompleteEmoji}>🔓</Text>
-          <Text style={styles.mapCompleteText}>New node{questResult.newlyRevealedNodeIds.length > 1 ? 's' : ''} unlocked!</Text>
-          <Text style={styles.mapCompleteSub}>Continue in the category map to see what's next.</Text>
-        </View>
+        <Reveal delay={380}>
+          <View style={styles.mapCompleteCard}>
+            <Text style={styles.mapCompleteEmoji}>🔓</Text>
+            <Text style={styles.mapCompleteText}>New node{questResult.newlyRevealedNodeIds.length > 1 ? 's' : ''} unlocked!</Text>
+            <Text style={styles.mapCompleteSub}>Continue in the category map to see what's next.</Text>
+          </View>
+        </Reveal>
       )}
 
-      {questResult.passed ? (
-        <Button title="Category Map" onPress={onQuestMap} size="lg" variant="primary" />
-      ) : (
-        <Button title="Try Again" onPress={onRetry} size="lg" variant="primary" />
-      )}
+      <Reveal delay={500} style={styles.questActions}>
+        {questResult.passed ? (
+          questResult.newlyRevealedNodeIds.length > 0 ? (
+            <Pulse>
+              <Button
+                title="Next Level →"
+                onPress={() => onNextNode(questResult.newlyRevealedNodeIds[0])}
+                size="lg"
+                variant="primary"
+              />
+            </Pulse>
+          ) : (
+            <Button title="Category Map" onPress={onQuestMap} size="lg" variant="primary" />
+          )
+        ) : (
+          <Button title="Try Again" onPress={onRetry} size="lg" variant="primary" />
+        )}
 
-      <Button title="Quest Map" onPress={onQuestMap} variant="ghost" />
+        <Button title="Quest Map" onPress={onQuestMap} variant="ghost" />
+      </Reveal>
     </View>
   )
 }
@@ -142,6 +178,7 @@ export default function ResultsScreen() {
   const createRound = useCreateRound()
   const completeDailyChallenge = useCompleteDailyChallenge()
   const { data: profile } = useProfile()
+  const { data: challengesData } = useChallenges()
   const [questRoundResult, setQuestRoundResult] = useState<QuestRoundResult | null>(null)
   const { play } = useSoundEffects()
   const completeNode = useQuestStore((s) => s.completeNode)
@@ -157,13 +194,26 @@ export default function ResultsScreen() {
   const nextMix = getClassicProgressionMix(roundNumber, GAME_CONFIG.QUESTIONS_PER_ROUND)
   const nextDifficulty = dominantDifficulty(nextMix)
 
+  // "One more round" momentum: counts down from the moment results loads,
+  // mirroring the server's own window (enforced against completed_at at
+  // create-round time — this countdown is purely informational).
+  const [resultsMountedAt] = useState(() => Date.now())
+  const momentumSecondsLeft = useCountdownSeconds(GAME_CONFIG.MOMENTUM_WINDOW_SECONDS, resultsMountedAt)
+  const momentumAvailable = !isDailyChallenge && momentumSecondsLeft > 0
+
+  const nextStepNudge = formatNextStepNudge({
+    xpToNextLevel: xpResult?.xpToNextLevel,
+    newLevel: xpResult?.newLevel,
+    challenges: challengesData?.challenges ?? [],
+  })
+
   const handleNextRound = async () => {
     if (!selectedCategory) return
     play('nextRound')
     incrementRound()
     setDifficulty(nextDifficulty)
     try {
-      await createRound.mutateAsync({ category: selectedCategory, difficulty: nextDifficulty, difficultyMix: nextMix  })
+      await createRound.mutateAsync({ category: selectedCategory, difficulty: nextDifficulty, difficultyMix: nextMix, continuationRoundId: roundId ?? undefined })
       router.replace('/game/play')
     } catch (err) {
       const msg = err instanceof Error ? err.message : 'Could not start next round. Please try again.'
@@ -188,6 +238,14 @@ export default function ResultsScreen() {
   useEffect(() => {
     if (xpResult?.leveledUp) setShowLevelUp(true)
   }, [xpResult])
+
+  // Ask for notification permission once, after the player's first finished
+  // round — a moment of goodwill, never at cold start.
+  useEffect(() => {
+    if (!roundResult) return
+    const timer = setTimeout(() => { maybeAskForPermission().catch(() => {}) }, 2000)
+    return () => clearTimeout(timer)
+  }, [roundResult])
 
   useEffect(() => {
     if (questNodeId && questLeveledUp) setShowLevelUp(true)
@@ -262,6 +320,14 @@ export default function ResultsScreen() {
     optimisticPreviousXp !== undefined &&
     optimisticNewXp !== undefined
 
+  // Coins earned equal XP earned 1:1 for non-quest rounds (server-enforced).
+  // Sourced from xpResult.newCoins (not profile.coins) so the wallet count-up
+  // never races the profile query's background refetch.
+  const newCoinsTotal = finiteNumber(xpResult?.newCoins)
+  const previousCoinsTotal = newCoinsTotal !== undefined
+    ? Math.max(0, newCoinsTotal - optimisticXpEarned)
+    : undefined
+
   // ── Quest mode layout ────────────────────────────────────────────────────
   if (questNodeId) {
     return (
@@ -283,6 +349,10 @@ export default function ResultsScreen() {
             totalXp={profile?.xp}
             onRetry={() => { resetGame(); router.replace(`/quest/${questCategoryId}` as never) }}
             onQuestMap={() => { resetGame(); router.replace(`/quest/${questCategoryId}` as never) }}
+            onNextNode={(nodeId) => {
+              resetGame()
+              router.replace(`/quest/${questCategoryId}?autoplay=${nodeId}` as never)
+            }}
           />
 
         </ScrollView>
@@ -305,29 +375,31 @@ export default function ResultsScreen() {
   return (
     <ScreenWrapper>
       <ScrollView style={styles.container} contentContainerStyle={styles.content}>
-        {isBlitz && (
-          <View style={[styles.dailyBadge, { borderColor: `${colors.streakActive}44`, backgroundColor: `${colors.streakActive}18` }]}>
-            <Text style={[styles.dailyBadgeText, { color: colors.streakActive }]}>⚡ Blitz Complete!</Text>
-            <Text style={[styles.dailyStreakText, { color: colors.textSecondary }]}>
-              {roundResult.answers.length} questions answered in 60s
+        <Reveal>
+          {isBlitz && (
+            <View style={[styles.dailyBadge, { borderColor: `${colors.streakActive}44`, backgroundColor: `${colors.streakActive}18` }]}>
+              <Text style={[styles.dailyBadgeText, { color: colors.streakActive }]}>⚡ Blitz Complete!</Text>
+              <Text style={[styles.dailyStreakText, { color: colors.textSecondary }]}>
+                {roundResult.answers.length} questions answered in {GAME_CONFIG.BLITZ_SECONDS}s
+              </Text>
+            </View>
+          )}
+
+          {isDailyChallenge && (
+            <View style={styles.dailyBadge}>
+              <Text style={styles.dailyBadgeText}>📅 Daily Challenge Complete!</Text>
+              {completeDailyChallenge.data && completeDailyChallenge.data.streak > 0 && (
+                <Text style={styles.dailyStreakText}>🔥 {completeDailyChallenge.data.streak} day streak</Text>
+              )}
+            </View>
+          )}
+
+          <View style={styles.titleSection}>
+            <Text style={styles.finishedLabel}>
+              {isDailyChallenge ? "Today's Challenge" : isBlitz ? 'Blitz Round' : `Round ${roundNumber} Complete!`}
             </Text>
           </View>
-        )}
-
-        {isDailyChallenge && (
-          <View style={styles.dailyBadge}>
-            <Text style={styles.dailyBadgeText}>📅 Daily Challenge Complete!</Text>
-            {completeDailyChallenge.data && completeDailyChallenge.data.streak > 0 && (
-              <Text style={styles.dailyStreakText}>🔥 {completeDailyChallenge.data.streak} day streak</Text>
-            )}
-          </View>
-        )}
-
-        <View style={styles.titleSection}>
-          <Text style={styles.finishedLabel}>
-            {isDailyChallenge ? "Today's Challenge" : isBlitz ? 'Blitz Round' : `Round ${roundNumber} Complete!`}
-          </Text>
-        </View>
+        </Reveal>
 
         {submitXp.isPending && (
           <View style={styles.loadingCard}>
@@ -337,18 +409,20 @@ export default function ResultsScreen() {
         )}
 
         {showRegularXpSummary && (
-          <XpCountUp
-            xpEarned={optimisticXpEarned}
-            previousXp={optimisticPreviousXp}
-            newXp={optimisticNewXp}
-            leveledUp={optimisticLeveledUp}
-            newLevel={optimisticNewLevel}
-            breakdown={xpResult?.xpBreakdown}
-          />
+          <Reveal delay={150}>
+            <XpCountUp
+              xpEarned={optimisticXpEarned}
+              previousXp={optimisticPreviousXp}
+              newXp={optimisticNewXp}
+              leveledUp={optimisticLeveledUp}
+              newLevel={optimisticNewLevel}
+              breakdown={xpResult?.xpBreakdown}
+            />
+          </Reveal>
         )}
 
         {showRegularXpSummary && optimisticXpEarned > 0 && (
-          <View style={styles.coinsEarnedRow}>
+          <Reveal delay={220} style={styles.coinsEarnedRow}>
             <Coins weight="duotone" size={16} color="#FFD700" />
             <Text style={styles.coinsEarnedText}>
               +{optimisticXpEarned.toLocaleString()} coins earned
@@ -356,84 +430,113 @@ export default function ResultsScreen() {
             {xpResult?.xpBreakdown && roundResult?.xpBoosterApplied && (
               <Text style={styles.boosterBadge}>⚡ XP Booster active</Text>
             )}
-          </View>
+            {previousCoinsTotal !== undefined && newCoinsTotal !== undefined && (
+              <WalletBadge previousCoins={previousCoinsTotal} newCoins={newCoinsTotal} />
+            )}
+          </Reveal>
         )}
 
-        <View style={styles.statsRow}>
-          <View style={styles.stat}>
-            <Text style={styles.statValue}>{roundResult.correctCount}/{roundResult.totalQuestions}</Text>
-            <Text style={styles.statLabel}>Correct</Text>
+        <Reveal delay={300}>
+          <View style={styles.statsRow}>
+            <View style={styles.stat}>
+              <Text style={styles.statValue}>{roundResult.correctCount}/{roundResult.totalQuestions}</Text>
+              <Text style={styles.statLabel}>Correct</Text>
+            </View>
+            <View style={styles.stat}>
+              <Text style={styles.statValue}>{accuracy}%</Text>
+              <Text style={styles.statLabel}>Accuracy</Text>
+            </View>
+            <View style={styles.stat}>
+              <Text style={styles.statValue}>{roundResult.longestStreak}🔥</Text>
+              <Text style={styles.statLabel}>Best Streak</Text>
+            </View>
           </View>
-          <View style={styles.stat}>
-            <Text style={styles.statValue}>{accuracy}%</Text>
-            <Text style={styles.statLabel}>Accuracy</Text>
-          </View>
-          <View style={styles.stat}>
-            <Text style={styles.statValue}>{roundResult.longestStreak}🔥</Text>
-            <Text style={styles.statLabel}>Best Streak</Text>
-          </View>
-        </View>
+        </Reveal>
 
         {(roundResult.bonusSummary.totalSpeedBonus > 0 || roundResult.bonusSummary.totalStreakBonus > 0) && (
-          <View style={styles.bonusCard}>
-            <Text style={styles.bonusTitle}>XP Details</Text>
-            {roundResult.bonusSummary.totalSpeedBonus > 0 && (
-              <Text style={styles.bonusLine}>⚡ Speed bonus: +{roundResult.bonusSummary.totalSpeedBonus} XP</Text>
-            )}
-            {roundResult.bonusSummary.totalStreakBonus > 0 && (
-              <Text style={styles.bonusLine}>🔥 Streak bonus: +{roundResult.bonusSummary.totalStreakBonus} XP</Text>
-            )}
-          </View>
+          <Reveal delay={380}>
+            <View style={styles.bonusCard}>
+              <Text style={styles.bonusTitle}>XP Details</Text>
+              {roundResult.bonusSummary.totalSpeedBonus > 0 && (
+                <Text style={styles.bonusLine}>⚡ Speed bonus: +{roundResult.bonusSummary.totalSpeedBonus} XP</Text>
+              )}
+              {roundResult.bonusSummary.totalStreakBonus > 0 && (
+                <Text style={styles.bonusLine}>🔥 Streak bonus: +{roundResult.bonusSummary.totalStreakBonus} XP</Text>
+              )}
+            </View>
+          </Reveal>
         )}
 
-        {xpResult && (
-          <>
-            {xpResult.newBestXp && (
-              <View style={styles.newBestCard}>
-                <Text style={styles.newBest}>🏆 New personal best XP!</Text>
-              </View>
-            )}
-          </>
+        {xpResult?.newBestXp && (
+          <Reveal delay={460}>
+            <View style={styles.newBestCard}>
+              <Text style={styles.newBest}>🏆 New personal best XP!</Text>
+            </View>
+          </Reveal>
         )}
 
         {xpResult && xpResult.sessionRound > 1 && (
-          <View style={styles.sessionCard}>
-            <Text style={styles.sessionTitle}>Session Total · Round {xpResult.sessionRound}</Text>
-            <View style={styles.sessionStats}>
-              <View style={styles.sessionStat}>
-                <Text style={[styles.sessionValue, { color: colors.primary }]}>+{xpResult.sessionXpEarned}</Text>
-                <Text style={styles.sessionLabel}>XP</Text>
-              </View>
-              <View style={styles.sessionDivider} />
-              <View style={styles.sessionStat}>
-                <Text style={styles.sessionValue}>{xpResult.sessionCorrectCount}</Text>
-                <Text style={styles.sessionLabel}>Correct</Text>
+          <Reveal delay={460}>
+            <View style={styles.sessionCard}>
+              <Text style={styles.sessionTitle}>Session Total · Round {xpResult.sessionRound}</Text>
+              <View style={styles.sessionStats}>
+                <View style={styles.sessionStat}>
+                  <Text style={[styles.sessionValue, { color: colors.primary }]}>+{xpResult.sessionXpEarned}</Text>
+                  <Text style={styles.sessionLabel}>XP</Text>
+                </View>
+                <View style={styles.sessionDivider} />
+                <View style={styles.sessionStat}>
+                  <Text style={styles.sessionValue}>{xpResult.sessionCorrectCount}</Text>
+                  <Text style={styles.sessionLabel}>Correct</Text>
+                </View>
               </View>
             </View>
-          </View>
+          </Reveal>
         )}
 
         {xpResult && (
-          <View style={styles.rankCard}>
-            <Text style={styles.rankLabel}>GLOBAL RANK</Text>
-            <Text style={styles.rankNumber}>#{xpResult.rank}</Text>
-          </View>
+          <Reveal delay={540}>
+            <View style={styles.rankCard}>
+              <Text style={styles.rankLabel}>GLOBAL RANK</Text>
+              <Text style={styles.rankNumber}>#{xpResult.rank}</Text>
+            </View>
+          </Reveal>
         )}
 
-        <View style={styles.actions}>
+        {nextStepNudge && (
+          <Reveal delay={620}>
+            <View style={styles.nudgeCard}>
+              <Text style={styles.nudgeText}>{nextStepNudge}</Text>
+            </View>
+          </Reveal>
+        )}
+
+        {momentumAvailable && (
+          <Reveal delay={620}>
+            <View style={styles.momentumChip}>
+              <Text style={styles.momentumText}>
+                ⚡ Momentum: +{Math.round(GAME_CONFIG.MOMENTUM_BONUS_MULTIPLIER * 100)}% XP if you start within {formatMmSs(momentumSecondsLeft)}
+              </Text>
+            </View>
+          </Reveal>
+        )}
+
+        <Reveal delay={700} style={styles.actions}>
           {!isDailyChallenge && (
-            <Button
-              title={`Round ${nextRoundNumber} → ${nextDifficulty.charAt(0).toUpperCase() + nextDifficulty.slice(1)}`}
-              onPress={handleNextRound}
-              size="lg"
-              disabled={createRound.isPending}
-            />
+            <Pulse>
+              <Button
+                title={`Round ${nextRoundNumber} →`}
+                onPress={handleNextRound}
+                size="lg"
+                disabled={createRound.isPending}
+              />
+            </Pulse>
           )}
           <Button title="Play Again" onPress={() => { resetGame(); router.replace('/game/category') }} size="lg" variant="secondary" />
           <Button title="Leaderboard" onPress={() => { resetGame(); router.replace('/(tabs)/leaderboard') }} variant="secondary" size="lg" />
           {xpResult && <Button title="Share Result" onPress={() => setShowShare(true)} variant="secondary" size="lg" />}
           <Button title="Home" onPress={() => { resetGame(); router.replace('/(tabs)/home') }} variant="ghost" />
-        </View>
+        </Reveal>
       </ScrollView>
 
       {xpResult?.newAchievements && xpResult.newAchievements.length > 0 && (
@@ -475,6 +578,7 @@ const styles = StyleSheet.create({
 
   // ── Quest styles ──────────────────────────────────────────────────────────
   questSection: { gap: spacing.lg },
+  questActions: { gap: spacing.sm },
   questEvaluating: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, justifyContent: 'center', paddingVertical: spacing.md },
   evaluatingText: { fontSize: fontSize.sm, color: colors.textSecondary },
 
@@ -628,6 +732,31 @@ const styles = StyleSheet.create({
   },
   rankLabel: { fontSize: fontSize.xs, color: colors.textSecondary, textTransform: 'uppercase', letterSpacing: 2, fontWeight: '600' },
   rankNumber: { fontSize: 52, fontWeight: '900', color: colors.textPrimary },
+  nudgeCard: {
+    backgroundColor: `${colors.primary}12`,
+    borderRadius: radius.lg,
+    borderWidth: 1,
+    borderColor: `${colors.primary}44`,
+    paddingVertical: spacing.md,
+    paddingHorizontal: spacing.lg,
+    alignItems: 'center',
+  },
+  nudgeText: { fontSize: fontSize.sm, fontWeight: '700', color: colors.primaryLight, textAlign: 'center' },
+  momentumChip: {
+    backgroundColor: `${colors.streakActive}15`,
+    borderRadius: radius.full,
+    borderWidth: 1,
+    borderColor: `${colors.streakActive}44`,
+    paddingVertical: spacing.sm,
+    paddingHorizontal: spacing.md,
+    alignItems: 'center',
+  },
+  momentumText: {
+    fontSize: fontSize.xs,
+    fontWeight: '800',
+    color: colors.streakActive,
+    fontVariant: ['tabular-nums'],
+  },
   actions: { gap: spacing.sm },
   toastContainer: { position: 'absolute', bottom: spacing.xl, left: spacing.lg, right: spacing.lg },
   dailyBadge: {

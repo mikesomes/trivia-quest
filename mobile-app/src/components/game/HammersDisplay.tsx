@@ -1,7 +1,8 @@
 import React from 'react'
-import { TouchableOpacity, Text, StyleSheet } from 'react-native'
+import { Text, StyleSheet } from 'react-native'
 import { spacing } from '../../constants/theme'
 import { GAME_CONFIG } from '../../constants/game'
+import { AnimatedPressable } from '../ui/AnimatedPressable'
 
 interface HammersDisplayProps {
   hammers: number
@@ -11,7 +12,7 @@ interface HammersDisplayProps {
 
 export function HammersDisplay({ hammers, onUse, canUse }: HammersDisplayProps) {
   return (
-    <TouchableOpacity
+    <AnimatedPressable
       style={styles.container}
       onPress={onUse}
       disabled={!canUse}
@@ -25,7 +26,7 @@ export function HammersDisplay({ hammers, onUse, canUse }: HammersDisplayProps) 
           🔨
         </Text>
       ))}
-    </TouchableOpacity>
+    </AnimatedPressable>
   )
 }
 

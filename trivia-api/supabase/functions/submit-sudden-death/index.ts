@@ -4,6 +4,13 @@ import { createServiceClient } from '../_shared/supabaseClient.ts'
 import { errorResponse, jsonResponse } from '../_shared/errors.ts'
 import { isValidUUID, parseBody } from '../_shared/validation.ts'
 import { levelFromXp, xpToNextLevel } from '../_shared/scoring.ts'
+import { updateDayStreak } from '../_shared/streaks.ts'
+import {
+  checkAndAwardAchievements,
+  thresholdConditions,
+  SURVIVAL_TARGETS,
+  DAY_STREAK_TARGETS,
+} from '../_shared/achievements.ts'
 
 // Maximum number of SD batches we'll accept.
 // Each batch is 10 questions → 200 batches = 2000 questions max per run.
@@ -112,7 +119,7 @@ Deno.serve(async (req) => {
   // ── XP award ─────────────────────────────────────────────────────────────
   const { data: user, error: userError } = await supabase
     .from('users')
-    .select('xp, level')
+    .select('xp, level, best_survival_depth')
     .eq('id', auth.userId)
     .single()
 
@@ -123,8 +130,20 @@ Deno.serve(async (req) => {
   const oldLevel = levelFromXp(user.xp)
   const newLevel = levelFromXp(newXp)
   const leveledUp = newLevel > oldLevel
+  const newBestSurvivalDepth = Math.max(user.best_survival_depth ?? 0, questionsAnswered)
 
-  await supabase.from('users').update({ xp: newXp, level: newLevel }).eq('id', auth.userId)
+  await supabase
+    .from('users')
+    .update({ xp: newXp, level: newLevel, best_survival_depth: newBestSurvivalDepth })
+    .eq('id', auth.userId)
+
+  // Survival runs also keep the universal day streak alive
+  const dayStreak = await updateDayStreak(supabase, auth.userId)
+
+  const newAchievements = await checkAndAwardAchievements(supabase, auth.userId, {
+    ...thresholdConditions('survival', SURVIVAL_TARGETS, newBestSurvivalDepth),
+    ...thresholdConditions('day_streak', DAY_STREAK_TARGETS, dayStreak?.currentStreak ?? 0),
+  })
 
   // ── Rank ──────────────────────────────────────────────────────────────────
   // Rank purely by XP earned in the run.
@@ -145,5 +164,7 @@ Deno.serve(async (req) => {
     leveledUp,
     rank,
     xpToNextLevel: xpToNextLevel(newXp),
+    dayStreak,
+    newAchievements,
   })
 })

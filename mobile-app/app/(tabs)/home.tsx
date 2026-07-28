@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react'
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native'
+import { View, Text, StyleSheet, ScrollView } from 'react-native'
 import { ScreenWrapper } from '../../src/components/ui/ScreenWrapper'
+import { AnimatedPressable } from '../../src/components/ui/AnimatedPressable'
 import { router, type Href } from 'expo-router'
 import { colors, spacing, fontSize, radius } from '../../src/constants/theme'
 import { useProfile } from '../../src/hooks/useProfile'
@@ -8,10 +9,14 @@ import { formatLevel } from '../../src/utils/format'
 import { XpProgressBar } from '../../src/components/profile/XpProgressBar'
 import { EasterEggModal } from '../../src/components/ui/EasterEggModal'
 import { DailyChallengeCard } from '../../src/components/home/DailyChallengeCard'
-import { Lightning, Brain, Fire } from 'phosphor-react-native'
+import { DailyChestCard } from '../../src/components/home/DailyChestCard'
+import { DailyQuestsCard } from '../../src/components/home/DailyQuestsCard'
+import { Reveal } from '../../src/components/ui/Reveal'
+import { Lightning, Brain, Fire, PuzzlePiece } from 'phosphor-react-native'
 import { QuestHeroCard } from '../../src/components/home/QuestHeroCard'
 import { useQuestStore } from '../../src/store/questStore'
 import { QUEST_CATEGORIES } from '../../src/config/questConfig'
+import { GAME_CONFIG } from '../../src/constants/game'
 
 export default function HomeScreen() {
   const { data: profile } = useProfile()
@@ -50,71 +55,99 @@ export default function HomeScreen() {
     <ScreenWrapper>
       <ScrollView style={styles.container} contentContainerStyle={styles.content}>
         {/* Header */}
-        <View style={styles.header}>
-          <TouchableOpacity onPress={handleGreetingTap} activeOpacity={1}>
-            <Text style={styles.greeting}>{greeting},</Text>
-            <Text style={styles.greetingName}>{profile?.displayName ?? ''}!</Text>
-          </TouchableOpacity>
-          {profile && (
-            <Text style={styles.metaRow}>
-              {formatLevel(profile.level)} · 💰 {profile.coins.toLocaleString()}
-            </Text>
-          )}
-        </View>
+        <Reveal style={styles.headerReveal}>
+          <View style={styles.header}>
+            <AnimatedPressable onPress={handleGreetingTap} activeOpacity={1} scaleTo={1}>
+              <Text style={styles.greeting}>{greeting},</Text>
+              <Text style={styles.greetingName}>{profile?.displayName ?? ''}!</Text>
+            </AnimatedPressable>
+            {profile && (
+              <Text style={styles.metaRow}>
+                {formatLevel(profile.level)} · 💰 {profile.coins.toLocaleString()}
+                {(profile.dayStreak ?? 0) > 0 && ` · 🔥 ${profile.dayStreak} day${profile.dayStreak === 1 ? '' : 's'}`}
+              </Text>
+            )}
+          </View>
 
-        {/* XP bar */}
-        {profile && (
-          <XpProgressBar
-            currentXp={profile.xp}
-            level={profile.level}
-            xpToNextLevel={profile.xpToNextLevel}
-          />
-        )}
+          {/* XP bar */}
+          {profile && (
+            <XpProgressBar
+              currentXp={profile.xp}
+              level={profile.level}
+              xpToNextLevel={profile.xpToNextLevel}
+            />
+          )}
+        </Reveal>
 
         {/* Quest hero — featured mode */}
-        <QuestHeroCard
-          totalNodes={totalNodes}
-          completedNodes={completedNodes}
-          isLoading={false}
-          onPress={() => router.push('/quest')}
-        />
+        <Reveal delay={70}>
+          <QuestHeroCard
+            totalNodes={totalNodes}
+            completedNodes={completedNodes}
+            isLoading={false}
+            onPress={() => router.push('/quest')}
+          />
+        </Reveal>
 
         {/* Daily challenge */}
-        <DailyChallengeCard />
+        <Reveal delay={140}>
+          <DailyChallengeCard />
+        </Reveal>
+
+        {/* Daily loot chest */}
+        <Reveal delay={210}>
+          <DailyChestCard />
+        </Reveal>
+
+        {/* Daily/weekly XP quests */}
+        <Reveal delay={280}>
+          <DailyQuestsCard />
+        </Reveal>
 
         {/* Play Modes */}
-        <View style={styles.modesSection}>
-          <Text style={styles.sectionLabel}>Play Modes</Text>
-          <View style={styles.modesRow}>
-            <TouchableOpacity
-              style={styles.modeCard}
-              onPress={() => router.push('/game/mode-intro?mode=classic' as Href)}
-              activeOpacity={0.8}
-            >
-              <Brain weight="duotone" size={24} color={colors.primary} />
-              <Text style={styles.modeTitle}>Classic</Text>
-              <Text style={styles.modeSubtitle}>Pick a topic</Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={styles.modeCard}
-              onPress={() => router.push('/game/mode-intro?mode=blitz' as Href)}
-              activeOpacity={0.8}
-            >
-              <Lightning weight="duotone" size={24} color={colors.timerWarning} />
-              <Text style={styles.modeTitle}>Blitz</Text>
-              <Text style={styles.modeSubtitle}>60s sprint</Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={styles.modeCard}
-              onPress={() => router.push('/game/mode-intro?mode=survival' as Href)}
-              activeOpacity={0.8}
-            >
-              <Fire weight="duotone" size={24} color={colors.incorrect} />
-              <Text style={styles.modeTitle}>Survival</Text>
-              <Text style={styles.modeSubtitle}>One life</Text>
-            </TouchableOpacity>
+        <Reveal delay={350}>
+          <View style={styles.modesSection}>
+            <Text style={styles.sectionLabel}>Play Modes</Text>
+            <View style={styles.modesRow}>
+              <AnimatedPressable
+                style={styles.modeCard}
+                onPress={() => router.push('/game/mode-intro?mode=classic' as Href)}
+                activeOpacity={0.8}
+              >
+                <Brain weight="duotone" size={24} color={colors.primary} />
+                <Text style={styles.modeTitle}>Classic</Text>
+                <Text style={styles.modeSubtitle}>Pick a topic</Text>
+              </AnimatedPressable>
+              <AnimatedPressable
+                style={styles.modeCard}
+                onPress={() => router.push('/game/mode-intro?mode=blitz' as Href)}
+                activeOpacity={0.8}
+              >
+                <Lightning weight="duotone" size={24} color={colors.timerWarning} />
+                <Text style={styles.modeTitle}>Blitz</Text>
+                <Text style={styles.modeSubtitle}>{GAME_CONFIG.BLITZ_SECONDS}s sprint</Text>
+              </AnimatedPressable>
+              <AnimatedPressable
+                style={styles.modeCard}
+                onPress={() => router.push('/game/mode-intro?mode=survival' as Href)}
+                activeOpacity={0.8}
+              >
+                <Fire weight="duotone" size={24} color={colors.incorrect} />
+                <Text style={styles.modeTitle}>Survival</Text>
+                <Text style={styles.modeSubtitle}>One life</Text>
+              </AnimatedPressable>
+              <AnimatedPressable
+                style={styles.modeCard}
+                onPress={() => router.push('/game/mode-intro?mode=odd_one_out' as Href)}
+                activeOpacity={0.8}
+              >
+                <PuzzlePiece weight="duotone" size={24} color="#10B981" />
+                <Text style={styles.modeTitle}>Odd One Out</Text>
+                <Text style={styles.modeSubtitle}>Find the misfit</Text>
+              </AnimatedPressable>
+            </View>
           </View>
-        </View>
+        </Reveal>
       </ScrollView>
       <EasterEggModal visible={showEasterEgg} onDismiss={() => setShowEasterEgg(false)} />
     </ScreenWrapper>
@@ -124,6 +157,7 @@ export default function HomeScreen() {
 const styles = StyleSheet.create({
   container: { flex: 1 },
   content: { padding: spacing.lg, gap: spacing.md, paddingBottom: spacing.xxl },
+  headerReveal: { gap: spacing.md },
   header: { gap: spacing.xs },
   greeting: { fontSize: fontSize.xl, fontWeight: '600', color: colors.textSecondary },
   greetingName: { fontSize: fontSize.xxxl, fontWeight: '900', color: colors.textPrimary },
@@ -143,10 +177,11 @@ const styles = StyleSheet.create({
   },
   modesRow: {
     flexDirection: 'row',
+    flexWrap: 'wrap',
     gap: spacing.sm,
   },
   modeCard: {
-    flex: 1,
+    width: '48%',
     backgroundColor: colors.bgCard,
     borderRadius: radius.md,
     borderWidth: 1,

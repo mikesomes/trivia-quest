@@ -1,8 +1,9 @@
 import React from 'react'
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView, ActivityIndicator, Dimensions } from 'react-native'
+import { View, Text, StyleSheet, ScrollView, ActivityIndicator, Dimensions } from 'react-native'
 import * as Haptics from 'expo-haptics'
 import { LinearGradient } from 'expo-linear-gradient'
 import { ScreenWrapper } from '../../src/components/ui/ScreenWrapper'
+import { AnimatedPressable } from '../../src/components/ui/AnimatedPressable'
 import { router } from 'expo-router'
 import { colors, spacing, fontSize, radius } from '../../src/constants/theme'
 import { CATEGORIES } from '../../src/constants/categories'
@@ -10,6 +11,8 @@ import { useGameStore } from '../../src/store/gameStore'
 import { useCreateRound } from '../../src/hooks/useRound'
 import { ArrowLeft } from 'phosphor-react-native'
 import { getBlitzSegments } from '../../src/utils/difficultyMix'
+import { GAME_CONFIG } from '../../src/constants/game'
+import { CategoryBadge } from '../../src/components/ui/CategoryBadge'
 
 const CARD_WIDTH = (Dimensions.get('window').width - spacing.lg * 2 - spacing.md) / 2
 
@@ -37,19 +40,19 @@ export default function BlitzCategoryScreen() {
     <ScreenWrapper>
       <ScrollView style={styles.container} contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
         <View style={styles.topRow}>
-          <TouchableOpacity style={styles.back} onPress={() => router.back()}>
+          <AnimatedPressable style={styles.back} onPress={() => router.back()}>
             <ArrowLeft weight="bold" size={24} color={colors.textPrimary} />
-          </TouchableOpacity>
+          </AnimatedPressable>
         </View>
 
         <Text style={styles.title}>⚡ Blitz</Text>
-        <Text style={styles.subtitle}>Choose a topic — 60 seconds on the clock</Text>
+        <Text style={styles.subtitle}>Choose a topic — {GAME_CONFIG.BLITZ_SECONDS} seconds on the clock</Text>
 
         <View style={styles.grid}>
-          {CATEGORIES.map((cat) => {
+          {CATEGORIES.filter((cat) => !cat.modeOnly).map((cat) => {
             const isDisabled = cat.comingSoon || createRound.isPending
             return (
-              <TouchableOpacity
+              <AnimatedPressable
                 key={cat.id}
                 style={[
                   styles.card,
@@ -83,9 +86,9 @@ export default function BlitzCategoryScreen() {
                     <Text style={[styles.badgeText, styles.comingSoonBadgeText]}>Coming Soon</Text>
                   </View>
                 )}
-                <Text style={[styles.emoji, cat.comingSoon && styles.emojiDisabled]}>
-                  {cat.emoji}
-                </Text>
+                <View style={[styles.badgeIcon, cat.comingSoon && styles.emojiDisabled]}>
+                  <CategoryBadge category={cat} size={46} muted={cat.comingSoon} />
+                </View>
                 <Text style={[styles.label, cat.comingSoon && styles.labelDisabled]}>
                   {cat.label}
                 </Text>
@@ -95,7 +98,7 @@ export default function BlitzCategoryScreen() {
                 {createRound.isPending && !cat.comingSoon && (
                   <ActivityIndicator style={styles.spinner} size="small" color={cat.color} />
                 )}
-              </TouchableOpacity>
+              </AnimatedPressable>
             )
           })}
         </View>
@@ -137,7 +140,7 @@ const styles = StyleSheet.create({
     marginBottom: spacing.xs,
   },
   badgeText: { fontSize: fontSize.xs, fontWeight: '700', letterSpacing: 0.3 },
-  emoji: { fontSize: 38, marginTop: spacing.xs },
+  badgeIcon: { marginTop: spacing.xs, alignSelf: 'flex-start' },
   label: { fontSize: fontSize.md, fontWeight: '800', color: colors.textPrimary, marginTop: spacing.xs },
   description: { fontSize: fontSize.xs, color: colors.textSecondary, lineHeight: 16 },
   cardDisabled: { opacity: 0.5, borderColor: colors.border },

@@ -4,7 +4,6 @@ import {
   Text,
   StyleSheet,
   ScrollView,
-  TouchableOpacity,
   Alert,
   ActivityIndicator,
 } from 'react-native'
@@ -13,6 +12,7 @@ import * as Haptics from 'expo-haptics'
 import { LinearGradient } from 'expo-linear-gradient'
 import { Coins, Minus, Plus } from 'phosphor-react-native'
 import { ScreenWrapper } from '../../src/components/ui/ScreenWrapper'
+import { AnimatedPressable } from '../../src/components/ui/AnimatedPressable'
 import { colors, spacing, fontSize, radius } from '../../src/constants/theme'
 import { SHOP_ITEMS, INVENTORY_KEYS, EQUIPPED_KEYS, type ShopItemId } from '../../src/constants/shop'
 import { shopApi } from '../../src/api/shop'
@@ -84,7 +84,8 @@ export default function ShopScreen() {
 
   const handleEquipChange = (itemId: ShopItemId, delta: number) => {
     if (!profile) return
-    const equippedKey = EQUIPPED_KEYS[itemId] as keyof EquipItemsRequest
+    const equippedKey = EQUIPPED_KEYS[itemId] as keyof EquipItemsRequest | undefined
+    if (!equippedKey) return
     const inventoryKey = INVENTORY_KEYS[itemId]
     const owned = (profile[inventoryKey] as number) ?? 0
     const current = loadout[equippedKey]
@@ -100,6 +101,7 @@ export default function ShopScreen() {
   const coins = profile?.coins ?? 0
 
   const loadoutItems = SHOP_ITEMS.filter((item) => {
+    if (!item.equippable) return false
     const key = INVENTORY_KEYS[item.id]
     return (profile?.[key] as number ?? 0) > 0
   })
@@ -155,25 +157,25 @@ export default function ShopScreen() {
                       <Text style={styles.loadoutOwned}>×{owned} in bag</Text>
                     </View>
                     <View style={styles.stepper}>
-                      <TouchableOpacity
+                      <AnimatedPressable
                         style={[styles.stepBtn, equipped === 0 && styles.stepBtnDisabled]}
                         onPress={() => handleEquipChange(item.id, -1)}
                         disabled={equipped === 0 || equipMutation.isPending}
                         activeOpacity={0.7}
                       >
                         <Minus size={14} color={equipped === 0 ? colors.textSecondary : colors.textPrimary} weight="bold" />
-                      </TouchableOpacity>
+                      </AnimatedPressable>
                       <Text style={[styles.stepCount, equipped > 0 && styles.stepCountActive]}>
                         {equipped}
                       </Text>
-                      <TouchableOpacity
+                      <AnimatedPressable
                         style={[styles.stepBtn, equipped >= owned && styles.stepBtnDisabled]}
                         onPress={() => handleEquipChange(item.id, 1)}
                         disabled={equipped >= owned || equipMutation.isPending}
                         activeOpacity={0.7}
                       >
                         <Plus size={14} color={equipped >= owned ? colors.textSecondary : colors.textPrimary} weight="bold" />
-                      </TouchableOpacity>
+                      </AnimatedPressable>
                     </View>
                   </View>
                 )
@@ -214,7 +216,7 @@ export default function ShopScreen() {
                   </View>
                 </View>
 
-                <TouchableOpacity
+                <AnimatedPressable
                   style={[styles.buyButton, isDisabled && styles.buyButtonDisabled]}
                   onPress={() => handleBuy(item.id)}
                   disabled={isDisabled}
@@ -232,7 +234,7 @@ export default function ShopScreen() {
                       </Text>
                     </>
                   )}
-                </TouchableOpacity>
+                </AnimatedPressable>
               </View>
             )
           })}

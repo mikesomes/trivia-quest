@@ -1,7 +1,8 @@
 import React from 'react'
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native'
+import { View, Text, StyleSheet, ScrollView } from 'react-native'
 import { router } from 'expo-router'
 import { ScreenWrapper } from '../../src/components/ui/ScreenWrapper'
+import { AnimatedPressable } from '../../src/components/ui/AnimatedPressable'
 import { QUEST_CATEGORIES } from '../../src/config/questConfig'
 import { useQuestStore } from '../../src/store/questStore'
 import { buildCategoryStats } from '../../src/utils/questProgress'
@@ -32,7 +33,7 @@ export default function QuestHubScreen() {
             const stats = buildCategoryStats(cat, progress)
 
             return (
-              <TouchableOpacity
+              <AnimatedPressable
                 key={cat.id}
                 style={[styles.card, { borderColor: `${cat.color}55` }]}
                 onPress={() => router.push(`/quest/${cat.id}` as never)}
@@ -69,7 +70,7 @@ export default function QuestHubScreen() {
                     )}
                   </View>
                 </View>
-              </TouchableOpacity>
+              </AnimatedPressable>
             )
           })}
         </View>

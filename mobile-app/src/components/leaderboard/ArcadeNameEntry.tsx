@@ -1,10 +1,11 @@
 import React, { useState, useRef } from 'react'
 import {
-  View, Text, StyleSheet, TextInput, TouchableOpacity,
+  View, Text, StyleSheet, TextInput,
   Animated, Easing, ActivityIndicator,
 } from 'react-native'
 import { colors, spacing, fontSize, radius } from '../../constants/theme'
 import { profileApi } from '../../api/profile'
+import { AnimatedPressable } from '../ui/AnimatedPressable'
 
 const MAX_NAME_LENGTH = 12
 
@@ -69,7 +70,7 @@ export function ArcadeNameEntry({ onSubmit }: Props) {
       <Text style={styles.counter}>{name.trim().length}/{MAX_NAME_LENGTH}</Text>
       {error ? <Text style={styles.error}>{error}</Text> : null}
 
-      <TouchableOpacity
+      <AnimatedPressable
         style={[styles.btn, (!name.trim() || saving) && styles.btnDisabled]}
         onPress={handleSubmit}
         disabled={!name.trim() || saving}
@@ -79,7 +80,7 @@ export function ArcadeNameEntry({ onSubmit }: Props) {
           ? <ActivityIndicator color="#fff" size="small" />
           : <Text style={styles.btnText}>PRESS START</Text>
         }
-      </TouchableOpacity>
+      </AnimatedPressable>
     </View>
   )
 }

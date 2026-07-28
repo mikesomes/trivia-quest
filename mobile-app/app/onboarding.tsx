@@ -1,6 +1,6 @@
 import React, { useRef, useState } from 'react'
 import {
-  View, Text, TextInput, StyleSheet, TouchableOpacity,
+  View, Text, TextInput, StyleSheet,
   FlatList, Animated, KeyboardAvoidingView, Platform,
   ActivityIndicator, useWindowDimensions,
 } from 'react-native'
@@ -8,6 +8,7 @@ import { LinearGradient } from 'expo-linear-gradient'
 import { router } from 'expo-router'
 import * as Haptics from 'expo-haptics'
 import { colors, spacing, fontSize, radius } from '../src/constants/theme'
+import { AnimatedPressable } from '../src/components/ui/AnimatedPressable'
 import { profileApi } from '../src/api/profile'
 import { storage } from '../src/utils/storage'
 import { useAuthStore } from '../src/store/authStore'
@@ -167,7 +168,7 @@ function NameSlide({ width, onDone }: { width: number; onDone: () => void }) {
         {error ? <Text style={styles.errorText}>{error}</Text> : null}
       </View>
 
-      <TouchableOpacity
+      <AnimatedPressable
         style={[styles.ctaButton, { backgroundColor: colors.primary }, (!isValid || loading) && styles.buttonDisabled]}
         onPress={handleSubmit}
         activeOpacity={0.85}
@@ -177,7 +178,7 @@ function NameSlide({ width, onDone }: { width: number; onDone: () => void }) {
           ? <ActivityIndicator color="#fff" size="small" />
           : <Text style={styles.ctaText}>Let's Play →</Text>
         }
-      </TouchableOpacity>
+      </AnimatedPressable>
     </KeyboardAvoidingView>
   )
 }
@@ -255,7 +256,7 @@ export default function OnboardingScreen() {
           <Dots current={currentIndex} total={TOTAL} />
 
           <View style={styles.navRow}>
-            <TouchableOpacity
+            <AnimatedPressable
               onPress={() => {
                 flatRef.current?.scrollToIndex({ index: SLIDES.length, animated: true })
                 setCurrentIndex(SLIDES.length)
@@ -263,11 +264,11 @@ export default function OnboardingScreen() {
               hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
             >
               <Text style={styles.skipText}>Skip</Text>
-            </TouchableOpacity>
+            </AnimatedPressable>
 
-            <TouchableOpacity style={[styles.nextButton, { backgroundColor: colors.primary }]} onPress={goNext} activeOpacity={0.85}>
+            <AnimatedPressable style={[styles.nextButton, { backgroundColor: colors.primary }]} onPress={goNext} activeOpacity={0.85}>
               <Text style={styles.nextText}>{isLastInfoSlide ? 'Get Started' : 'Next'}</Text>
-            </TouchableOpacity>
+            </AnimatedPressable>
           </View>
         </View>
       )}

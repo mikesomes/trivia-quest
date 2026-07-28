@@ -4,9 +4,13 @@ import { errorResponse, jsonResponse } from '../_shared/errors.ts'
 import { isValidCategory, isValidDifficulty, parseBody } from '../_shared/validation.ts'
 import { createOpenAIClient } from '../_shared/openaiClient.ts'
 import { CATEGORIES, DIFFICULTIES, GAME_CONSTANTS } from '../_shared/types.ts'
+import type { Category } from '../_shared/types.ts'
 import { getExistingHashes, getQuestionInventory } from '../../src/db/questions.ts'
 import { generateQuestions } from '../../src/openai/generator.ts'
 import { makeLogger, getRequestId } from '../_shared/logger.ts'
+
+// Use a more capable model for categories where factual accuracy is harder to get right
+const CATEGORY_MODEL_OVERRIDE: Partial<Record<Category, string>> = {}
 
 /** Run tasks with at most `concurrency` running simultaneously. */
 async function withConcurrency<T>(
@@ -86,12 +90,13 @@ Deno.serve(async (req) => {
           ? ['history', 'science', 'geography', 'sports', 'movies_tv']
           : []
         const hashes = await getExistingHashes(supabase, cat, diff, crossCats)
+        const modelOverride = CATEGORY_MODEL_OVERRIDE[cat as Category]
         const questions = await generateQuestions({
           category: cat,
           difficulty: diff,
           count: needed,
           existingHashes: hashes,
-          openaiChat: openai.chat.bind(openai),
+          openaiChat: (params) => openai.chat({ ...params, model: modelOverride }),
         })
         if (questions.length > 0) {
           await supabase.from('question_bank').upsert(questions, { onConflict: 'content_hash', ignoreDuplicates: true })
@@ -124,12 +129,13 @@ Deno.serve(async (req) => {
   log.info('Generating questions', { category: body.category, difficulty: body.difficulty, count })
 
   const existingHashes = await getExistingHashes(supabase, body.category, body.difficulty, crossCategories)
+  const modelOverride = CATEGORY_MODEL_OVERRIDE[body.category]
   const questions = await generateQuestions({
     category: body.category,
     difficulty: body.difficulty,
     count,
     existingHashes,
-    openaiChat: openai.chat.bind(openai),
+    openaiChat: (params) => openai.chat({ ...params, model: modelOverride }),
   })
 
   if (questions.length === 0) {

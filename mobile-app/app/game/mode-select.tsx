@@ -1,11 +1,13 @@
 import React from 'react'
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from 'react-native'
+import { View, Text, StyleSheet, ScrollView } from 'react-native'
 import { LinearGradient } from 'expo-linear-gradient'
 import * as Haptics from 'expo-haptics'
 import { ScreenWrapper } from '../../src/components/ui/ScreenWrapper'
+import { AnimatedPressable } from '../../src/components/ui/AnimatedPressable'
 import { router } from 'expo-router'
 import { colors, spacing, fontSize, radius } from '../../src/constants/theme'
 import { ArrowLeft } from 'phosphor-react-native'
+import { GAME_CONFIG } from '../../src/constants/game'
 
 const MODES = [
   {
@@ -20,7 +22,7 @@ const MODES = [
     id: 'blitz',
     emoji: '⚡',
     label: 'Blitz',
-    description: '60 seconds, unlimited questions, no hammers',
+    description: `${GAME_CONFIG.BLITZ_SECONDS} seconds, unlimited questions, no hammers`,
     color: '#FFD700',
     route: '/game/mode-intro?mode=blitz',
   },
@@ -31,6 +33,14 @@ const MODES = [
     description: 'One life, endless rounds, go as far as you can',
     color: '#F44336',
     route: '/game/mode-intro?mode=survival',
+  },
+  {
+    id: 'odd_one_out',
+    emoji: '🧩',
+    label: 'Odd One Out',
+    description: 'Pick the item that does not belong',
+    color: '#10B981',
+    route: '/game/mode-intro?mode=odd_one_out',
   },
 ] as const
 
@@ -44,9 +54,9 @@ export default function ModeSelectScreen() {
     <ScreenWrapper>
       <ScrollView style={styles.container} contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
         <View style={styles.topRow}>
-          <TouchableOpacity style={styles.back} onPress={() => router.back()}>
+          <AnimatedPressable style={styles.back} onPress={() => router.back()}>
             <ArrowLeft weight="bold" size={24} color={colors.textPrimary} />
-          </TouchableOpacity>
+          </AnimatedPressable>
         </View>
 
         <Text style={styles.title}>Game Mode</Text>
@@ -54,7 +64,7 @@ export default function ModeSelectScreen() {
 
         <View style={styles.list}>
           {MODES.map((mode) => (
-            <TouchableOpacity
+            <AnimatedPressable
               key={mode.id}
               style={styles.card}
               onPress={() => handleSelect(mode.route)}
@@ -79,7 +89,7 @@ export default function ModeSelectScreen() {
                   <Text style={styles.description}>{mode.description}</Text>
                 </View>
               </View>
-            </TouchableOpacity>
+            </AnimatedPressable>
           ))}
         </View>
       </ScrollView>

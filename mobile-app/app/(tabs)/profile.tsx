@@ -1,12 +1,13 @@
 import React, { useState } from 'react'
 import {
   View, Text, StyleSheet, ScrollView, ActivityIndicator,
-  TouchableOpacity, TextInput, Modal, TouchableWithoutFeedback,
+  TextInput, Modal, TouchableWithoutFeedback,
   Dimensions,
 } from 'react-native'
 import { LinearGradient } from 'expo-linear-gradient'
 import * as Haptics from 'expo-haptics'
 import { ScreenWrapper } from '../../src/components/ui/ScreenWrapper'
+import { AnimatedPressable } from '../../src/components/ui/AnimatedPressable'
 import { colors, spacing, fontSize, radius } from '../../src/constants/theme'
 import { useProfile, useUpdateDisplayName } from '../../src/hooks/useProfile'
 import { useAchievements } from '../../src/hooks/useAchievements'
@@ -17,24 +18,7 @@ import { GradientCard } from '../../src/components/ui/GradientCard'
 import { getAvatarStage } from '../../src/constants/quest'
 import { MAX_PLAYER_LEVEL } from '../../src/utils/scoring'
 import { formatNumber, formatAccuracy, formatDate } from '../../src/utils/format'
-import type { Achievement } from '../../src/types/user'
-
 const { width: SCREEN_WIDTH } = Dimensions.get('window')
-
-const ALL_ACHIEVEMENTS: Achievement[] = [
-  { id: 'first_game',    name: 'First Game',       description: 'Play your first game',                    icon: '🎮', rarity: 'common'    },
-  { id: 'games_10',      name: 'Getting Started',   description: 'Play 10 games',                           icon: '📈', rarity: 'common'    },
-  { id: 'games_50',      name: 'Dedicated',         description: 'Play 50 games',                           icon: '🎯', rarity: 'rare'      },
-  { id: 'games_100',     name: 'Centurion',         description: 'Play 100 games',                          icon: '💯', rarity: 'epic'      },
-  { id: 'perfect_round', name: 'Perfect Round',     description: 'Answer all 10 questions correctly',       icon: '⭐', rarity: 'rare'      },
-  { id: 'speed_demon',   name: 'Speed Demon',       description: 'Perfect round with avg under 8 seconds',  icon: '⚡', rarity: 'epic'      },
-  { id: 'survivor',      name: 'Survivor',          description: 'Finish a round with only 1 life left',    icon: '❤️', rarity: 'rare'      },
-  { id: 'streak_5',      name: 'On Fire',           description: 'Get a 5-answer streak',                   icon: '🔥', rarity: 'common'    },
-  { id: 'streak_10',     name: 'Unstoppable',       description: 'Get a 10-answer streak',                  icon: '🚀', rarity: 'rare'      },
-  { id: 'streak_15',     name: 'Legendary Streak',  description: 'Get a 15-answer streak',                  icon: '👑', rarity: 'legendary' },
-  { id: 'high_scorer',   name: 'High XP',           description: 'Earn 500 XP in a single round',           icon: '🏅', rarity: 'common'    },
-  { id: 'big_brain',     name: 'Big Brain',         description: 'Earn 1500 XP in a session',              icon: '🧠', rarity: 'legendary' },
-]
 
 const RARITY_ORDER = { legendary: 0, epic: 1, rare: 2, common: 3 }
 
@@ -42,7 +26,7 @@ const NAME_RE = /^[a-zA-Z0-9_. -]+$/
 
 export default function ProfileScreen() {
   const { data: profile, isLoading } = useProfile()
-  const { data: earnedAchievements = [] } = useAchievements()
+  const { data: achievements = [] } = useAchievements()
   const updateName = useUpdateDisplayName()
 
   const [achievementFilter, setAchievementFilter] = useState<'all' | 'earned'>('earned')
@@ -50,17 +34,17 @@ export default function ProfileScreen() {
   const [nameInput, setNameInput] = useState('')
   const [nameError, setNameError] = useState('')
 
-  const earnedIds = new Set(earnedAchievements.map(a => a.id))
+  const earnedCount = achievements.filter(a => a.earned).length
 
-  const sortedAchievements = [...ALL_ACHIEVEMENTS].sort((a, b) => {
-    const aEarned = earnedIds.has(a.id) ? 0 : 1
-    const bEarned = earnedIds.has(b.id) ? 0 : 1
+  const sortedAchievements = [...achievements].sort((a, b) => {
+    const aEarned = a.earned ? 0 : 1
+    const bEarned = b.earned ? 0 : 1
     if (aEarned !== bEarned) return aEarned - bEarned
     return RARITY_ORDER[a.rarity] - RARITY_ORDER[b.rarity]
   })
 
   const filteredAchievements = achievementFilter === 'earned'
-    ? sortedAchievements.filter(a => earnedIds.has(a.id))
+    ? sortedAchievements.filter(a => a.earned)
     : sortedAchievements
 
   const handleSaveName = async () => {
@@ -112,14 +96,14 @@ export default function ProfileScreen() {
             end={{ x: 0.5, y: 1 }}
           />
           <PlayerAvatar level={profile.level} size="lg" />
-          <TouchableOpacity
+          <AnimatedPressable
             style={styles.nameRow}
             onPress={() => { setNameInput(profile.displayName); setShowNameModal(true) }}
             activeOpacity={0.7}
           >
             <Text style={styles.heroName}>{profile.displayName}</Text>
             <Text style={styles.editIcon}>✎</Text>
-          </TouchableOpacity>
+          </AnimatedPressable>
           <View style={styles.heroBadgeRow}>
             <View style={[styles.stagePill, { backgroundColor: `${stage.color}22`, borderColor: `${stage.color}55` }]}>
               <Text style={styles.stageEmoji}>{stage.emoji}</Text>
@@ -173,6 +157,16 @@ export default function ProfileScreen() {
             <Text style={[styles.statValue, { color: colors.medium }]}>{formatAccuracy(profile.accuracy)}</Text>
             <Text style={styles.statLabel}>Accuracy</Text>
           </GradientCard>
+          <GradientCard accentColor={colors.streakActive} style={styles.statCard} contentStyle={styles.statContent}>
+            <Text style={styles.statEmoji}>🔥</Text>
+            <Text style={[styles.statValue, { color: colors.streakActive }]}>{profile.dayStreak ?? 0}</Text>
+            <Text style={styles.statLabel}>Day Streak</Text>
+          </GradientCard>
+          <GradientCard accentColor={colors.incorrect} style={styles.statCard} contentStyle={styles.statContent}>
+            <Text style={styles.statEmoji}>📈</Text>
+            <Text style={[styles.statValue, { color: colors.incorrect }]}>{profile.longestDayStreak ?? 0}</Text>
+            <Text style={styles.statLabel}>Longest Streak</Text>
+          </GradientCard>
         </View>
 
         {/* ── Achievements ── */}
@@ -180,15 +174,15 @@ export default function ProfileScreen() {
           <Text style={styles.sectionTitle}>Achievements</Text>
           <View style={styles.filterRow}>
             {(['earned', 'all'] as const).map(f => (
-              <TouchableOpacity
+              <AnimatedPressable
                 key={f}
                 style={[styles.filterTab, achievementFilter === f && styles.filterTabActive]}
                 onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); setAchievementFilter(f) }}
               >
                 <Text style={[styles.filterTabText, achievementFilter === f && styles.filterTabTextActive]}>
-                  {f === 'earned' ? `Earned (${earnedAchievements.length})` : `All (${ALL_ACHIEVEMENTS.length})`}
+                  {f === 'earned' ? `Earned (${earnedCount})` : `All (${achievements.length})`}
                 </Text>
-              </TouchableOpacity>
+              </AnimatedPressable>
             ))}
           </View>
         </View>
@@ -201,7 +195,7 @@ export default function ProfileScreen() {
         ) : (
           <View style={styles.achievementsGrid}>
             {filteredAchievements.map(a => (
-              <AchievementBadge key={a.id} achievement={a} earned={earnedIds.has(a.id)} />
+              <AchievementBadge key={a.id} achievement={a} />
             ))}
           </View>
         )}
@@ -236,10 +230,10 @@ export default function ProfileScreen() {
                 <Text style={styles.charCount}>{nameInput.trim().length}/20</Text>
                 {nameError ? <Text style={styles.nameError}>{nameError}</Text> : null}
                 <View style={styles.modalActions}>
-                  <TouchableOpacity style={styles.cancelBtn} onPress={() => { setShowNameModal(false); setNameError('') }}>
+                  <AnimatedPressable style={styles.cancelBtn} onPress={() => { setShowNameModal(false); setNameError('') }}>
                     <Text style={styles.cancelBtnText}>Cancel</Text>
-                  </TouchableOpacity>
-                  <TouchableOpacity
+                  </AnimatedPressable>
+                  <AnimatedPressable
                     style={[styles.saveBtn, updateName.isPending && styles.saveBtnDisabled]}
                     onPress={handleSaveName}
                     disabled={updateName.isPending}
@@ -248,7 +242,7 @@ export default function ProfileScreen() {
                       ? <ActivityIndicator color="#fff" size="small" />
                       : <Text style={styles.saveBtnText}>Save</Text>
                     }
-                  </TouchableOpacity>
+                  </AnimatedPressable>
                 </View>
               </View>
             </TouchableWithoutFeedback>

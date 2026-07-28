@@ -1,9 +1,10 @@
-import React, { useState } from 'react'
+import React, { useEffect, useRef, useState } from 'react'
 import {
-  View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert, ActivityIndicator,
+  View, Text, StyleSheet, ScrollView, Alert, ActivityIndicator,
 } from 'react-native'
 import { router, useLocalSearchParams } from 'expo-router'
 import { ScreenWrapper } from '../../src/components/ui/ScreenWrapper'
+import { AnimatedPressable } from '../../src/components/ui/AnimatedPressable'
 import { QUEST_CATEGORY_MAP } from '../../src/config/questConfig'
 import { useQuestStore } from '../../src/store/questStore'
 import { getNodeStatus, getCreateRoundParams } from '../../src/utils/questProgress'
@@ -33,34 +34,17 @@ const DIFF_COLOR: Record<string, string> = {
 }
 
 export default function CategoryMapScreen() {
-  const { categoryId } = useLocalSearchParams<{ categoryId: string }>()
+  const { categoryId, autoplay } = useLocalSearchParams<{ categoryId: string; autoplay?: string }>()
   const category = QUEST_CATEGORY_MAP.get(categoryId ?? '')
   const categoryProgress = useQuestStore(s => s.categoryProgress[categoryId ?? ''])
   const [loading, setLoading] = useState(false)
+  const autoplayedRef = useRef(false)
 
   const setCategory = useGameStore(s => s.setCategory)
   const setDifficulty = useGameStore(s => s.setDifficulty)
   const setIsDailyChallenge = useGameStore(s => s.setIsDailyChallenge)
   const setQuestNode = useGameStore(s => s.setQuestNode)
   const startRound = useGameStore(s => s.startRound)
-
-  if (!category) {
-    return (
-      <ScreenWrapper>
-        <View style={styles.center}>
-          <Text style={styles.errorText}>Category not found.</Text>
-        </View>
-      </ScreenWrapper>
-    )
-  }
-
-  const progress = categoryProgress ?? {
-    revealedNodeIds: [],
-    completedNodeIds: [],
-    bestStars: {},
-    categoryXp: 0,
-    highestClearedTier: 0,
-  }
 
   const handlePlay = async (node: QuestNode) => {
     if (loading) return
@@ -94,6 +78,37 @@ export default function CategoryMapScreen() {
     }
   }
 
+  // Deep-link from the results screen's "Next Level" button — auto-starts
+  // the newly-unlocked node without an extra tap on the map.
+  useEffect(() => {
+    if (autoplayedRef.current || !autoplay || !category || loading) return
+    const node = category.nodes.find(n => n.id === autoplay)
+    if (!node) return
+    const revealed = categoryProgress?.revealedNodeIds ?? []
+    const completed = categoryProgress?.completedNodeIds ?? []
+    if (!revealed.includes(node.id) && !completed.includes(node.id)) return
+    autoplayedRef.current = true
+    handlePlay(node)
+  }, [autoplay, category, categoryProgress, loading])
+
+  if (!category) {
+    return (
+      <ScreenWrapper>
+        <View style={styles.center}>
+          <Text style={styles.errorText}>Category not found.</Text>
+        </View>
+      </ScreenWrapper>
+    )
+  }
+
+  const progress = categoryProgress ?? {
+    revealedNodeIds: [],
+    completedNodeIds: [],
+    bestStars: {},
+    categoryXp: 0,
+    highestClearedTier: 0,
+  }
+
   const revealedIds = new Set(progress.revealedNodeIds)
   const completedIds = new Set(progress.completedNodeIds)
   const visibleNodes = category.nodes.filter(n => revealedIds.has(n.id) || completedIds.has(n.id))
@@ -108,9 +123,9 @@ export default function CategoryMapScreen() {
       >
         {/* Header */}
         <View style={styles.header}>
-          <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
+          <AnimatedPressable onPress={() => router.back()} style={styles.backBtn}>
             <Text style={styles.backText}>← Back</Text>
-          </TouchableOpacity>
+          </AnimatedPressable>
           <View style={styles.titleRow}>
             <Text style={styles.emoji}>{category.emoji}</Text>
             <Text style={styles.title}>{category.name}</Text>
@@ -129,7 +144,7 @@ export default function CategoryMapScreen() {
             const diffColor = DIFF_COLOR[node.difficulty] ?? colors.textSecondary
 
             return (
-              <TouchableOpacity
+              <AnimatedPressable
                 key={node.id}
                 style={[
                   styles.nodeCard,
@@ -170,7 +185,7 @@ export default function CategoryMapScreen() {
                     <Text style={[styles.playBtn, { color: category.color }]}>Play →</Text>
                   )}
                 </View>
-              </TouchableOpacity>
+              </AnimatedPressable>
             )
           })}
 

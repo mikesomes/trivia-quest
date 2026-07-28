@@ -3,7 +3,8 @@ import { View, Text, StyleSheet } from 'react-native'
 import type { LeaderboardEntry } from '../../types/api'
 import { colors, spacing, fontSize, radius } from '../../constants/theme'
 import { formatNumber } from '../../utils/format'
-import { getRankMovement, type RankMovement } from '../../utils/leaderboard'
+import { getRankMovement } from '../../utils/leaderboard'
+import { MovementBadge } from './MovementBadge'
 
 const RANK_META: Record<number, { color: string; bg: string; medal: string }> = {
   1: { color: '#FFD700', bg: 'rgba(255,215,0,0.08)',   medal: '🥇' },
@@ -16,35 +17,6 @@ interface Props {
   isCurrentUser: boolean
   xpGap?: number | null
   nextRankName?: string | null
-}
-
-function MovementBadge({ movement }: { movement: RankMovement }) {
-  if (movement.direction === 'new') {
-    return (
-      <View style={[badge.base, badge.new]}>
-        <Text style={[badge.text, badge.newText]}>NEW</Text>
-      </View>
-    )
-  }
-  if (movement.direction === 'up') {
-    return (
-      <View style={[badge.base, badge.up]}>
-        <Text style={[badge.text, badge.upText]}>↑{movement.delta}</Text>
-      </View>
-    )
-  }
-  if (movement.direction === 'down') {
-    return (
-      <View style={[badge.base, badge.down]}>
-        <Text style={[badge.text, badge.downText]}>↓{movement.delta}</Text>
-      </View>
-    )
-  }
-  return (
-    <View style={[badge.base, badge.same]}>
-      <Text style={[badge.text, badge.sameText]}>—</Text>
-    </View>
-  )
 }
 
 export function XpLeaderboardRow({ entry, isCurrentUser, xpGap, nextRankName }: Props) {
@@ -207,26 +179,4 @@ const styles = StyleSheet.create({
   currentUserXp: {
     color: colors.primaryLight,
   },
-})
-
-const badge = StyleSheet.create({
-  base: {
-    borderRadius: radius.full,
-    paddingHorizontal: 6,
-    paddingVertical: 2,
-    minWidth: 32,
-    alignItems: 'center',
-  },
-  text: {
-    fontSize: 10,
-    fontWeight: '700',
-  },
-  up:       { backgroundColor: 'rgba(76,175,80,0.2)' },
-  upText:   { color: colors.correct },
-  down:     { backgroundColor: 'rgba(244,67,54,0.2)' },
-  downText: { color: colors.incorrect },
-  same:     { backgroundColor: colors.bgCard },
-  sameText: { color: colors.textMuted },
-  new:      { backgroundColor: `${colors.primary}30` },
-  newText:  { color: colors.primaryLight },
 })

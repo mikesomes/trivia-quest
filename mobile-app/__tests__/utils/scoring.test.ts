@@ -66,7 +66,7 @@ describe('computeAnswerXp', () => {
       difficulty: 'medium',
     })
 
-    expect(early.timeBonus).toBe(5)
+    expect(early.timeBonus).toBe(7)
     expect(late.timeBonus).toBe(0)
     expect(early.total).toBeGreaterThan(late.total)
     expect(early.timing.mode).toBe('round')

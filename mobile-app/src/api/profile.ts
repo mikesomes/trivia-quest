@@ -37,6 +37,10 @@ export function normalizeUserProfile(profile: Partial<UserProfile> | null | unde
     bestXp: Math.max(0, Math.floor(coerceNumber(profile?.bestXp))),
     accuracy: Math.max(0, Math.min(1, coerceNumber(profile?.accuracy))),
     createdAt: profile?.createdAt ?? '',
+    dayStreak: Math.max(0, Math.floor(coerceNumber(profile?.dayStreak))),
+    longestDayStreak: Math.max(0, Math.floor(coerceNumber(profile?.longestDayStreak))),
+    streakFreezes: Math.max(0, Math.floor(coerceNumber(profile?.streakFreezes))),
+    lastActiveDate: profile?.lastActiveDate ?? null,
   }
 }
 

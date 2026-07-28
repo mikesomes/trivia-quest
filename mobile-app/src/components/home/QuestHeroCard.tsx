@@ -1,8 +1,9 @@
 import React from 'react'
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native'
+import { View, Text, StyleSheet } from 'react-native'
 import { MapTrifold } from 'phosphor-react-native'
 import { LinearGradient } from 'expo-linear-gradient'
 import { colors, spacing, fontSize, radius } from '../../constants/theme'
+import { AnimatedPressable } from '../ui/AnimatedPressable'
 
 interface QuestHeroCardProps {
   totalNodes: number
@@ -16,7 +17,7 @@ export function QuestHeroCard({ totalNodes, completedNodes, isLoading, onPress }
   const pct = totalNodes > 0 ? Math.round((completedNodes / totalNodes) * 100) : 0
 
   return (
-    <TouchableOpacity onPress={onPress} activeOpacity={0.85} style={styles.wrapper}>
+    <AnimatedPressable onPress={onPress} activeOpacity={0.85} style={styles.wrapper}>
       <View style={styles.card}>
         <LinearGradient
           colors={[`${colors.primary}22`, 'transparent']}
@@ -55,15 +56,15 @@ export function QuestHeroCard({ totalNodes, completedNodes, isLoading, onPress }
             </View>
           )}
 
-          <TouchableOpacity style={styles.cta} onPress={onPress} activeOpacity={0.8}>
+          <AnimatedPressable style={styles.cta} onPress={onPress} activeOpacity={0.8}>
             <Text style={styles.ctaText}>
               {hasProgress ? 'Continue Journey' : 'Begin Your Journey'}
             </Text>
             <Text style={styles.ctaArrow}>→</Text>
-          </TouchableOpacity>
+          </AnimatedPressable>
         </View>
       </View>
-    </TouchableOpacity>
+    </AnimatedPressable>
   )
 }
 

@@ -7,10 +7,10 @@ import { useCreateRound } from '../../src/hooks/useRound'
 import { useGameStore } from '../../src/store/gameStore'
 import { colors, spacing, fontSize, radius } from '../../src/constants/theme'
 import type { Category } from '../../src/types/game'
-import { getSurvivalMix, dominantDifficulty } from '../../src/utils/difficultyMix'
+import { getClassicProgressionMix, getSurvivalMix, dominantDifficulty } from '../../src/utils/difficultyMix'
 import { GAME_CONFIG } from '../../src/constants/game'
 
-type Mode = 'classic' | 'blitz' | 'survival'
+type Mode = 'classic' | 'blitz' | 'survival' | 'odd_one_out'
 
 const CATEGORIES: Category[] = ['general_knowledge', 'history', 'science', 'sports', 'movies_tv', 'geography']
 
@@ -39,11 +39,12 @@ const INTRO_CONFIG: Record<Mode, {
   blitz: {
     emoji: '⚡',
     title: 'Blitz Mode',
-    subtitle: '60 seconds. Unlimited questions.',
+    subtitle: '45 seconds. Unlimited questions.',
     rules: [
-      { icon: '⏱️', text: '60 seconds on the clock — answer as many as you can' },
+      { icon: '⏱️', text: '45 seconds on the clock — answer as many as you can' },
       { icon: '🔀', text: 'Categories rotate automatically between questions' },
       { icon: '⚡', text: 'Correct streaks add bonus time to the clock' },
+      { icon: '❌', text: 'Wrong answers cost 5 seconds' },
       { icon: '🚫', text: 'No hammers — raw knowledge only' },
       { icon: '🏆', text: 'Score is based on questions answered correctly' },
     ],
@@ -63,6 +64,19 @@ const INTRO_CONFIG: Record<Mode, {
     ],
     ctaLabel: 'Start Survival Mode',
   },
+  odd_one_out: {
+    emoji: '🧩',
+    title: 'Odd One Out',
+    subtitle: 'Four items. One does not fit.',
+    rules: [
+      { icon: '🧩', text: 'Each puzzle shows four items' },
+      { icon: '👀', text: 'Pick the one that does not belong' },
+      { icon: '⏱️', text: '15 seconds per puzzle' },
+      { icon: '💡', text: 'Explanations reveal the shared pattern' },
+      { icon: '⭐', text: 'Earn XP based on speed and accuracy' },
+    ],
+    ctaLabel: 'Start Odd One Out',
+  },
 }
 
 export default function ModeIntroScreen() {
@@ -71,6 +85,7 @@ export default function ModeIntroScreen() {
 
   const createRound = useCreateRound()
   const setIsSuddenDeath = useGameStore((s) => s.setIsSuddenDeath)
+  const setCategory = useGameStore((s) => s.setCategory)
   const setDifficulty = useGameStore((s) => s.setDifficulty)
   const resetGame = useGameStore((s) => s.resetGame)
 
@@ -92,9 +107,29 @@ export default function ModeIntroScreen() {
     }
   }
 
+  const handleOddOneOutStart = async () => {
+    resetGame()
+    setIsSuddenDeath(false)
+    setCategory('odd_one_out')
+    setDifficulty('easy')
+    try {
+      await createRound.mutateAsync({
+        category: 'odd_one_out',
+        difficulty: 'easy',
+        difficultyMix: getClassicProgressionMix(0, GAME_CONFIG.QUESTIONS_PER_ROUND),
+      })
+      router.replace('/game/play')
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : 'Could not start Odd One Out. Please try again.'
+      Alert.alert('Error', msg)
+    }
+  }
+
   const handleCta = () => {
     if (mode === 'survival') {
       handleSurvivalStart()
+    } else if (mode === 'odd_one_out') {
+      handleOddOneOutStart()
     } else if (config.nextRoute) {
       router.push(config.nextRoute as Parameters<typeof router.push>[0])
     }
@@ -146,7 +181,7 @@ export default function ModeIntroScreen() {
             title={config.ctaLabel}
             onPress={handleCta}
             size="lg"
-            disabled={mode === 'survival' && createRound.isPending}
+            disabled={(mode === 'survival' || mode === 'odd_one_out') && createRound.isPending}
           />
           <Button
             title="Back"

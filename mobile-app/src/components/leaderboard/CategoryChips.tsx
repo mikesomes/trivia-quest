@@ -1,6 +1,7 @@
 import React from 'react'
-import { ScrollView, TouchableOpacity, Text, StyleSheet, View } from 'react-native'
+import { ScrollView, Text, StyleSheet, View } from 'react-native'
 import { CATEGORIES } from '../../constants/categories'
+import { AnimatedPressable } from '../ui/AnimatedPressable'
 import type { Category } from '../../types/game'
 import { colors, spacing, radius, fontSize } from '../../constants/theme'
 
@@ -10,7 +11,7 @@ interface CategoryChipsProps {
 }
 
 export function CategoryChips({ activeCategory, onChange }: CategoryChipsProps) {
-  const live = CATEGORIES.filter((c) => !c.comingSoon)
+  const live = CATEGORIES.filter((c) => !c.comingSoon && !c.modeOnly)
 
   return (
     <ScrollView
@@ -21,7 +22,7 @@ export function CategoryChips({ activeCategory, onChange }: CategoryChipsProps) 
       {live.map((cat) => {
         const active = cat.id === activeCategory
         return (
-          <TouchableOpacity
+          <AnimatedPressable
             key={cat.id}
             onPress={() => onChange(cat.id)}
             activeOpacity={0.7}
@@ -36,7 +37,7 @@ export function CategoryChips({ activeCategory, onChange }: CategoryChipsProps) 
                 {cat.label}
               </Text>
             </View>
-          </TouchableOpacity>
+          </AnimatedPressable>
         )
       })}
     </ScrollView>

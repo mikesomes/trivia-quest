@@ -47,5 +47,9 @@ Deno.serve(async (req) => {
     equipped_hammers: user.equipped_hammers ?? 0,
     equipped_shields: user.equipped_shields ?? 0,
     equipped_xp_booster: user.equipped_xp_booster ?? 0,
+    dayStreak: user.current_streak ?? 0,
+    longestDayStreak: user.longest_streak ?? 0,
+    streakFreezes: user.streak_freezes ?? 0,
+    lastActiveDate: user.last_active_date ?? null,
   })
 })

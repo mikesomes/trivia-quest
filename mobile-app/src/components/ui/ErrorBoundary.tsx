@@ -1,7 +1,8 @@
 import React from 'react'
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native'
+import { View, Text, StyleSheet } from 'react-native'
 import * as Sentry from '@sentry/react-native'
 import { colors, fontSize, spacing, radius } from '../../constants/theme'
+import { AnimatedPressable } from './AnimatedPressable'
 
 interface State { hasError: boolean; eventId: string | null }
 
@@ -28,9 +29,9 @@ export class ErrorBoundary extends React.Component<{ children: React.ReactNode }
         {this.state.eventId && (
           <Text style={styles.eventId}>Ref: {this.state.eventId.slice(0, 8)}</Text>
         )}
-        <TouchableOpacity style={styles.button} onPress={() => this.setState({ hasError: false, eventId: null })}>
+        <AnimatedPressable style={styles.button} onPress={() => this.setState({ hasError: false, eventId: null })}>
           <Text style={styles.buttonText}>Try Again</Text>
-        </TouchableOpacity>
+        </AnimatedPressable>
       </View>
     )
   }

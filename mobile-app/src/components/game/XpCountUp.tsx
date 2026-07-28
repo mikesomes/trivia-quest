@@ -1,9 +1,11 @@
-import React, { useEffect, useRef, useState } from 'react'
-import { View, Text, StyleSheet, Animated } from 'react-native'
+import React, { useEffect, useRef } from 'react'
+import { View, Text, StyleSheet } from 'react-native'
+import Animated, { useSharedValue, useAnimatedStyle, withSequence, withTiming } from 'react-native-reanimated'
 import * as Haptics from 'expo-haptics'
 import { colors, spacing, fontSize } from '../../constants/theme'
 import { levelFromXp, MAX_PLAYER_LEVEL, xpRequiredForLevel } from '../../utils/scoring'
 import { getNextLevelUnlock } from '../../constants/progression'
+import { useAnimatedNumber } from '../../hooks/useAnimatedNumber'
 import type { XpAwardBreakdown } from '../../types/user'
 
 interface Props {
@@ -48,10 +50,18 @@ export function XpCountUp({
     normalizeXp(newXp, normalizedPreviousXp + normalizedXpEarned)
   )
 
-  const glowOpacity = useRef(new Animated.Value(0)).current
-  const [displayXp, setDisplayXp] = useState(normalizedPreviousXp)
-  const [displayEarnedXp, setDisplayEarnedXp] = useState(0)
+  const glowOpacity = useSharedValue(0)
+  const totalGain = normalizedNewXp - normalizedPreviousXp
+  const displayXp = useAnimatedNumber(normalizedNewXp, {
+    from: normalizedPreviousXp,
+    durationMs: (delta) => Math.min(2200, Math.max(1100, delta * 10)),
+    steps: (delta) => Math.min(56, Math.max(24, delta)),
+  })
+  const displayEarnedXp = totalGain > 0
+    ? Math.round(normalizedXpEarned * clampProgress((displayXp - normalizedPreviousXp) / totalGain))
+    : normalizedXpEarned
   const displayedLevelRef = useRef(levelFromXp(normalizedPreviousXp))
+  const sparkleFiredRef = useRef(false)
 
   const displayLevel = levelFromXp(displayXp)
   const nextUnlock = getNextLevelUnlock(displayLevel)
@@ -70,78 +80,32 @@ export function XpCountUp({
     ? 0
     : Math.max(0, levelEndXp - displayXp)
 
+  // Fires once per level crossed as displayXp ticks upward mid-animation.
   useEffect(() => {
-    displayedLevelRef.current = levelFromXp(normalizedPreviousXp)
-    setDisplayXp(normalizedPreviousXp)
-    setDisplayEarnedXp(0)
-
-    if (normalizedNewXp <= normalizedPreviousXp) {
-      setDisplayXp(normalizedNewXp)
-      setDisplayEarnedXp(normalizedXpEarned)
-      return
+    const resolvedLevel = levelFromXp(displayXp)
+    if (resolvedLevel > displayedLevelRef.current) {
+      displayedLevelRef.current = resolvedLevel
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => {})
+      glowOpacity.value = withSequence(
+        withTiming(0.9, { duration: 120 }),
+        withTiming(0, { duration: 500 })
+      )
     }
+  }, [displayXp, glowOpacity])
 
-    const totalGain = normalizedNewXp - normalizedPreviousXp
-    const durationMs = Math.min(2200, Math.max(1100, totalGain * 10))
-    const steps = Math.min(56, Math.max(24, totalGain))
-    const stepMs = durationMs / steps
-    let step = 0
+  // A smaller sparkle once the count-up finishes, when it didn't already level up.
+  useEffect(() => {
+    if (sparkleFiredRef.current) return
+    if (totalGain > 0 && displayXp === normalizedNewXp && !leveledUp && normalizedXpEarned > 0) {
+      sparkleFiredRef.current = true
+      glowOpacity.value = withSequence(
+        withTiming(0.55, { duration: 100 }),
+        withTiming(0, { duration: 420 })
+      )
+    }
+  }, [displayXp, totalGain, normalizedNewXp, leveledUp, normalizedXpEarned, glowOpacity])
 
-    const interval = setInterval(() => {
-      step += 1
-      const normalized = step / steps
-      const eased = 1 - Math.pow(1 - normalized, 3)
-      const nextDisplayXp = Math.round(normalizedPreviousXp + totalGain * eased)
-      const nextEarnedXp = Math.round(normalizedXpEarned * eased)
-
-      setDisplayXp((currentXp) => {
-        const resolvedXp = Math.max(currentXp, nextDisplayXp)
-        const resolvedLevel = levelFromXp(resolvedXp)
-
-        if (resolvedLevel > displayedLevelRef.current) {
-          displayedLevelRef.current = resolvedLevel
-          Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => {})
-          Animated.sequence([
-            Animated.timing(glowOpacity, {
-              toValue: 0.9,
-              duration: 120,
-              useNativeDriver: false,
-            }),
-            Animated.timing(glowOpacity, {
-              toValue: 0,
-              duration: 500,
-              useNativeDriver: false,
-            }),
-          ]).start()
-        }
-
-        return resolvedXp
-      })
-      setDisplayEarnedXp((currentXp) => Math.max(currentXp, nextEarnedXp))
-
-      if (step >= steps) {
-        clearInterval(interval)
-        setDisplayXp(normalizedNewXp)
-        setDisplayEarnedXp(normalizedXpEarned)
-        if (!leveledUp && normalizedXpEarned > 0) {
-          Animated.sequence([
-            Animated.timing(glowOpacity, {
-              toValue: 0.55,
-              duration: 100,
-              useNativeDriver: false,
-            }),
-            Animated.timing(glowOpacity, {
-              toValue: 0,
-              duration: 420,
-              useNativeDriver: false,
-            }),
-          ]).start()
-        }
-      }
-    }, stepMs)
-
-    return () => clearInterval(interval)
-  }, [normalizedNewXp, normalizedPreviousXp, normalizedXpEarned, leveledUp, glowOpacity])
+  const glowAnimatedStyle = useAnimatedStyle(() => ({ opacity: glowOpacity.value }))
 
   return (
     <View style={styles.container}>
@@ -168,6 +132,7 @@ export function XpCountUp({
           <BreakdownLine label="No Lives Lost" value={breakdown.noLivesLostBonus} />
           <BreakdownLine label="Daily Challenge" value={breakdown.dailyChallengeBonus} />
           <BreakdownLine label="First Round Today" value={breakdown.firstRoundBonus} />
+          <BreakdownLine label="⚡ Momentum Bonus" value={breakdown.momentumBonus ?? 0} highlight />
         </View>
       )}
 
@@ -190,8 +155,8 @@ export function XpCountUp({
           <Animated.View
             style={[
               styles.barGlow,
+              glowAnimatedStyle,
               {
-                opacity: glowOpacity,
                 left: `${baseProgress * 100}%`,
                 width: `${earnedProgress * 100}%`,
               },

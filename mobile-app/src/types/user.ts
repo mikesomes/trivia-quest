@@ -19,6 +19,10 @@ export interface UserProfile {
   bestXp: number
   accuracy: number
   createdAt: string
+  dayStreak: number
+  longestDayStreak: number
+  streakFreezes: number
+  lastActiveDate: string | null
 }
 
 export interface Achievement {
@@ -33,6 +37,18 @@ export interface UserAchievement extends Achievement {
   earnedAt: string
 }
 
+export interface AchievementProgress {
+  current: number
+  target: number
+}
+
+/** Full-catalogue entry returned by GET /get-achievements. */
+export interface AchievementCatalogueEntry extends Achievement {
+  earned: boolean
+  earnedAt: string | null
+  progress: AchievementProgress | null
+}
+
 export interface XpAwardBreakdown {
   answerBase: number
   speedBonus: number
@@ -45,6 +61,8 @@ export interface XpAwardBreakdown {
   dailyChallengeBonus: number
   firstRoundBonus: number
   total: number
+  /** Present only when the round started within the momentum window. */
+  momentumBonus?: number
 }
 
 export interface XpSubmissionResult {
@@ -65,4 +83,11 @@ export interface XpSubmissionResult {
   sessionXpEarned: number
   sessionCorrectCount: number
   sessionRound: number
+  dayStreak?: {
+    currentStreak: number
+    longestStreak: number
+    streakFreezes: number
+    extendedToday: boolean
+    freezesUsed: number
+  } | null
 }

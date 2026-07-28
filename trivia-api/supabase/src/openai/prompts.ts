@@ -12,6 +12,7 @@ const CATEGORY_DISPLAY: Record<Category, string> = {
   harry_potter: 'Harry Potter',
   famous_quotes: 'Famous Quotes',
   music: 'Music',
+  odd_one_out: 'Odd One Out',
 }
 
 const CATEGORY_GUIDANCE: Partial<Record<Category, string>> = {
@@ -20,6 +21,7 @@ const CATEGORY_GUIDANCE: Partial<Record<Category, string>> = {
   roman_history: `Focus on: the Roman Republic and Empire, emperors and their reigns, military campaigns and battles, Roman law and governance, engineering and architecture (aqueducts, roads, Colosseum), religion and mythology, key figures (Caesar, Augustus, Cicero, Hadrian, etc.), the fall of the Western Empire, daily life, and the Senate. Cover a wide range of periods from the founding of Rome to the fall of Constantinople. Avoid ambiguous or debatable questions — all answers must be definitively correct.`,
   famous_quotes: `Every question must follow this exact format: the question text is 'Who said: "[exact quote]"?' and the correct answer is the speaker's full name. The three incorrect options must be plausible alternatives from the same era, field, or nationality — never random unrelated names. Quotes must be verifiably and unambiguously attributed; do not use quotes that are commonly misattributed or of disputed origin. Easy: iconic quotes instantly recognizable to most adults (e.g. moon landing, civil rights speeches, famous scientists). Medium: well-known quotes that require some familiarity with the speaker's life or work. Hard: lesser-known quotes, quotes often confused with other speakers, or quotes requiring knowledge of a specific speech, book, or context. The explanation must name who the person was and the context in which the quote was said. Cover a wide spread of fields per batch: literature, science, politics, philosophy, sports, cinema, and history. Aim for variety across speakers per batch, but the same speaker may appear more than once if they have multiple distinct, well-known quotes worth including.`,
   music: `Cover a wide spread of genres and eras: rock, pop, hip-hop, classical, jazz, country, R&B, electronic, and musical theatre. Include questions about artists, bands, albums, chart hits, music history, instruments, music theory basics, and iconic moments (concerts, albums, collaborations). Easy: globally recognizable artists and songs most adults would know. Medium: deeper album/track knowledge, music history, or genre-specific facts. Hard: deep-cut knowledge, lesser-known facts, specific chart positions, or music theory. Vary artists and genres within each batch — do not over-index on any single decade or genre. Avoid questions about events after 2023.`,
+  odd_one_out: `Every question must be an Odd One Out puzzle. The question text should ask the player to pick the item that does not belong, without revealing the grouping. The four options must be short item names. Exactly three options must share one clear, factual category or property, and exactly one option must not share it. The odd item must be unambiguous, not subjective, and not based on a trick distinction. Avoid sets where another option could reasonably be considered odd for a different reason. Easy: familiar everyday, geography, science, sports, entertainment, or history groupings. Medium: requires general knowledge of the shared property. Hard: requires more specific knowledge, but still has one definitive answer. The explanation must identify the three-item grouping and state why the correct option does not fit.`,
   harry_potter: `Focus on: characters and their relationships, spells and their effects, magical creatures, Hogwarts houses and their traits, classes and teachers, Horcruxes and Deathly Hallows, the Order of the Phoenix, Death Eaters, wand lore, Quidditch rules and matches, key plot events, and magical locations — based strictly on the original 7 books and their direct film adaptations. Cover all 7 books/films proportionally; do not over-index on any single installment. Avoid questions about Pottermore, Fantastic Beasts, or any expanded-universe content not depicted in the original books or films. All answers must be definitively verifiable from the source material.`,
 }
 
@@ -56,7 +58,9 @@ export function buildUserPrompt(
     ? `\nCategory guidance: ${CATEGORY_GUIDANCE[category]}`
     : ''
 
-  return `Generate ${count} trivia questions for:
+  const categoryLabel = category === 'odd_one_out' ? 'Odd One Out puzzles' : 'trivia questions'
+
+  return `Generate ${count} ${categoryLabel} for:
 - Category: ${CATEGORY_DISPLAY[category]}
 - Difficulty: ${difficulty} (${DIFFICULTY_DESCRIPTION[difficulty]})${guidance}
 

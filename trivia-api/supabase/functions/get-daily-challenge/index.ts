@@ -86,14 +86,15 @@ Deno.serve(async (req) => {
   const idOrder = new Map(challengeRow.question_ids.map((id: string, i: number) => [id, i]))
   questions.sort((a, b) => (idOrder.get(a.id) ?? 0) - (idOrder.get(b.id) ?? 0))
 
-  // Create the round
+  // Create the round. The set is mixed, so round metadata records the majority
+  // category/difficulty of today's actual questions.
   const expiresAt = new Date(Date.now() + GAME_CONSTANTS.ROUND_EXPIRY_MINUTES * 60 * 1000).toISOString()
   const { data: round, error: roundError } = await supabase
     .from('rounds')
     .insert({
       user_id: auth.userId,
-      category: 'general_knowledge', // placeholder; actual questions are mixed
-      difficulty: 'medium',          // placeholder
+      category: majorityValue(questions.map(q => q.category)),
+      difficulty: majorityValue(questions.map(q => q.difficulty)),
       status: 'active',
       lives_remaining: GAME_CONSTANTS.STARTING_LIVES,
       hammers: GAME_CONSTANTS.STARTING_HAMMERS,
@@ -134,6 +135,21 @@ Deno.serve(async (req) => {
 /** Returns the current date in America/New_York (YYYY-MM-DD). DST-safe via IANA tz. */
 function getEasternDate(): string {
   return new Date().toLocaleDateString('en-CA', { timeZone: 'America/New_York' })
+}
+
+/** Most frequent value in a list (first-seen wins ties). */
+function majorityValue(values: string[]): string {
+  const counts = new Map<string, number>()
+  for (const v of values) counts.set(v, (counts.get(v) ?? 0) + 1)
+  let best = values[0]
+  let bestCount = 0
+  for (const [v, count] of counts) {
+    if (count > bestCount) {
+      best = v
+      bestCount = count
+    }
+  }
+  return best
 }
 
 async function getDailyChallenge(supabase: ReturnType<typeof createServiceClient>, date: string) {

@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest'
 
 const TIMER_SECONDS = 15
-const BLITZ_SECONDS = 60
+const BLITZ_SECONDS = 45
 const MAX_PLAYER_LEVEL = 50
 const EASY_BASE_ANSWER_XP = 10
 const XP_BASE_BY_DIFFICULTY: Record<string, number> = { easy: 10, medium: 15, hard: 25, boss: 40 }
@@ -145,7 +145,7 @@ describe('computeAnswerXp', () => {
       difficulty: 'medium',
     })
 
-    expect(fastBlitz.timeBonus).toBe(5)
+    expect(fastBlitz.timeBonus).toBe(7)
     expect(lateBlitz.timeBonus).toBe(0)
     expect(fastBlitz.total).toBeGreaterThan(lateBlitz.total)
     expect(fastBlitz.timing.mode).toBe('round')

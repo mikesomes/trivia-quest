@@ -30,14 +30,16 @@ Mobile App (Expo)
       │  JWT (Supabase anon key)
       ▼
 Supabase Edge Functions  ──────►  PostgreSQL (RLS-enabled)
-  (Deno runtime)                  └── question_bank
-      │                           └── rounds
-      │  OpenAI API calls         └── round_questions
-      ▼                           └── answers
-  gpt-4o-mini                     └── scores
-  (question gen only)             └── users
-                                  └── leaderboard_all_time (view)
-                                  └── leaderboard_weekly (view)
+  (Deno runtime,                  ├── users, question_bank, rounds,
+   ~28 functions)                 │   round_questions, answers, scores
+      │                           ├── achievements, user_achievements
+      │  OpenAI API calls         ├── daily_challenges, daily_challenge_completions
+      ▼                           ├── user_challenge_progress
+  gpt-4o-mini                     ├── quest_nodes, quest_node_connections,
+  (question gen only)             │   user_quest_progress, quest_node_rounds
+                                  ├── sudden_death_scores, question_flags
+                                  └── leaderboard views (global, by-category,
+                                      per-mode × daily/weekly/all-time)
 ```
 
 **Key design decisions:**
@@ -63,13 +65,28 @@ Supabase Edge Functions  ──────►  PostgreSQL (RLS-enabled)
 | `round_questions` | Junction table: 10 rows per round linking `rounds` to `question_bank` with a `position` (0–9). |
 | `answers` | One row per submitted answer. Stores correctness, time taken, XP awarded, and breakdown (speed / streak bonus). |
 | `scores` | Historical table name for round XP submissions. One row per round. Used as the source of truth for leaderboards. |
+| `achievements` / `user_achievements` | Achievement catalogue (rarity tiers) and per-user awards, checked server-side in `submit-xp`, `submit-sudden-death`, and `claim-daily-reward` (see `_shared/achievements.ts`). |
+| `user_category_stats` | Per-user correct-answer count per category, incremented in `submit-answer` for every mode. Feeds `category_master_*` achievements. |
+| `daily_challenges` / `daily_challenge_completions` | Shared 10-question set per Eastern-time calendar day + completion/streak tracking. |
+| `user_challenge_progress` | Progress on rotating daily/weekly XP challenges (`_shared/challenges.ts`). |
+| `quest_nodes` / `quest_node_connections` / `user_quest_progress` / `quest_node_rounds` | Quest campaign schema — **not currently used by the shipped client.** `complete-quest-node` and `start-quest-node-run` are fully built (cooldowns, multi-round runs, server-computed star thresholds) but the mobile app computes quest stars/XP/unlocks client-side and never calls them; quest progress lives only in a local Zustand store. Quest XP/stars are therefore not server-validated today. |
+| `sudden_death_scores` | Survival-mode run depth records (feeds survival/blitz leaderboards). |
+| `leaderboard_rank_snapshots` | Most recent rank per (mode, period, user), refreshed daily by `snapshot-leaderboard-ranks`. Feeds rank-delta ("▲3 since yesterday") badges for xp/classic/blitz × alltime/weekly. Survival isn't snapshotted — its ranking is computed in-memory rather than from a ranked view. |
+| `question_flags` | Player reports of bad questions. |
+| `daily_reward_claims` | One row per user per Eastern day claiming the daily loot chest (tier + rolled reward); `users.chest_streak`/`longest_chest_streak`/`last_chest_claim_date` track the claim streak that sets the tier. |
+
+`users` also carries denormalized personal bests used for achievement checks: `best_survival_depth`, `best_blitz_correct`.
 
 ### Views
 
 | View | Description |
 |---|---|
-| `leaderboard_all_time` | Aggregates XP submissions joined with `users`, ordered by `session_xp_earned` descending. Used by the all-time leaderboard. |
-| `leaderboard_weekly` | Same as above but filtered to `completed_at >= date_trunc('week', now())`. |
+| `leaderboard_global` | All-time ranking by `users.xp`. |
+| `leaderboard_by_category` | Per-category XP ranking from `scores` (daily-challenge rounds excluded). |
+| `classic_leaderboard_weekly` / `classic_leaderboard_alltime` | Classic-mode rankings from `scores`. |
+| `blitz_leaderboard_weekly` / `blitz_leaderboard_alltime` | Blitz rankings from `sudden_death_scores`. |
+| `xp_leaderboard_daily` / `xp_leaderboard_weekly` | Period XP rankings. |
+| `leaderboard_today` / `leaderboard_weekly` / `leaderboard_all_time` | Legacy views, superseded by the above. |
 
 ### Relationships
 
@@ -81,14 +98,23 @@ users ──< rounds ──< round_questions >── question_bank
 
 ### Migrations
 
-Migrations live in `supabase/migrations/` and are applied in order:
+Migrations live in `supabase/migrations/` and are applied in order — 55 files and counting. Landmarks:
 
 | File | Description |
 |---|---|
-| `20240001000000_init_schema.sql` | Creates all tables, constraints, and leaderboard views |
+| `20240001000000_init_schema.sql` | Core tables, constraints, and original leaderboard views |
 | `20240002000000_rls_policies.sql` | RLS policies: users can only read/write their own data |
-| `20240003000000_indexes.sql` | Performance indexes on foreign keys and leaderboard columns |
-| `20240004000000_db_functions.sql` | PostgreSQL helper functions (e.g., question selection, trigger for user creation) |
+| `20240008/09` | Achievements tables + seed |
+| `20240010` | Daily challenge tables |
+| `20240021/22/26` | Quest map schema + node seeds (sequential zones) |
+| `20240041` | Coin economy (coins + power-up inventory on `users`) |
+| `20240045/47/50` | Leaderboard revamp: global/category + per-mode × period views |
+| `20240055` | Exclude daily-challenge rounds from category leaderboards |
+| `20240056` | Universal day streak (`current_streak`/`longest_streak`/`streak_freezes` on `users`) |
+| `20240057` | Daily loot chest (`daily_reward_claims` + chest streak columns) |
+| `20240058` | "One more round" momentum bonus (`momentum_bonus_active` on `rounds`) |
+| `20240059/60` | Achievement expansion schema (`user_category_stats`, personal-best columns) + 23 new achievements |
+| `20240061` | `leaderboard_rank_snapshots` (rank-delta arrows) |
 
 ---
 
@@ -99,16 +125,46 @@ All endpoints are deployed as Supabase Edge Functions under:
 
 Every endpoint requires a valid Supabase JWT in the `Authorization: Bearer <token>` header unless otherwise noted.
 
+**Core gameplay**
+
+| Method | Endpoint | Description |
+|---|---|---|
+| POST | `/create-round` | Creates a round (classic/blitz/survival/quest; supports difficulty mixes/segments and level-perk starting lives/hammers/shields; rate-limited 60/hr). When `continuationRoundId` points to a just-completed round, also resolves classic life carry-over, survival streak carry-over, and "one more round" momentum-bonus eligibility (see `_shared/momentum.ts`). |
+| GET | `/get-round-questions?roundId=<id>` | Returns the round's questions with correct answers stripped. |
+| POST | `/submit-answer` | Validates the answer server-side, computes XP, updates round state, increments challenge progress, returns correctness + breakdown. |
+| POST | `/finish-round` | Marks the round `completed`; returns a full round summary. |
+| POST | `/submit-xp` | Persists round XP to `scores`, awards XP/coins, recomputes level, checks achievements, applies the momentum bonus if eligible, returns new rank. |
+
+**Leaderboards / profile / economy**
+
+| Method | Endpoint | Description |
+|---|---|---|
+| GET | `/get-leaderboard` | `mode` = global\|category\|classic\|survival\|blitz\|daily\|xp; `period` = today\|weekly\|alltime; paginated. Entries include `previousRank` where a snapshot exists (see below). |
+| GET | `/get-profile`, POST | `/update-profile` | Player stats and display-name editing. |
+| GET | `/get-category-counts` | Question availability per category. |
+| POST | `/purchase-item`, `/equip-items`, `/use-hammer` | Coin shop, loadout equipping, in-round hammer use. |
+
+**Gamification**
+
+| Method | Endpoint | Description |
+|---|---|---|
+| GET | `/get-daily-challenge`, POST `/complete-daily-challenge` | Shared daily 10-question set with Eastern-midnight reset and day streaks. |
+| GET | `/get-challenges` | Daily/weekly XP challenge progress. |
+| GET | `/get-daily-reward`, POST `/claim-daily-reward` | Free daily loot chest — GET previews today's tier/streak without claiming; POST rolls and grants the reward (idempotent per Eastern day; see `_shared/chest.ts`). |
+| GET | `/get-achievements` | Full achievement catalogue with earned status and, for counter-backed achievements, progress toward the next tier (see `_shared/achievements.ts`). |
+| GET | `/get-quest-map`, POST `/start-quest-node-run`, `/complete-quest-node` | Quest campaign progression. |
+| POST | `/submit-sudden-death` | Survival-mode run records. |
+| POST/DELETE | `/flag-question` | Player question reporting. |
+
+**Ops**
+
 | Method | Endpoint | Auth | Description |
 |---|---|---|---|
-| POST | `/create-round` | JWT | Creates a round, randomly selects 10 questions from the bank for the given category/difficulty, returns `roundId` and first question. |
-| GET | `/get-round-questions?roundId=<id>` | JWT | Returns all 10 questions for the round. Correct answers are omitted from the response — the client only receives `option_a` through `option_d` and question text. |
-| POST | `/submit-answer` | JWT | Validates the player's answer server-side, computes answer XP, updates round state (streak, lives, round XP, question index), and returns correctness + XP breakdown. |
-| POST | `/finish-round` | JWT | Marks the round as `completed` (or `abandoned` if called with no answers). Returns a full round summary. |
-| POST | `/submit-xp` | JWT | Persists round XP to the historical `scores` table, awards XP, recomputes level, updates the user's best XP if applicable, and returns the player's new rank. |
-| GET | `/get-leaderboard?period=weekly\|alltime` | JWT | Returns the top 100 entries from the appropriate leaderboard view, plus the current user's rank if they are not in the top 100. |
-| GET | `/get-profile` | JWT | Returns the current user's full stats: level, XP, XP to next level, total games, total correct, best XP. |
-| POST | `/generate-questions` | `CRON_SECRET` or `SERVICE_KEY` | Calls OpenAI to generate questions and insert them into `question_bank`. Accepts `{ category?, difficulty?, count?, topUpAll? }`. Not exposed to players — intended for cron jobs and manual admin use only. |
+| POST | `/generate-questions` | `CRON_SECRET` or service key | OpenAI question generation with validation/dedup/verification. Accepts `{ category?, difficulty?, count?, topUpAll? }`. |
+| POST | `/snapshot-leaderboard-ranks` | `CRON_SECRET` or service key | Snapshots current ranks (xp/classic/blitz × alltime/weekly) so `get-leaderboard` can compute rank-delta badges. Run daily. |
+| GET | `/health` | none | Liveness check. |
+
+All player endpoints require `Authorization: Bearer <JWT>`.
 
 ### Request/Response examples
 
@@ -185,7 +241,7 @@ Copy `.env.example` to `.env.local` for local development. For production, use `
 | `EXPO_PUBLIC_SUPABASE_URL` | Same as `SUPABASE_URL` — included here so `.env.example` can serve both repos. |
 | `EXPO_PUBLIC_SUPABASE_ANON_KEY` | Same as `SUPABASE_ANON_KEY`. |
 | `EXPO_PUBLIC_API_BASE_URL` | Base URL for Edge Function calls, e.g. `https://abcdef.supabase.co/functions/v1` |
-| `EXPO_PUBLIC_APP_ENV` | `development` or `production`. |
+| `EXPO_PUBLIC_ENV` | `development` or `production`. |
 
 > **Security note:** `SUPABASE_SERVICE_ROLE_KEY` and `OPENAI_API_KEY` must never be committed to version control or included in mobile app builds. They are server-only secrets.
 
@@ -244,7 +300,7 @@ supabase functions invoke generate-questions \
   --env-file .env.local
 ```
 
-`topUpAll: true` loops through every category/difficulty combination and generates questions until each bucket reaches `QUESTION_BANK_MIN_THRESHOLD`. Expect this to take 60–120 seconds and make ~18 OpenAI calls (6 categories × 3 difficulties).
+`topUpAll: true` loops through every category/difficulty combination and generates questions until each bucket reaches `QUESTION_BANK_MIN_THRESHOLD` (12 categories × 3 difficulties = up to 36 OpenAI calls; expect a few minutes). Import scripts in `scripts/` (Open Trivia DB, NFL, etc.) offer a no-cost alternative for some categories.
 
 ### 7. Test an endpoint
 
@@ -284,6 +340,11 @@ npm run typecheck       # TypeScript type-check without running tests
 | `__tests__/unit/scoring.test.ts` | `computeAnswerXp`, `computeXpEarned`, `levelFromXp`, `xpRequiredForLevel` — all XP math |
 | `__tests__/unit/validator.test.ts` | OpenAI response validation — rejects malformed questions, wrong option counts, etc. |
 | `__tests__/unit/deduplicator.test.ts` | Content hash generation and deduplication logic |
+| `__tests__/unit/hammer.test.ts` | Hammer power-up: eliminating two wrong options |
+| `__tests__/unit/streaks.test.ts` | Day-streak advancement, freeze bridging, and reset logic (`_shared/streakLogic.ts`) |
+| `__tests__/unit/chest.test.ts` | Daily chest tier thresholds and weighted reward rolls, incl. inventory-cap fallback (`_shared/chest.ts`) |
+| `__tests__/unit/momentum.test.ts` | "One more round" momentum bonus window eligibility, incl. clock-skew guard (`_shared/momentum.ts`) |
+| `__tests__/unit/achievements.test.ts` | Threshold-tier condition building shared by award-checking and progress display (`_shared/achievementLogic.ts`) |
 
 ---
 
@@ -349,6 +410,15 @@ Use an external cron service (e.g., [cron-job.org](https://cron-job.org), GitHub
 
 Example cron-job.org request:
 - URL: `https://<project-ref>.supabase.co/functions/v1/generate-questions`
+- Method: POST
+- Header: `Authorization: Bearer <CRON_SECRET>`
+- Body: `{}`
+
+### 8. Set up the leaderboard rank-snapshot cron job (needed for rank-delta arrows)
+
+Same pattern as above, once daily: call `snapshot-leaderboard-ranks` so `get-leaderboard` has a "rank as of yesterday" to diff against. Skipping this just means movement badges stay hidden (the client already degrades gracefully when `previousRank` is absent).
+
+- URL: `https://<project-ref>.supabase.co/functions/v1/snapshot-leaderboard-ranks`
 - Method: POST
 - Header: `Authorization: Bearer <CRON_SECRET>`
 - Body: `{}`
@@ -470,12 +540,12 @@ const multipliers = { easy: 1.0, medium: 1.5, hard: 2.0 }
 
 ## Post-MVP TODOs
 
+- [ ] Wire the mobile client to `complete-quest-node`/`start-quest-node-run` for real — quest progress is currently client-side only (see the note on quest tables above); this would also unlock quest-native achievements (nodes completed, stars earned)
 - [ ] Email/social auth (Supabase supports Google, Apple, GitHub OAuth out of the box)
-- [ ] Rate limiting on Edge Functions — Supabase has no built-in rate limiter; use Upstash Redis or Cloudflare Workers in front
-- [ ] Admin question review dashboard — let a human approve/reject AI-generated questions before they go live
-- [ ] Push notifications (Firebase Cloud Messaging + Expo Notifications)
-- [ ] Leaderboard filtering by category and difficulty
-- [ ] Question reporting / flagging — let players report bad questions
+- [ ] Admin question review dashboard — approve/reject flagged and AI-generated questions
+- [ ] Server push notifications (Expo Push + `push_tokens` table + pg_cron senders)
+- [ ] Streak repair offer (grace window to restore a broken day streak for coins) — freezes exist, repair does not
+- [ ] Weekly leagues (cohorts, promotion/demotion)
+- [ ] Friends + async head-to-head duels
 - [ ] Round expiry cleanup cron job — mark rounds with `expires_at` in the past as `abandoned`
-- [ ] Per-category and per-difficulty personal bests on the profile
-- [ ] Multiplayer / head-to-head mode via Supabase Realtime
+- [ ] Integration tests for edge functions (only pure-logic unit tests exist today)

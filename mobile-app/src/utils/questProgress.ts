@@ -14,7 +14,7 @@ export function calculateStars(
   const { starThresholds: t, mode } = node
 
   if (mode === 'timed') {
-    // Blitz: raw correct count (out of 30 questions in 60s)
+    // Blitz: raw correct count within GAME_CONFIG.BLITZ_SECONDS
     if (correctCount >= t.three) return 3
     if (correctCount >= t.two)   return 2
     if (correctCount >= t.one)   return 1

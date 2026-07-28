@@ -39,7 +39,7 @@ Deno.serve(async (req) => {
 
   const { data: user, error: userError } = await supabase
     .from('users')
-    .select('coins, inventory_lives, inventory_hammers, inventory_shields, inventory_xp_booster')
+    .select('coins, inventory_lives, inventory_hammers, inventory_shields, inventory_xp_booster, streak_freezes')
     .eq('id', auth.userId)
     .single()
 

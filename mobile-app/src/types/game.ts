@@ -10,6 +10,7 @@ export type Category =
   | 'harry_potter'
   | 'famous_quotes'
   | 'music'
+  | 'odd_one_out'
   | 'art_history'
   | 'movie_quotes'
   | 'pop_culture'
@@ -33,6 +34,7 @@ export interface Question {
   questionId: string
   questionText: string
   options: QuestionOptions
+  difficulty?: Difficulty
 }
 
 export interface ActiveScoringTimerSnapshot {

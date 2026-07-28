@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import { validateBatch } from '../../supabase/src/openai/validator.ts'
+import { CATEGORIES } from '../../supabase/functions/_shared/types'
 
 const VALID_QUESTION = {
   questionText: 'What is the chemical symbol for gold?',
@@ -12,6 +13,10 @@ const VALID_QUESTION = {
 }
 
 describe('validateBatch', () => {
+  it('includes odd_one_out in the valid category list', () => {
+    expect(CATEGORIES).toContain('odd_one_out')
+  })
+
   it('accepts a valid batch', () => {
     const json = JSON.stringify({ questions: [VALID_QUESTION] })
     const result = validateBatch(json)
@@ -71,5 +76,23 @@ describe('validateBatch', () => {
     // Should accept both (same question twice is allowed by validator, deduplicator handles that)
     const result = validateBatch(json)
     expect(result.valid).toHaveLength(2)
+  })
+
+  it('accepts a valid Odd One Out puzzle shape', () => {
+    const json = JSON.stringify({
+      questions: [{
+        questionText: 'Which item does not belong with the others?',
+        optionA: 'Mercury',
+        optionB: 'Venus',
+        optionC: 'Earth',
+        optionD: 'Pluto',
+        correctOption: 'd',
+        explanation: 'Mercury, Venus, and Earth are planets; Pluto is classified as a dwarf planet.',
+      }],
+    })
+
+    const result = validateBatch(json)
+    expect(result.valid).toHaveLength(1)
+    expect(result.rejected).toHaveLength(0)
   })
 })

@@ -9,6 +9,7 @@ import { getActiveRoundForUser } from '../../src/db/rounds.ts'
 import { selectQuestionsForRound, selectQuestionsWithMix, selectQuestionsWithSegments } from '../../src/db/questions.ts'
 import { checkRoundCreationLimit } from '../_shared/rateLimit.ts'
 import { makeLogger, getRequestId } from '../_shared/logger.ts'
+import { isMomentumEligible } from '../_shared/momentum.ts'
 
 Deno.serve(async (req) => {
   const requestId = getRequestId(req)
@@ -240,7 +241,8 @@ async function handler(req: Request, requestId: string): Promise<Response> {
     startingShields = Math.max(GAME_CONSTANTS.STARTING_SHIELDS, perks.startingShields)
     maxLives = perks.maxLives
   } else {
-    startingLives = GAME_CONSTANTS.STARTING_LIVES
+    const carryLives = await resolveClassicCarryLives(supabase, auth.userId, body.continuationRoundId)
+    startingLives = Math.max(GAME_CONSTANTS.STARTING_LIVES, carryLives)
   }
 
   // Fetch user inventory and equipped loadout; apply only equipped items to round starting stats
@@ -262,6 +264,13 @@ async function handler(req: Request, requestId: string): Promise<Response> {
   startingHammers = Math.min(startingHammers + eqHammers, GAME_CONSTANTS.MAX_HAMMERS)
   startingShields = startingShields + eqShields
   const xpBoosterActive = eqBooster
+
+  // "One more round" momentum: eligibility is decided here, once, using the
+  // server clock against the prior round's completed_at — never trust a
+  // client-supplied timestamp for this.
+  const momentumBonusActive = !isQuest
+    ? await resolveMomentumBonus(supabase, auth.userId, body.continuationRoundId)
+    : false
 
   // Abandon any existing active round before creating a new one
   const existingRound = await getActiveRoundForUser(supabase, auth.userId).catch(() => null)
@@ -345,6 +354,7 @@ async function handler(req: Request, requestId: string): Promise<Response> {
       expires_at: expiresAt,
       quest_run_id: questRunId,
       quest_run_round_index: questRunRoundIndex,
+      momentum_bonus_active: momentumBonusActive,
     })
     .select()
     .single()
@@ -412,9 +422,51 @@ async function handler(req: Request, requestId: string): Promise<Response> {
       scoringTimerMode,
       questRunId,
       questRunRoundIndex,
+      momentumBonusActive,
     },
     201
   )
+}
+
+async function resolveMomentumBonus(
+  supabase: ReturnType<typeof createServiceClient>,
+  userId: string,
+  continuationRoundId: unknown,
+): Promise<boolean> {
+  if (!isValidUUID(continuationRoundId)) return false
+
+  const { data: priorRound, error } = await supabase
+    .from('rounds')
+    .select('status, is_quest, completed_at')
+    .eq('id', continuationRoundId)
+    .eq('user_id', userId)
+    .maybeSingle()
+
+  if (error || !priorRound) return false
+  if (priorRound.status !== 'completed' || priorRound.is_quest) return false
+
+  return isMomentumEligible(priorRound.completed_at, GAME_CONSTANTS.MOMENTUM_WINDOW_MS)
+}
+
+async function resolveClassicCarryLives(
+  supabase: ReturnType<typeof createServiceClient>,
+  userId: string,
+  continuationRoundId: unknown,
+): Promise<number> {
+  if (!isValidUUID(continuationRoundId)) return 0
+
+  const { data: priorRound, error } = await supabase
+    .from('rounds')
+    .select('lives_remaining, status, is_survival, is_quest, is_blitz')
+    .eq('id', continuationRoundId)
+    .eq('user_id', userId)
+    .maybeSingle()
+
+  if (error || !priorRound) return 0
+  if (priorRound.status !== 'completed') return 0
+  if (priorRound.is_survival || priorRound.is_quest || priorRound.is_blitz) return 0
+
+  return Math.max(0, priorRound.lives_remaining ?? 0)
 }
 
 async function resolveSurvivalCarryStreak(

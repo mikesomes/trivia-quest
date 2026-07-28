@@ -6,6 +6,7 @@ import { isValidUUID, isValidOption, parseBody } from '../_shared/validation.ts'
 import { computeAnswerXp, createActiveScoringTimerSnapshot, levelFromXp } from '../_shared/scoring.ts'
 import { GAME_CONSTANTS, type ActiveScoringTimerSnapshot } from '../_shared/types.ts'
 import { incrementChallengeProgress } from '../_shared/challenges.ts'
+import { incrementCategoryStat } from '../_shared/achievements.ts'
 
 interface SubmitAnswerBody {
   roundId?: unknown
@@ -192,6 +193,7 @@ Deno.serve(async (req) => {
   const newIndex = (body.position as number) + 1
   const isStreakMilestone = isCorrect && newStreak > 0 && newStreak % GAME_CONSTANTS.BLITZ_STREAK_THRESHOLD === 0
   const timeBonus = round.is_blitz && isStreakMilestone ? GAME_CONSTANTS.BLITZ_TIME_BONUS_MS : 0
+  const timePenalty = round.is_blitz && !isCorrect && !isTimeout ? GAME_CONSTANTS.BLITZ_WRONG_PENALTY_MS : 0
   const newMaxStreak = Math.max(round.max_streak ?? 0, newStreak)
 
   // Streak-mode quest rounds end when the target streak is hit (success).
@@ -246,6 +248,9 @@ Deno.serve(async (req) => {
   }
   if (timeBonus > 0) {
     roundUpdates.expires_at = new Date(new Date(round.expires_at).getTime() + timeBonus).toISOString()
+  } else if (timePenalty > 0) {
+    const penalized = new Date(round.expires_at).getTime() - timePenalty
+    roundUpdates.expires_at = new Date(Math.max(penalized, Date.now())).toISOString()
   }
   if (isRoundOver) {
     roundUpdates.status = 'completed'
@@ -271,9 +276,14 @@ Deno.serve(async (req) => {
     if (presentationError) return errorResponse('Failed to activate next question', 500)
   }
 
-  // Update challenge progress (fire-and-forget)
+  // Update challenge + category-mastery progress (fire-and-forget). Daily
+  // challenge rounds mix categories and store only an approximate majority
+  // category, so they're excluded from category-stat tracking.
   if (isCorrect) {
     incrementChallengeProgress(supabase, auth.userId, 'correct_answers').catch(() => {})
+    if (!round.is_daily_challenge) {
+      incrementCategoryStat(supabase, auth.userId, round.category).catch(() => {})
+    }
   }
 
   // Quest mode: award XP immediately per correct answer. Other modes award the
@@ -337,6 +347,7 @@ Deno.serve(async (req) => {
     lifeEarned,
     hammerEarned,
     timeBonus,
+    timePenalty,
     xpGained: round.is_quest ? boostedXpGained : xpGained,
     coinsEarned: round.is_quest && isCorrect ? boostedXpGained : 0,
     newXp,

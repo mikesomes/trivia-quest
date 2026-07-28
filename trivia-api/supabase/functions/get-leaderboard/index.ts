@@ -5,9 +5,51 @@ import { errorResponse, jsonResponse } from '../_shared/errors.ts'
 import { CATEGORIES, type Category } from '../_shared/types.ts'
 
 type Period = 'today' | 'weekly' | 'alltime'
-type Mode = 'global' | 'category' | 'classic' | 'survival' | 'daily'
+type Mode = 'global' | 'category' | 'classic' | 'survival' | 'daily' | 'xp' | 'blitz'
 
 const PAGE_CAP = 100
+
+interface RankedEntry {
+  rank: number
+  userId: string
+  [key: string]: unknown
+}
+
+/** Attaches `previousRank` (from the last snapshot-leaderboard-ranks run) to each entry. */
+async function attachPreviousRanks<T extends RankedEntry>(
+  supabase: ReturnType<typeof createServiceClient>,
+  snapshotMode: string,
+  snapshotPeriod: string,
+  entries: T[],
+): Promise<(T & { previousRank: number | null })[]> {
+  if (entries.length === 0) return []
+
+  const { data: snapshots } = await supabase
+    .from('leaderboard_rank_snapshots')
+    .select('user_id, rank')
+    .eq('mode', snapshotMode)
+    .eq('period', snapshotPeriod)
+    .in('user_id', entries.map(e => e.userId))
+
+  const prevByUser = new Map((snapshots ?? []).map(s => [s.user_id, s.rank]))
+  return entries.map(e => ({ ...e, previousRank: prevByUser.get(e.userId) ?? null }))
+}
+
+async function previousRankFor(
+  supabase: ReturnType<typeof createServiceClient>,
+  snapshotMode: string,
+  snapshotPeriod: string,
+  userId: string,
+): Promise<number | null> {
+  const { data } = await supabase
+    .from('leaderboard_rank_snapshots')
+    .select('rank')
+    .eq('mode', snapshotMode)
+    .eq('period', snapshotPeriod)
+    .eq('user_id', userId)
+    .maybeSingle()
+  return data?.rank ?? null
+}
 
 Deno.serve(async (req) => {
   const corsResult = handleCors(req)
@@ -23,8 +65,8 @@ Deno.serve(async (req) => {
   const offset = parseInt(url.searchParams.get('offset') || '0', 10)
   const category = url.searchParams.get('category') as Category | null
 
-  if (!['global', 'category', 'classic', 'survival', 'daily', 'xp'].includes(mode)) {
-    return errorResponse('Invalid mode. Use global, category, classic, survival, daily, or xp.', 400)
+  if (!['global', 'category', 'classic', 'survival', 'daily', 'xp', 'blitz'].includes(mode)) {
+    return errorResponse('Invalid mode. Use global, category, classic, survival, blitz, daily, or xp.', 400)
   }
   if (!['today', 'weekly', 'alltime'].includes(period)) {
     return errorResponse('Invalid period. Use today, weekly, or alltime.', 400)
@@ -54,19 +96,21 @@ Deno.serve(async (req) => {
         .eq('user_id', auth.userId)
         .maybeSingle()
 
+      const mappedEntries = (entries ?? []).map(e => ({
+        rank: e.rank,
+        userId: e.user_id,
+        displayName: e.display_name,
+        level: e.level,
+        primaryValue: e.total_xp,
+      }))
+
       return jsonResponse({
         mode,
         period,
-        entries: (entries ?? []).map(e => ({
-          rank: e.rank,
-          userId: e.user_id,
-          displayName: e.display_name,
-          level: e.level,
-          primaryValue: e.total_xp,
-        })),
+        entries: await attachPreviousRanks(supabase, 'xp', 'alltime', mappedEntries),
         total: count ?? 0,
         userEntry: userEntry
-          ? { rank: userEntry.rank, primaryValue: userEntry.total_xp }
+          ? { rank: userEntry.rank, primaryValue: userEntry.total_xp, previousRank: await previousRankFor(supabase, 'xp', 'alltime', auth.userId) }
           : null,
       })
     }
@@ -86,20 +130,22 @@ Deno.serve(async (req) => {
         .eq('user_id', auth.userId)
         .maybeSingle()
 
+      const mappedEntries = (entries ?? []).map(e => ({
+        rank: e.rank,
+        userId: e.user_id,
+        displayName: e.display_name,
+        level: e.level,
+        primaryValue: e.weekly_xp,
+        gamesPlayed: e.games_played,
+      }))
+
       return jsonResponse({
         mode,
         period,
-        entries: (entries ?? []).map(e => ({
-          rank: e.rank,
-          userId: e.user_id,
-          displayName: e.display_name,
-          level: e.level,
-          primaryValue: e.weekly_xp,
-          gamesPlayed: e.games_played,
-        })),
+        entries: await attachPreviousRanks(supabase, 'xp', 'weekly', mappedEntries),
         total: count ?? 0,
         userEntry: userEntry
-          ? { rank: userEntry.rank, primaryValue: userEntry.weekly_xp }
+          ? { rank: userEntry.rank, primaryValue: userEntry.weekly_xp, previousRank: await previousRankFor(supabase, 'xp', 'weekly', auth.userId) }
           : null,
       })
     }
@@ -209,12 +255,10 @@ Deno.serve(async (req) => {
     })
   }
 
-  // ── Classic (legacy) ─────────────────────────────────────────────────────────
+  // ── Classic (best session, ranked by session XP) ─────────────────────────────
   if (mode === 'classic') {
-    const viewName =
-      period === 'today'   ? 'leaderboard_today' :
-      period === 'weekly'  ? 'leaderboard_weekly' :
-                             'leaderboard_all_time'
+    const snapshotPeriod = period === 'weekly' ? 'weekly' : 'alltime'
+    const viewName = snapshotPeriod === 'weekly' ? 'classic_leaderboard_weekly' : 'classic_leaderboard_alltime'
 
     const { data: entries, error, count } = await supabase
       .from(viewName)
@@ -226,34 +270,76 @@ Deno.serve(async (req) => {
 
     const { data: userEntry } = await supabase
       .from(viewName)
-      .select('rank, best_xp')
+      .select('rank, session_xp_earned')
       .eq('user_id', auth.userId)
       .maybeSingle()
+
+    const mappedEntries = (entries ?? []).map(e => ({
+      rank: e.rank,
+      userId: e.user_id,
+      displayName: e.display_name,
+      level: e.level,
+      primaryValue: e.session_xp_earned,
+      sessionRound: e.session_round,
+      totalQuestions: e.total_questions,
+    }))
 
     return jsonResponse({
       mode,
       period,
-      entries: (entries ?? []).map(e => ({
-        rank: e.rank,
-        userId: e.user_id,
-        displayName: e.display_name,
-        level: e.level,
-        bestXp: e.best_xp,
-        gamesPlayed: e.games_played,
-      })),
+      entries: await attachPreviousRanks(supabase, 'classic', snapshotPeriod, mappedEntries),
       total: count ?? 0,
       userEntry: userEntry
-        ? { rank: userEntry.rank, primaryValue: userEntry.best_xp }
+        ? { rank: userEntry.rank, primaryValue: userEntry.session_xp_earned, previousRank: await previousRankFor(supabase, 'classic', snapshotPeriod, auth.userId) }
         : null,
     })
   }
 
-  // ── Survival (legacy, now ranked purely by XP) ───────────────────────────────
+  // ── Blitz (best run, ranked by correct answers) ───────────────────────────────
+  if (mode === 'blitz') {
+    const snapshotPeriod = period === 'weekly' ? 'weekly' : 'alltime'
+    const viewName = snapshotPeriod === 'weekly' ? 'blitz_leaderboard_weekly' : 'blitz_leaderboard_alltime'
+
+    const { data: entries, error, count } = await supabase
+      .from(viewName)
+      .select('*', { count: 'exact' })
+      .order('rank', { ascending: true })
+      .range(offset, offset + limit - 1)
+
+    if (error) return errorResponse('Failed to fetch leaderboard', 500)
+
+    const { data: userEntry } = await supabase
+      .from(viewName)
+      .select('rank, correct_count')
+      .eq('user_id', auth.userId)
+      .maybeSingle()
+
+    const mappedEntries = (entries ?? []).map(e => ({
+      rank: e.rank,
+      userId: e.user_id,
+      displayName: e.display_name,
+      level: e.level,
+      primaryValue: e.correct_count,
+      correctCount: e.correct_count,
+    }))
+
+    return jsonResponse({
+      mode,
+      period,
+      entries: await attachPreviousRanks(supabase, 'blitz', snapshotPeriod, mappedEntries),
+      total: count ?? 0,
+      userEntry: userEntry
+        ? { rank: userEntry.rank, primaryValue: userEntry.correct_count, previousRank: await previousRankFor(supabase, 'blitz', snapshotPeriod, auth.userId) }
+        : null,
+    })
+  }
+
+  // ── Survival (ranked by questions answered, then XP as tiebreaker) ───────────
   if (mode === 'survival') {
     let query = supabase
       .from('sudden_death_scores')
       .select('user_id, questions_answered, xp_earned')
-      .order('xp_earned', { ascending: false })
+      .order('questions_answered', { ascending: false })
 
     if (period === 'today') {
       query = query.gte('completed_at', new Date(new Date().toISOString().split('T')[0]).toISOString())
@@ -269,11 +355,18 @@ Deno.serve(async (req) => {
     const bestByUser = new Map<string, { user_id: string; questions_answered: number; xp_earned: number }>()
     for (const run of allRuns ?? []) {
       const existing = bestByUser.get(run.user_id)
-      if (!existing || run.xp_earned > existing.xp_earned) bestByUser.set(run.user_id, run)
+      if (!existing ||
+          run.questions_answered > existing.questions_answered ||
+          (run.questions_answered === existing.questions_answered && run.xp_earned > existing.xp_earned)
+      ) {
+        bestByUser.set(run.user_id, run)
+      }
     }
 
     const sorted = Array.from(bestByUser.values())
-      .sort((a, b) => b.xp_earned - a.xp_earned)
+      .sort((a, b) =>
+        b.questions_answered - a.questions_answered || b.xp_earned - a.xp_earned
+      )
 
     const page = sorted.slice(offset, offset + limit)
     const userIds = page.map(r => r.user_id)
@@ -293,12 +386,16 @@ Deno.serve(async (req) => {
         userId: r.user_id,
         displayName: userMap.get(r.user_id)?.display_name ?? 'Unknown',
         level: userMap.get(r.user_id)?.level ?? 1,
+        // Ranked by questions_answered (see sort above), so primaryValue must
+        // match that — not xp_earned — or it disagrees with userEntry below
+        // and with the actual rank ordering (same bug class fixed earlier
+        // this session for Blitz mode).
+        primaryValue: r.questions_answered,
         questionsAnswered: r.questions_answered,
-        bestXp: r.xp_earned,
       })),
       total: sorted.length,
       userEntry: userRun
-        ? { rank: userRankIndex + 1, primaryValue: userRun.xp_earned }
+        ? { rank: userRankIndex + 1, primaryValue: userRun.questions_answered }
         : null,
     })
   }

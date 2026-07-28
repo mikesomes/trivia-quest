@@ -80,3 +80,42 @@ export const fonts = {
   extraBold: 'NunitoSans_800ExtraBold',
   black: 'NunitoSans_900Black',
 } as const
+
+/**
+ * Elevation surfaces, darkest (screen background) to lightest (floating UI).
+ * Prefer these over ad-hoc hex values so depth reads consistently.
+ */
+export const surfaces = {
+  surface0: '#0f0f1a', // screen background (== colors.bg)
+  surface1: '#16162a', // inset panels
+  surface2: '#1a1a2e', // cards (== colors.bgCard)
+  surface3: '#222240', // raised elements: modals, toasts, popovers
+} as const
+
+/** Shared animation timings/springs so all motion has the same physics. */
+export const motion = {
+  duration: {
+    fast: 150,
+    base: 250,
+    slow: 450,
+  },
+  /** For Animated.spring — snappy UI response (presses, toggles). */
+  springSnappy: { friction: 8, tension: 120 },
+  /** For Animated.spring — celebratory overshoot (reveals, rewards). */
+  springBouncy: { friction: 5, tension: 80 },
+  /** For Reanimated withSpring — snappy UI response (presses, toggles). */
+  reanimatedSpringSnappy: { damping: 16, stiffness: 260, mass: 0.5 },
+  /** For Reanimated withSpring — celebratory overshoot (reveals, rewards). */
+  reanimatedSpringBouncy: { damping: 10, stiffness: 160, mass: 0.6 },
+} as const
+
+/** Soft glow shadow keyed by accent color; spread via style arrays. */
+export function glow(color: string, opacity = 0.35, radiusPx = 12) {
+  return {
+    shadowColor: color,
+    shadowOpacity: opacity,
+    shadowRadius: radiusPx,
+    shadowOffset: { width: 0, height: 0 },
+    elevation: 6,
+  } as const
+}

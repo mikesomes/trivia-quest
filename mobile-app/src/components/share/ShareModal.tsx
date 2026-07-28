@@ -1,9 +1,10 @@
 import React, { useRef, useState } from 'react'
-import { Modal, View, Text, StyleSheet, TouchableOpacity, ActivityIndicator } from 'react-native'
+import { Modal, View, Text, StyleSheet, ActivityIndicator } from 'react-native'
 import ViewShot from 'react-native-view-shot'
 import * as Sharing from 'expo-sharing'
 import { ShareCard, type ShareCardData } from './ShareCard'
 import { colors, spacing, fontSize, radius } from '../../constants/theme'
+import { AnimatedPressable } from '../ui/AnimatedPressable'
 
 interface Props {
   visible: boolean
@@ -47,7 +48,7 @@ export function ShareModal({ visible, data, onClose }: Props) {
           </ViewShot>
 
           {/* Actions */}
-          <TouchableOpacity
+          <AnimatedPressable
             style={styles.shareButton}
             onPress={handleShare}
             disabled={sharing}
@@ -58,11 +59,11 @@ export function ShareModal({ visible, data, onClose }: Props) {
             ) : (
               <Text style={styles.shareButtonText}>Share Image</Text>
             )}
-          </TouchableOpacity>
+          </AnimatedPressable>
 
-          <TouchableOpacity onPress={onClose} style={styles.closeButton}>
+          <AnimatedPressable onPress={onClose} style={styles.closeButton}>
             <Text style={styles.closeText}>Close</Text>
-          </TouchableOpacity>
+          </AnimatedPressable>
         </View>
       </View>
     </Modal>

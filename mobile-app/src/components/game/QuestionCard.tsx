@@ -1,9 +1,10 @@
 import React from 'react'
 import { View, Text, StyleSheet } from 'react-native'
 import { LinearGradient } from 'expo-linear-gradient'
-import type { Question, AnswerOption, AnswerState, Difficulty } from '../../types/game'
+import type { Question, AnswerOption, AnswerState, Difficulty, Category } from '../../types/game'
 import { AnswerOption as AnswerOptionComponent } from './AnswerOption'
 import { colors, spacing, fontSize, radius } from '../../constants/theme'
+import { CATEGORIES } from '../../constants/categories'
 
 type EliminationEffect = 'hammer' | 'shield'
 
@@ -27,6 +28,7 @@ const XP_MULTIPLIER: Record<Difficulty, string | null> = {
 
 interface QuestionCardProps {
   question: Question
+  category?: Category
   difficulty?: Difficulty
   answerState: AnswerState
   selectedOption: AnswerOption | null
@@ -37,6 +39,7 @@ interface QuestionCardProps {
 
 export function QuestionCard({
   question,
+  category,
   difficulty,
   answerState,
   selectedOption,
@@ -48,6 +51,7 @@ export function QuestionCard({
   const diffColor = difficulty ? DIFFICULTY_COLOR[difficulty] : colors.primary
   const xpMultiplier = difficulty ? XP_MULTIPLIER[difficulty] : null
   const eliminatedOrder = options.filter((opt) => Boolean(eliminatedOptions?.[opt]))
+  const categoryMeta = category ? CATEGORIES.find((c) => c.id === category) : null
 
   return (
     <View style={styles.container}>
@@ -62,15 +66,24 @@ export function QuestionCard({
         />
       )}
 
-      {/* Difficulty badge row */}
-      {difficulty && (
+      {/* Metadata badge row */}
+      {(categoryMeta || difficulty) && (
         <View style={styles.badgeRow}>
-          <View style={[styles.diffBadge, { backgroundColor: `${diffColor}22`, borderColor: `${diffColor}55` }]}>
-            <View style={[styles.diffDot, { backgroundColor: diffColor }]} />
-            <Text style={[styles.diffLabel, { color: diffColor }]}>
-              {DIFFICULTY_LABEL[difficulty]}
-            </Text>
-          </View>
+          {categoryMeta && (
+            <View style={[styles.categoryBadge, { backgroundColor: `${categoryMeta.color}22`, borderColor: `${categoryMeta.color}55` }]}>
+              <Text style={[styles.categoryLabel, { color: categoryMeta.color }]}>
+                {categoryMeta.emoji} {categoryMeta.label}
+              </Text>
+            </View>
+          )}
+          {difficulty && (
+            <View style={[styles.diffBadge, { backgroundColor: `${diffColor}22`, borderColor: `${diffColor}55` }]}>
+              <View style={[styles.diffDot, { backgroundColor: diffColor }]} />
+              <Text style={[styles.diffLabel, { color: diffColor }]}>
+                {DIFFICULTY_LABEL[difficulty]}
+              </Text>
+            </View>
+          )}
           {xpMultiplier && (
             <View style={[styles.xpBadge, { backgroundColor: `${diffColor}18`, borderColor: `${diffColor}44` }]}>
               <Text style={[styles.xpLabel, { color: diffColor }]}>{xpMultiplier}</Text>
@@ -121,8 +134,20 @@ const styles = StyleSheet.create({
   badgeRow: {
     flexDirection: 'row',
     alignItems: 'center',
+    flexWrap: 'wrap',
     gap: spacing.sm,
     zIndex: 1,
+  },
+  categoryBadge: {
+    paddingHorizontal: spacing.sm,
+    paddingVertical: 4,
+    borderRadius: radius.full,
+    borderWidth: 1,
+  },
+  categoryLabel: {
+    fontSize: fontSize.xs,
+    fontWeight: '700',
+    letterSpacing: 0.3,
   },
   diffBadge: {
     flexDirection: 'row',

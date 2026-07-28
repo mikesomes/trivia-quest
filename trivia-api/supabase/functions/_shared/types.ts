@@ -10,7 +10,11 @@ export type Category =
   | 'harry_potter'
   | 'famous_quotes'
   | 'music'
+  | 'odd_one_out'
 
+// 'boss' exists only on quest nodes; boss rounds draw 'hard' questions
+// (mapped in create-round and start-quest-node-run), so question_bank and
+// the generation pipeline (DIFFICULTIES below) never use it.
 export type Difficulty = 'easy' | 'medium' | 'hard' | 'boss'
 export type ScoringTimerMode = 'question' | 'round'
 
@@ -126,6 +130,8 @@ export interface RoundXpBreakdown {
   dailyChallengeBonus: number
   firstRoundBonus: number
   total: number
+  /** Present only when the round started within the momentum window (see MOMENTUM_WINDOW_MS). */
+  momentumBonus?: number
 }
 
 export const CATEGORIES: Category[] = [
@@ -140,6 +146,7 @@ export const CATEGORIES: Category[] = [
   'harry_potter',
   'famous_quotes',
   'music',
+  'odd_one_out',
 ]
 
 export const DIFFICULTIES: Difficulty[] = ['easy', 'medium', 'hard']
@@ -147,9 +154,10 @@ export const DIFFICULTIES: Difficulty[] = ['easy', 'medium', 'hard']
 export const GAME_CONSTANTS = {
   QUESTIONS_PER_ROUND: 10,
   TIMER_SECONDS: 15,
-  BLITZ_SECONDS: 60,
+  BLITZ_SECONDS: 45,
   BLITZ_QUESTIONS: 30,
   BLITZ_TIME_BONUS_MS: 5000,
+  BLITZ_WRONG_PENALTY_MS: 5000,
   BLITZ_STREAK_THRESHOLD: 3,
   STARTING_LIVES: 3,
   STARTING_HAMMERS: 1,
@@ -158,6 +166,8 @@ export const GAME_CONSTANTS = {
   MAX_HAMMERS: 5,
   ROUND_EXPIRY_MINUTES: 15,
   QUESTION_BANK_MIN: 30,
+  MOMENTUM_WINDOW_MS: 2 * 60 * 1000,
+  MOMENTUM_BONUS_MULTIPLIER: 0.15,
 } as const
 
 /** A perk tier applied at quest round start based on player level */
@@ -170,10 +180,11 @@ export interface LevelPerk {
 }
 
 export const SHOP_ITEMS = [
-  { id: 'life',       cost: 500, inventoryKey: 'inventory_lives',       maxInventory: 4 },
-  { id: 'hammer',     cost: 400, inventoryKey: 'inventory_hammers',     maxInventory: 4 },
-  { id: 'shield',     cost: 300, inventoryKey: 'inventory_shields',     maxInventory: 3 },
-  { id: 'xp_booster', cost: 600, inventoryKey: 'inventory_xp_booster', maxInventory: 3 },
+  { id: 'life',          cost: 500, inventoryKey: 'inventory_lives',      maxInventory: 4 },
+  { id: 'hammer',        cost: 400, inventoryKey: 'inventory_hammers',    maxInventory: 4 },
+  { id: 'shield',        cost: 300, inventoryKey: 'inventory_shields',    maxInventory: 3 },
+  { id: 'xp_booster',    cost: 600, inventoryKey: 'inventory_xp_booster', maxInventory: 3 },
+  { id: 'streak_freeze', cost: 800, inventoryKey: 'streak_freezes',       maxInventory: 2 },
 ] as const
 export type ShopItemId = typeof SHOP_ITEMS[number]['id']
 

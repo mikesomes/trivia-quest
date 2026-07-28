@@ -2,22 +2,27 @@ import React from 'react'
 import { View, Text, StyleSheet } from 'react-native'
 import { colors, spacing, radius, fontSize } from '../../constants/theme'
 import { formatNumber } from '../../utils/format'
+import { getRankMovement } from '../../utils/leaderboard'
+import { MovementBadge } from './MovementBadge'
 import type { LeaderboardEntry } from '../../types/api'
 
 interface Props {
-  userEntry: { rank: number; primaryValue: number } | null
+  userEntry: { rank: number; primaryValue: number; previousRank?: number | null } | null
   displayName: string
   entries: LeaderboardEntry[]
+  /** Unit shown next to the value — modes aren't all ranked by XP (e.g. Blitz = "correct", Survival = "questions"). */
+  unitLabel: string
 }
 
-export function MyRankBanner({ userEntry, displayName, entries }: Props) {
+export function MyRankBanner({ userEntry, displayName, entries, unitLabel }: Props) {
   if (!userEntry) return null
 
   const isInVisibleList = entries.some((e) => e.rank === userEntry.rank)
   if (isInVisibleList) return null
 
   const nextEntry = entries.find((e) => e.rank === userEntry.rank - 1)
-  const xpGap = nextEntry ? Math.max(0, nextEntry.primaryValue - userEntry.primaryValue) : null
+  const gap = nextEntry ? Math.max(0, nextEntry.primaryValue - userEntry.primaryValue) : null
+  const showMovement = userEntry.previousRank !== undefined
 
   return (
     <View style={styles.container}>
@@ -27,14 +32,17 @@ export function MyRankBanner({ userEntry, displayName, entries }: Props) {
         </View>
         <View style={styles.info}>
           <Text style={styles.name} numberOfLines={1}>{displayName}</Text>
-          {xpGap != null && xpGap > 0 && (
+          {gap != null && gap > 0 && (
             <Text style={styles.gap}>
-              {formatNumber(xpGap)} XP behind #{userEntry.rank - 1}
+              {formatNumber(gap)} {unitLabel} behind #{userEntry.rank - 1}
             </Text>
           )}
         </View>
       </View>
-      <Text style={styles.xp}>{formatNumber(userEntry.primaryValue)} XP</Text>
+      <View style={styles.rightSection}>
+        {showMovement && <MovementBadge movement={getRankMovement(userEntry.rank, userEntry.previousRank)} />}
+        <Text style={styles.value}>{formatNumber(userEntry.primaryValue)} {unitLabel}</Text>
+      </View>
     </View>
   )
 }
@@ -81,7 +89,11 @@ const styles = StyleSheet.create({
     fontSize: fontSize.xs,
     color: colors.textSecondary,
   },
-  xp: {
+  rightSection: {
+    alignItems: 'flex-end',
+    gap: 4,
+  },
+  value: {
     fontSize: fontSize.md,
     fontWeight: '800',
     color: colors.primaryLight,

@@ -1,4 +1,5 @@
 import { apiPost } from './client'
+import type { Achievement } from '../types/user'
 
 export interface SuddenDeathResult {
   submissionId: string
@@ -10,6 +11,7 @@ export interface SuddenDeathResult {
   leveledUp: boolean
   rank: number
   xpToNextLevel: number
+  newAchievements: Achievement[]
 }
 
 export const suddenDeathApi = {

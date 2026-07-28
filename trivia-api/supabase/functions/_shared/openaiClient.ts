@@ -2,20 +2,22 @@ export interface OpenAIClient {
   chat: (params: ChatParams) => Promise<string>
 }
 
-interface ChatParams {
+export interface ChatParams {
   systemPrompt: string
   userPrompt: string
   jsonSchema: Record<string, unknown>
   schemaName: string
+  model?: string
+  temperature?: number
 }
 
 export function createOpenAIClient(): OpenAIClient {
   const apiKey = Deno.env.get('OPENAI_API_KEY')
-  const model = Deno.env.get('OPENAI_MODEL') || 'gpt-4o-mini'
+  const defaultModel = Deno.env.get('OPENAI_MODEL') || 'gpt-4o-mini'
   if (!apiKey) throw new Error('Missing OPENAI_API_KEY')
 
   return {
-    async chat({ systemPrompt, userPrompt, jsonSchema, schemaName }: ChatParams): Promise<string> {
+    async chat({ systemPrompt, userPrompt, jsonSchema, schemaName, model, temperature }: ChatParams): Promise<string> {
       const response = await fetch('https://api.openai.com/v1/chat/completions', {
         method: 'POST',
         headers: {
@@ -23,7 +25,7 @@ export function createOpenAIClient(): OpenAIClient {
           'Authorization': `Bearer ${apiKey}`,
         },
         body: JSON.stringify({
-          model,
+          model: model ?? defaultModel,
           messages: [
             { role: 'system', content: systemPrompt },
             { role: 'user', content: userPrompt },
@@ -36,7 +38,7 @@ export function createOpenAIClient(): OpenAIClient {
               schema: jsonSchema,
             },
           },
-          temperature: 0.8,
+          temperature: temperature ?? 0.8,
         }),
       })
 

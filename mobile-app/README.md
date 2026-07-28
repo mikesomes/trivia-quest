@@ -2,7 +2,7 @@
 
 Expo React Native app (TypeScript) for the Trivia Quest trivia game. Uses Expo Router for file-based navigation, React Query for server state, and Zustand for client state.
 
-Players sign in anonymously on first launch (no account required), pick a category and difficulty, answer 10 questions against a 15-second timer, and land on a results screen showing XP earned, updated total XP, and rank.
+Players sign in anonymously on first launch (no account required) and play one of four modes — Classic (10 questions, 3 lives), Blitz (one global clock, unlimited questions), Survival (one life, progressive difficulty), and Odd One Out — plus a Daily Challenge and a 12-category Quest campaign with star ratings and boss nodes. XP, coins, a power-up shop, achievements, and multi-mode leaderboards round out the meta-game. The backend is authoritative for all scoring.
 
 ---
 
@@ -28,17 +28,27 @@ Players sign in anonymously on first launch (no account required), pick a catego
 
 ```
 app/index.tsx                  — Splash / redirect (checks auth, routes to tabs or onboarding)
+app/onboarding.tsx             — First-launch slides + display-name entry
 │
 ├── app/(tabs)/_layout.tsx     — Bottom tab navigator
-│   ├── (tabs)/home.tsx        — Play button, XP bar, recent stats
-│   ├── (tabs)/leaderboard.tsx — Weekly / all-time rankings toggle
-│   └── (tabs)/profile.tsx     — Level, XP, lifetime stats
+│   ├── (tabs)/home.tsx        — Greeting, XP bar, quest hero card, daily challenge, mode cards
+│   ├── (tabs)/leaderboard.tsx — Mode tabs (XP/Classic/Survival/Blitz) × period tabs
+│   ├── (tabs)/profile.tsx     — Avatar, editable name, stats grid, achievements
+│   └── (tabs)/shop.tsx        — Spend coins on power-ups; equip loadout for next round
 │
-└── app/game/
-    ├── game/category.tsx      — Category picker (General Knowledge, History, Science, ...)
-    ├── game/difficulty.tsx    — Difficulty picker (Easy / Medium / Hard)
-    ├── game/play.tsx          — Active game: countdown timer, question text, 4 answer buttons, lives display
-    └── game/results.tsx       — Round summary: XP earned, level-up animation if applicable
+├── app/game/
+│   ├── game/mode-select.tsx        — Pick Classic / Blitz / Survival / Odd One Out
+│   ├── game/mode-intro.tsx         — Per-mode rules screen
+│   ├── game/category.tsx           — Classic category picker
+│   ├── game/blitz-category.tsx     — Blitz category picker
+│   ├── game/play.tsx               — Active game: timer, question, answers, lives/power-ups
+│   ├── game/results.tsx            — Round summary (classic/blitz/daily/quest variants)
+│   ├── game/gameover.tsx           — All-lives-lost screen
+│   └── game/sudden-death-over.tsx  — Survival-run-ended screen
+│
+└── app/quest/
+    ├── quest/index.tsx        — Quest category hub
+    └── quest/[categoryId].tsx — Node map for a category (stars, unlock gating)
 ```
 
 ### Source layout
@@ -123,7 +133,8 @@ cp .env.example .env.local
 | `EXPO_PUBLIC_SUPABASE_URL` | Your Supabase project URL, e.g. `https://abcdef.supabase.co`. For local dev, use `http://127.0.0.1:54321`. |
 | `EXPO_PUBLIC_SUPABASE_ANON_KEY` | The public anon key from your Supabase project (Settings → API). Safe to expose in the app. |
 | `EXPO_PUBLIC_API_BASE_URL` | Base URL for Edge Function calls, e.g. `https://abcdef.supabase.co/functions/v1`. For local dev: `http://127.0.0.1:54321/functions/v1`. |
-| `EXPO_PUBLIC_APP_ENV` | `development` or `production`. Controls debug logging and error display. |
+| `EXPO_PUBLIC_ENV` | `development` or `production`. Sentry reporting is enabled only in `production`. |
+| `EXPO_PUBLIC_SENTRY_DSN` | Sentry DSN for crash/error reporting (optional in local dev). |
 
 > All variables prefixed with `EXPO_PUBLIC_` are bundled into the app at build time and are readable by client code. Never put secrets (service role keys, OpenAI keys) in `.env.local`.
 
@@ -187,7 +198,10 @@ npm run typecheck  # TypeScript type checking (no test execution)
 | File | What it tests |
 |---|---|
 | `__tests__/utils/scoring.test.ts` | Client-side XP preview — verifies it matches the backend XP formulas |
+| `__tests__/utils/difficultyMix.test.ts` | Difficulty mix/segment generation for classic progression and Blitz |
+| `__tests__/utils/format.test.ts` | Display formatting helpers |
 | `__tests__/stores/gameStore.test.ts` | Zustand game store — round initialization, answer submission, streak/lives logic |
+| `__tests__/api/profile.test.ts` | Profile API client behavior |
 
 ---
 
@@ -259,11 +273,14 @@ eas update --branch production --message "Fix leaderboard sorting"
 
 ### Rules
 
-- Each round consists of **10 multiple-choice questions** (4 options each).
-- Before starting, the player picks a **category** (General Knowledge, History, Science, Sports, Movies & TV, Geography) and a **difficulty** (Easy, Medium, Hard).
-- Each question has a **15-second timer**. If time runs out, the answer is marked wrong and a life is lost.
-- Players start with **3 lives**. Losing all 3 lives ends the round early.
-- After all 10 questions (or game over), the results screen shows XP earned, updated total XP, and current rank.
+- **Classic**: 10 multiple-choice questions (4 options each) in a chosen category. Each question has a **15-second timer** (`TIMER_SECONDS`); timeouts count as wrong and cost a life. Players start with **3 lives** (more with level perks).
+- **Blitz**: one global clock (`BLITZ_SECONDS`, currently 45s), unlimited questions; streaks add time, wrong answers subtract it.
+- **Survival**: one life, chained 10-question batches with a progressive difficulty ramp and rotating categories.
+- **Odd One Out**: pick the item that doesn't belong.
+- **Daily Challenge**: a shared 10-question set for all players, resetting at midnight Eastern, with a day-streak counter.
+- **Quest**: a campaign of 12 categories × 5 nodes (classic/timed/survival/boss), 1–3 stars per node, unlock gating.
+- Power-ups from the shop: extra lives, hammers (remove 2 wrong options), shields (block one wrong answer), XP booster.
+- After a round, the results screen shows XP earned (with speed/streak breakdown), coins, session totals, and rank.
 
 ### XP
 
@@ -376,13 +393,10 @@ No route registration is needed — Expo Router discovers all files in `app/` au
 
 ## Post-MVP TODOs
 
-- [ ] Display name editor (tap-to-edit field on the profile screen)
-- [ ] Sound effects and haptic feedback (`expo-av` for audio, `expo-haptics` for vibration)
 - [ ] Offline mode — cache a set of questions in AsyncStorage so the game works without a connection
-- [ ] App icon and splash screen assets (replace Expo defaults in `assets/`)
-- [ ] Deep linking support — link directly into a specific category/difficulty from a push notification
+- [ ] Deep linking support — link directly into a specific category from a push notification
 - [ ] E2E tests with [Detox](https://wix.github.io/Detox/)
 - [ ] Dark/light theme toggle (currently dark-only)
-- [ ] Animated level-up screen with confetti
-- [ ] Leaderboard filter by category
-- [ ] Streak/achievement badges on the profile screen
+- [ ] Server push notifications (Expo Push) — local scheduled notifications ship first
+- [ ] Friends / head-to-head duels
+- [ ] Weekly leagues (cohort-based promotion/demotion)

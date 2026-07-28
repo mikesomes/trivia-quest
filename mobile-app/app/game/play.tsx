@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useCallback } from 'react'
-import { Animated, Easing, View, Text, StyleSheet, TouchableOpacity, AppState, Alert, Platform, ScrollView } from 'react-native'
+import { Animated, Easing, View, Text, StyleSheet, AppState, Alert, Platform, ScrollView } from 'react-native'
 import { useMutation } from '@tanstack/react-query'
 import { isAlreadyAnsweredError, isApiError } from '../../src/api/client'
 import { flagsApi } from '../../src/api/flags'
@@ -11,7 +11,8 @@ import { useHammer } from '../../src/hooks/useHammer'
 import { useFinishRound, useCreateRound } from '../../src/hooks/useRound'
 import { useProfile } from '../../src/hooks/useProfile'
 import { useSoundEffects } from '../../src/hooks/useSoundEffects'
-import { useAnimatedXp } from '../../src/hooks/useAnimatedXp'
+import { useAnimatedNumber } from '../../src/hooks/useAnimatedNumber'
+import { AnimatedPressable } from '../../src/components/ui/AnimatedPressable'
 import ConfettiCannon from 'react-native-confetti-cannon'
 import { QuestionCard } from '../../src/components/game/QuestionCard'
 import { ProgressDots } from '../../src/components/game/ProgressDots'
@@ -42,6 +43,7 @@ export default function PlayScreen() {
     questions,
     currentPosition,
     scoringTimerMode,
+    selectedCategory,
     selectedDifficulty,
     streak,
     livesRemaining,
@@ -123,7 +125,7 @@ export default function PlayScreen() {
   const availableShields = roundShields
 
   const displayedXp = isSuddenDeath ? sdBaseXp + xpEarnedInRound : xpEarnedInRound
-  const displayXp = useAnimatedXp(displayedXp)
+  const displayXp = useAnimatedNumber(displayedXp)
 
   const currentQuestion = questions[currentPosition]
   // Absolute question number for sudden death (shown in header)
@@ -463,13 +465,13 @@ export default function PlayScreen() {
               />
             )}
           </View>
-          <TouchableOpacity
+          <AnimatedPressable
             onPress={pauseGame}
             style={styles.pauseBtn}
             disabled={answerState !== 'revealed'}
           >
             <Text style={[styles.pauseIcon, answerState !== 'revealed' && styles.pauseIconDisabled]}>⏸</Text>
-          </TouchableOpacity>
+          </AnimatedPressable>
         </View>
 
         {/* Timer */}
@@ -514,6 +516,7 @@ export default function PlayScreen() {
             <ProgressDots answerHistory={answerHistory} currentPosition={currentPosition} />
             <QuestionCard
               question={currentQuestion}
+              category={selectedCategory ?? undefined}
               difficulty={selectedDifficulty ?? undefined}
               answerState={answerState}
               selectedOption={selectedOption}
@@ -534,7 +537,7 @@ export default function PlayScreen() {
 
             {/* Next question button — shown after answer is revealed */}
             {answerState === 'revealed' && (
-              <TouchableOpacity
+              <AnimatedPressable
                 style={[
                   styles.nextButton,
                   pendingResult?.isCorrect ? styles.nextButtonCorrect : styles.nextButtonIncorrect,
@@ -549,12 +552,12 @@ export default function PlayScreen() {
                       : isSuddenDeath ? 'Keep Going →' : 'See Results'
                     : 'Next Question →'}
                 </Text>
-              </TouchableOpacity>
+              </AnimatedPressable>
             )}
 
             {/* Flag / unflag question — shown after answer is revealed */}
             {answerState === 'revealed' && currentQuestion && (
-              <TouchableOpacity
+              <AnimatedPressable
                 style={styles.flagButton}
                 onPress={() => {
                   const qId = currentQuestion.questionId
@@ -570,7 +573,7 @@ export default function PlayScreen() {
                 <Text style={[styles.flagText, flaggedQuestionIds.has(currentQuestion.questionId) && styles.flagTextDone]}>
                   {flaggedQuestionIds.has(currentQuestion.questionId) ? '🚩 Flagged — tap to unflag' : '🚩 Flag question'}
                 </Text>
-              </TouchableOpacity>
+              </AnimatedPressable>
             )}
           </ScrollView>
         </Animated.View>

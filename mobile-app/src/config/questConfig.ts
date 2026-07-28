@@ -1,4 +1,5 @@
 import type { QuestCategory, QuestNode, QuestStarThresholds } from '../types/quest'
+import { GAME_CONFIG } from '../constants/game'
 
 // ─── Centralized star thresholds ─────────────────────────────────────────────
 
@@ -66,7 +67,7 @@ export const QUEST_CATEGORIES: QuestCategory[] = [
     nodes: [
       classic('gk-1', 'general_knowledge', 'First Steps',    'Kickstart your quest with everyday trivia.',        1, 'easy',   50,  []),
       classic('gk-2', 'general_knowledge', 'Getting Serious', 'A broader test of what you know.',                 2, 'medium', 75,  ['gk-1']),
-      timed  ('gk-3', 'general_knowledge', 'Race the Clock',  'Answer as many as you can in 60 seconds.',        ['gk-2']),
+      timed  ('gk-3', 'general_knowledge', 'Race the Clock',  `Answer as many as you can in ${GAME_CONFIG.BLITZ_SECONDS} seconds.`, ['gk-2']),
       classic('gk-4', 'general_knowledge', 'Expert Ground',  'Only the well-read survive here.',                 4, 'hard',  150, ['gk-3']),
       boss   ('gk-5', 'general_knowledge', 'Grand Master',   'The ultimate general knowledge challenge.',        ['gk-4']),
     ],
@@ -122,7 +123,7 @@ export const QUEST_CATEGORIES: QuestCategory[] = [
     nodes: [
       classic('mv-1', 'movies_tv', 'Opening Credits',  'Box office hits and beloved classics.',              1, 'easy',   50,  []),
       classic('mv-2', 'movies_tv', 'Director\'s Cut',  'Deeper cuts from cinema and television.',           2, 'medium', 75,  ['mv-1']),
-      timed  ('mv-3', 'movies_tv', 'Scene Stealer',    'How many films can you recall in 60 seconds?',      ['mv-2']),
+      timed  ('mv-3', 'movies_tv', 'Scene Stealer',    `How many films can you recall in ${GAME_CONFIG.BLITZ_SECONDS} seconds?`, ['mv-2']),
       classic('mv-4', 'movies_tv', 'Critic\'s Pick',   'From cult classics to award-winners.',              4, 'hard',  150, ['mv-3']),
       boss   ('mv-5', 'movies_tv', 'Cinephile\'s Test','The ultimate screen knowledge challenge.',           ['mv-4']),
     ],
@@ -150,7 +151,7 @@ export const QUEST_CATEGORIES: QuestCategory[] = [
     nodes: [
       classic('nf-1', 'nfl_football', 'Coin Toss',       'Basic NFL knowledge for casual fans.',               1, 'easy',   50,  []),
       classic('nf-2', 'nfl_football', 'Playbook',         'Stats, records, and team histories.',                2, 'medium', 75,  ['nf-1']),
-      timed  ('nf-3', 'nfl_football', 'Two-Minute Drill', 'Score as many points as you can in 60 seconds.',   ['nf-2']),
+      timed  ('nf-3', 'nfl_football', 'Two-Minute Drill', `Score as many points as you can in ${GAME_CONFIG.BLITZ_SECONDS} seconds.`, ['nf-2']),
       classic('nf-4', 'nfl_football', 'Film Study',       'Deep-cut NFL trivia for true fans.',                 4, 'hard',  150, ['nf-3']),
       boss   ('nf-5', 'nfl_football', 'Super Bowl IQ',    'Only the biggest football brains pass this.',       ['nf-4']),
     ],

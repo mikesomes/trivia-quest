@@ -43,7 +43,8 @@ Deno.serve(async (req) => {
         option_a,
         option_b,
         option_c,
-        option_d
+        option_d,
+        difficulty
       )
     `)
     .eq('round_id', roundId)
@@ -56,6 +57,7 @@ Deno.serve(async (req) => {
     position: rq.position,
     questionId: rq.question_id,
     questionText: (rq.question_bank as Record<string, string>).question_text,
+    difficulty: (rq.question_bank as Record<string, string>).difficulty,
     options: {
       a: (rq.question_bank as Record<string, string>).option_a,
       b: (rq.question_bank as Record<string, string>).option_b,

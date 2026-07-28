@@ -1,5 +1,6 @@
 import React, { useEffect, useRef } from 'react'
 import { Animated, Easing, Modal, StyleSheet, Text, TouchableWithoutFeedback, View } from 'react-native'
+import { LinearGradient } from 'expo-linear-gradient'
 import { colors, fontSize, spacing } from '../../constants/theme'
 
 interface Props {
@@ -12,6 +13,50 @@ interface Props {
 const PARTICLE_COUNT = 8
 const PARTICLE_ANGLES = Array.from({ length: PARTICLE_COUNT }, (_, i) => (i * 360) / PARTICLE_COUNT)
 const PARTICLE_EMOJIS = ['⭐', '✨', '🌟', '💫', '⭐', '✨', '🌟', '💫']
+
+// Slowly rotating sunburst behind the card — the "full-screen takeover" feel.
+const RAY_COUNT = 12
+const RAY_LENGTH = 360
+
+function RadialRays({ trigger }: { trigger: boolean }) {
+  const opacity = useRef(new Animated.Value(0)).current
+  const rotation = useRef(new Animated.Value(0)).current
+
+  useEffect(() => {
+    if (!trigger) {
+      opacity.setValue(0)
+      rotation.setValue(0)
+      return
+    }
+    Animated.timing(opacity, { toValue: 1, duration: 500, useNativeDriver: true }).start()
+    rotation.setValue(0)
+    const loop = Animated.loop(
+      Animated.timing(rotation, { toValue: 1, duration: 18000, easing: Easing.linear, useNativeDriver: true })
+    )
+    loop.start()
+    return () => loop.stop()
+  }, [trigger, opacity, rotation])
+
+  const spin = rotation.interpolate({ inputRange: [0, 1], outputRange: ['0deg', '360deg'] })
+
+  return (
+    <Animated.View
+      style={[styles.raysContainer, { opacity, transform: [{ rotate: spin }] }]}
+      pointerEvents="none"
+    >
+      {Array.from({ length: RAY_COUNT }, (_, i) => (
+        <View key={i} style={[styles.rayWrap, { transform: [{ rotate: `${(360 / RAY_COUNT) * i}deg` }] }]}>
+          <LinearGradient
+            colors={['transparent', `${colors.streakActive}66`, 'transparent']}
+            start={{ x: 0, y: 0.5 }}
+            end={{ x: 1, y: 0.5 }}
+            style={styles.ray}
+          />
+        </View>
+      ))}
+    </Animated.View>
+  )
+}
 
 function Particle({ angle, trigger }: { angle: number; trigger: boolean }) {
   const distance = useRef(new Animated.Value(0)).current
@@ -97,8 +142,8 @@ export function LevelUpModal({ visible, newLevel, onDismiss }: Props) {
       ])
     ).start()
 
-    // Auto-dismiss after 2.8s
-    const timer = setTimeout(onDismiss, 2800)
+    // Auto-dismiss after 3.2s — a touch longer so the rays get a moment to read
+    const timer = setTimeout(onDismiss, 3200)
     return () => clearTimeout(timer)
   }, [visible])
 
@@ -106,6 +151,9 @@ export function LevelUpModal({ visible, newLevel, onDismiss }: Props) {
     <Modal visible={visible} transparent animationType="none" statusBarTranslucent>
       <TouchableWithoutFeedback onPress={onDismiss}>
         <Animated.View style={[styles.overlay, { opacity: overlayOpacity }]}>
+          {/* Radial rays — sits behind everything else */}
+          <RadialRays trigger={visible} />
+
           {/* Particles */}
           <View style={styles.particleOrigin} pointerEvents="none">
             {PARTICLE_ANGLES.map((angle) => (
@@ -144,6 +192,24 @@ const styles = StyleSheet.create({
     position: 'absolute',
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  raysContainer: {
+    position: 'absolute',
+    width: RAY_LENGTH,
+    height: RAY_LENGTH,
+  },
+  rayWrap: {
+    position: 'absolute',
+    left: '50%',
+    top: '50%',
+    width: RAY_LENGTH,
+    height: 4,
+    marginLeft: -RAY_LENGTH / 2,
+    marginTop: -2,
+  },
+  ray: {
+    width: '100%',
+    height: '100%',
   },
   particle: {
     position: 'absolute',

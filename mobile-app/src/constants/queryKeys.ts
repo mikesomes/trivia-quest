@@ -15,4 +15,10 @@ export const queryKeys = {
   dailyChallenge: {
     status: () => ['daily-challenge', 'status'] as const,
   },
+  challenges: {
+    list: () => ['challenges'] as const,
+  },
+  dailyReward: {
+    status: () => ['daily-reward', 'status'] as const,
+  },
 } as const

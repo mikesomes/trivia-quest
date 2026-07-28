@@ -6,6 +6,7 @@ import { dailyChallengeApi } from '../api/dailyChallenge'
 import { queryKeys } from '../constants/queryKeys'
 import { useGameStore } from '../store/gameStore'
 import { roundsApi } from '../api/rounds'
+import { cancelStreakReminder, syncDailyReminders } from '../lib/notifications'
 
 export function useDailyChallengeStatus() {
   const queryClient = useQueryClient()
@@ -21,11 +22,22 @@ export function useDailyChallengeStatus() {
     return () => sub.remove()
   }, [queryClient])
 
-  return useQuery({
+  const query = useQuery({
     queryKey: queryKeys.dailyChallenge.status(),
     queryFn: () => dailyChallengeApi.getStatus(),
     staleTime: 60 * 1000, // periodic recheck catches midnight rollover while app stays open
   })
+
+  // Keep the streak-saver / morning reminders in line with today's status.
+  useEffect(() => {
+    if (!query.data) return
+    syncDailyReminders({
+      challengeCompletedToday: query.data.alreadyCompleted,
+      dayStreak: query.data.streak,
+    }).catch(() => {})
+  }, [query.data?.alreadyCompleted, query.data?.streak])
+
+  return query
 }
 
 export function useStartDailyChallenge() {
@@ -70,6 +82,7 @@ export function useCompleteDailyChallenge() {
     mutationFn: (roundId: string) => dailyChallengeApi.complete(roundId),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.dailyChallenge.status() })
+      cancelStreakReminder().catch(() => {})
     },
   })
 }

@@ -11,9 +11,10 @@ describe('getSurvivalMix', () => {
     expect(getSurvivalMix(6, 10)).toEqual({ easy: 0, medium: 2, hard: 8 })
   })
 
-  it('clamps batch 7+ to the last curve entry', () => {
-    expect(getSurvivalMix(7, 10)).toEqual({ easy: 0, medium: 2, hard: 8 })
-    expect(getSurvivalMix(100, 10)).toEqual({ easy: 0, medium: 2, hard: 8 })
+  it('clamps batch 8+ to the last curve entry', () => {
+    expect(getSurvivalMix(7, 10)).toEqual({ easy: 0, medium: 1, hard: 9 })
+    expect(getSurvivalMix(8, 10)).toEqual({ easy: 0, medium: 0, hard: 10 })
+    expect(getSurvivalMix(100, 10)).toEqual({ easy: 0, medium: 0, hard: 10 })
   })
 
   it('sums always equal the requested count', () => {

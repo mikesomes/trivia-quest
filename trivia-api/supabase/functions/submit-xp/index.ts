@@ -11,15 +11,17 @@ import {
   levelFromXp,
   xpToNextLevel as computeXpToNextLevel,
 } from '../_shared/scoring.ts'
-import type { Difficulty } from '../_shared/types.ts'
-
-interface AchievementRecord {
-  id: string
-  name: string
-  description: string
-  icon: string
-  rarity: string
-}
+import { GAME_CONSTANTS, type Difficulty } from '../_shared/types.ts'
+import { updateDayStreak } from '../_shared/streaks.ts'
+import {
+  checkAndAwardAchievements,
+  thresholdConditions,
+  GAMES_TARGETS,
+  STREAK_TARGETS,
+  BLITZ_TARGETS,
+  DAY_STREAK_TARGETS,
+  CATEGORY_MASTERY_TARGET,
+} from '../_shared/achievements.ts'
 
 const MAX_SESSION_ROUNDS = 50
 
@@ -155,9 +157,21 @@ Deno.serve(async (req) => {
   const answerXpEarned = xpBreakdown.answerXp > 0 || correctCount === 0
     ? xpBreakdown.answerXp
     : accumulatedAnswerXp
-  const xpEarned = answerXpEarned > 0 || correctCount === 0
+  const baseXpEarned = answerXpEarned > 0 || correctCount === 0
     ? xpBreakdown.total
     : computeXpEarned(correctCount, round.difficulty as Difficulty, 10)
+
+  // "One more round" momentum bonus — eligibility was already decided (and
+  // locked in) server-side back at create-round time; just apply it here.
+  const momentumBonusActive = round.momentum_bonus_active === true
+  const momentumBonusXp = momentumBonusActive
+    ? Math.round(baseXpEarned * GAME_CONSTANTS.MOMENTUM_BONUS_MULTIPLIER)
+    : 0
+  const xpEarned = baseXpEarned + momentumBonusXp
+  const xpBreakdownFinal = momentumBonusXp > 0
+    ? { ...xpBreakdown, momentumBonus: momentumBonusXp, total: xpBreakdown.total + momentumBonusXp }
+    : xpBreakdown
+
   const completionBonusXp = Math.max(0, xpEarned - answerXpEarned)
   const sessionXpEarned = prevSessionXp + xpEarned
   const sessionRound = sessionRoundIds.length + 1
@@ -194,7 +208,7 @@ Deno.serve(async (req) => {
       newBestXp: recoveredSessionXp >= user.best_score,
       rank: (betterXpSubmissions ?? 0) + 1,
       xpToNextLevel: computeXpToNextLevel(user.xp),
-      xpBreakdown,
+      xpBreakdown: xpBreakdownFinal,
       newAchievements: [],
       sessionXpEarned: recoveredSessionXp,
       sessionCorrectCount: prevSessionCorrect + recoveredCorrectCount,
@@ -212,13 +226,14 @@ Deno.serve(async (req) => {
       difficulty: round.difficulty,
       total_score: xpEarned,
       correct_count: correctCount,
-      total_questions: 10,
+      total_questions: answers?.length ?? 10,
       time_bonus_total: timeBonusTotal,
       streak_bonus_total: streakBonusTotal,
       completed_at: round.completed_at || new Date().toISOString(),
       xp_earned: xpEarned,
       session_score: sessionXpEarned,
       session_xp_earned: sessionXpEarned,
+      session_round: sessionRound,
     })
     .select()
     .single()
@@ -228,7 +243,7 @@ Deno.serve(async (req) => {
   // Fetch current user stats
   const { data: user, error: userError } = await supabase
     .from('users')
-    .select('xp, level, total_games, total_correct, best_score, coins')
+    .select('xp, level, total_games, total_correct, best_score, coins, best_blitz_correct')
     .eq('id', auth.userId)
     .single()
 
@@ -249,12 +264,18 @@ Deno.serve(async (req) => {
   const coinsAwarded = round.is_quest ? completionBonusXp : xpEarned
   const newCoins = (user.coins ?? 0) + coinsAwarded
 
+  // Blitz personal best (for blitz_15/25/35 achievements)
+  const newBestBlitzCorrect = round.is_blitz
+    ? Math.max(user.best_blitz_correct ?? 0, correctCount)
+    : (user.best_blitz_correct ?? 0)
+
   // Update user stats
   const userUpdate: Record<string, unknown> = {
     total_games: newTotalGames,
     total_correct: user.total_correct + correctCount,
     best_score: newBestXp ? sessionXpEarned : user.best_score,
     coins: newCoins,
+    best_blitz_correct: newBestBlitzCorrect,
   }
   if (!round.is_quest || completionBonusXp > 0) {
     userUpdate.xp = newXp
@@ -262,51 +283,41 @@ Deno.serve(async (req) => {
   }
   await supabase.from('users').update(userUpdate).eq('id', auth.userId)
 
+  // Any completed round keeps the universal day streak alive
+  const dayStreak = await updateDayStreak(supabase, auth.userId)
+
+  // Category-mastery progress (submit-answer already incremented this per
+  // correct answer during play — daily-challenge rounds are excluded there
+  // since their round.category is only a majority approximation).
+  let categoryCorrectCount = 0
+  if (!round.is_daily_challenge) {
+    const { data: categoryStat } = await supabase
+      .from('user_category_stats')
+      .select('correct_count')
+      .eq('user_id', auth.userId)
+      .eq('category', round.category)
+      .maybeSingle()
+    categoryCorrectCount = categoryStat?.correct_count ?? 0
+  }
+
   // ── Achievement checks ─────────────────────────────────────────────────────
   const conditions: Record<string, boolean> = {
     first_game:    newTotalGames >= 1,
-    games_10:      newTotalGames >= 10,
-    games_50:      newTotalGames >= 50,
-    games_100:     newTotalGames >= 100,
+    ...thresholdConditions('games', GAMES_TARGETS, newTotalGames),
     perfect_round: correctCount === 10,
     speed_demon:   correctCount === 10 && avgTimeTakenMs < 8000,
     survivor:      round.lives_remaining === 1,
-    streak_5:      longestStreak >= 5,
-    streak_10:     longestStreak >= 10,
-    streak_15:     longestStreak >= 15,
+    ...thresholdConditions('streak', STREAK_TARGETS, longestStreak),
     high_scorer:   xpEarned >= 500,
     big_brain:     sessionXpEarned >= 1500,
+    ...thresholdConditions('blitz', BLITZ_TARGETS, newBestBlitzCorrect),
+    ...thresholdConditions('day_streak', DAY_STREAK_TARGETS, dayStreak?.currentStreak ?? 0),
+    ...(!round.is_daily_challenge
+      ? { [`category_master_${round.category}`]: categoryCorrectCount >= CATEGORY_MASTERY_TARGET }
+      : {}),
   }
 
-  const eligible = Object.entries(conditions)
-    .filter(([, met]) => met)
-    .map(([id]) => id)
-
-  // Fetch already-earned achievements to avoid duplicates
-  const { data: alreadyEarned } = await supabase
-    .from('user_achievements')
-    .select('achievement_id')
-    .eq('user_id', auth.userId)
-
-  const earnedSet = new Set((alreadyEarned ?? []).map(r => r.achievement_id))
-  const toAward = eligible.filter(id => !earnedSet.has(id))
-
-  let newAchievements: AchievementRecord[] = []
-
-  if (toAward.length > 0) {
-    // Insert new achievements
-    await supabase.from('user_achievements').insert(
-      toAward.map(achievement_id => ({ user_id: auth.userId, achievement_id }))
-    )
-
-    // Fetch full achievement records to return to client
-    const { data: awarded } = await supabase
-      .from('achievements')
-      .select('id, name, description, icon, rarity')
-      .in('id', toAward)
-
-    newAchievements = (awarded ?? []) as AchievementRecord[]
-  }
+  const newAchievements = await checkAndAwardAchievements(supabase, auth.userId, conditions)
   // ──────────────────────────────────────────────────────────────────────────
 
   // Get current global rank (rank on session XP, matching the leaderboard views)
@@ -330,10 +341,11 @@ Deno.serve(async (req) => {
     newBestXp,
     rank,
     xpToNextLevel: computeXpToNextLevel(newXp),
-    xpBreakdown,
+    xpBreakdown: xpBreakdownFinal,
     newAchievements,
     sessionXpEarned: prevSessionXp + xpEarned,
     sessionCorrectCount: prevSessionCorrect + correctCount,
     sessionRound,
+    dayStreak,
   })
 })

@@ -16,6 +16,7 @@ export function useSubmitXp() {
       addSessionRoundId(roundId)
       queryClient.invalidateQueries({ queryKey: queryKeys.leaderboard.all() })
       queryClient.invalidateQueries({ queryKey: queryKeys.profile.all() })
+      queryClient.invalidateQueries({ queryKey: queryKeys.challenges.list() })
     },
   })
 }

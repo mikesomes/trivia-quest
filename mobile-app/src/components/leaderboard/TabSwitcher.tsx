@@ -1,6 +1,7 @@
 import React from 'react'
-import { View, TouchableOpacity, Text, StyleSheet } from 'react-native'
+import { View, Text, StyleSheet } from 'react-native'
 import { colors, spacing, radius, fontSize } from '../../constants/theme'
+import { AnimatedPressable } from '../ui/AnimatedPressable'
 
 interface TabSwitcherProps<T extends string> {
   tabs: Array<{ id: T; label: string }>
@@ -12,7 +13,7 @@ export function TabSwitcher<T extends string>({ tabs, activeTab, onTabChange }: 
   return (
     <View style={styles.container}>
       {tabs.map((tab) => (
-        <TouchableOpacity
+        <AnimatedPressable
           key={tab.id}
           style={[styles.tab, activeTab === tab.id && styles.activeTab]}
           onPress={() => onTabChange(tab.id)}
@@ -21,7 +22,7 @@ export function TabSwitcher<T extends string>({ tabs, activeTab, onTabChange }: 
           <Text style={[styles.label, activeTab === tab.id && styles.activeLabel]}>
             {tab.label}
           </Text>
-        </TouchableOpacity>
+        </AnimatedPressable>
       ))}
     </View>
   )
