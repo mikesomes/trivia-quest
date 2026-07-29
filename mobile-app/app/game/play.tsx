@@ -23,6 +23,7 @@ import { RoundXpBar } from '../../src/components/game/RoundXpBar'
 import { StreakMilestoneToast, STREAK_MILESTONES, type StreakMilestone } from '../../src/components/game/StreakMilestoneToast'
 import { LivesDisplay } from '../../src/components/game/LivesDisplay'
 import { HammersDisplay } from '../../src/components/game/HammersDisplay'
+import { analytics } from '../../src/lib/analytics'
 import { StreakIndicator } from '../../src/components/game/StreakIndicator'
 import { StreakTargetIndicator } from '../../src/components/game/StreakTargetIndicator'
 import { PauseModal } from '../../src/components/game/PauseModal'
@@ -81,6 +82,16 @@ export default function PlayScreen() {
 
   const isQuest = !!questNodeId
   const isBlitz = scoringTimerMode === 'round'
+
+  // One label for every analytics event from this screen, so content quality
+  // can be sliced by how the question was served rather than only by category.
+  const analyticsGameMode = isQuest
+    ? `quest_${questGameMode ?? 'classic'}`
+    : isSuddenDeath
+      ? 'sudden_death'
+      : isBlitz
+        ? 'blitz'
+        : 'classic'
   const BLITZ_MS = GAME_CONFIG.BLITZ_SECONDS * 1000
 
   const [timeRemainingMs, setTimeRemainingMs] = React.useState(
@@ -107,7 +118,16 @@ export default function PlayScreen() {
 
   const flagQuestion = useMutation({
     mutationFn: (questionId: string) => flagsApi.flag(questionId),
-    onSuccess: (_, questionId) => setFlaggedQuestionIds((prev) => new Set([...prev, questionId])),
+    onSuccess: (_, questionId) => {
+      setFlaggedQuestionIds((prev) => new Set([...prev, questionId]))
+      // The earliest signal that a question is broken rather than merely hard —
+      // it arrives long before the correct-rate rules have enough answers.
+      analytics.questionFlagged({
+        questionId,
+        category: selectedCategory ?? 'unknown',
+        difficulty: selectedDifficulty ?? 'unknown',
+      })
+    },
     onError: () => Alert.alert('Error', 'Could not flag question. Try again.'),
   })
 
@@ -135,6 +155,20 @@ export default function PlayScreen() {
   const currentQuestion = questions[currentPosition]
   // Absolute question number for sudden death (shown in header)
   const absoluteQuestion = isSuddenDeath ? sdBatchNumber * GAME_CONFIG.BLITZ_QUESTIONS + currentPosition + 1 : null
+
+  // Recorded on presentation rather than on answer, so questions abandoned
+  // mid-round still count — the gap between presented and answered is where
+  // a bad question shows up first.
+  useEffect(() => {
+    if (!currentQuestion) return
+    analytics.questionPresented({
+      questionId: currentQuestion.questionId,
+      category: selectedCategory ?? 'unknown',
+      difficulty: selectedDifficulty ?? 'unknown',
+      gameMode: analyticsGameMode,
+      position: currentPosition,
+    })
+  }, [currentQuestion?.questionId])
 
   useEffect(() => {
     submitInFlightRef.current = false
@@ -265,6 +299,16 @@ export default function PlayScreen() {
           submitInFlightRef.current = false
           return
         }
+        analytics.answerSubmitted({
+          questionId: currentQuestion.questionId,
+          category: selectedCategory ?? 'unknown',
+          difficulty: selectedDifficulty ?? 'unknown',
+          gameMode: analyticsGameMode,
+          isCorrect: result.isCorrect,
+          timeTakenMs,
+          timedOut: option === null,
+        })
+
         // recordAnswer fires via onSuccess — sets answerState: 'revealed' and pendingResult
         play(result.isCorrect ? 'correct' : 'wrong', result.isCorrect ? result.currentStreak : undefined)
         if (result.isCorrect) {

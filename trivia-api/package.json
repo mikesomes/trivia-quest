@@ -8,7 +8,8 @@
     "test:unit": "vitest run __tests__/unit",
     "test:integration": "vitest run __tests__/integration",
     "typecheck": "tsc --noEmit",
-    "audit:duplicates": "vite-node scripts/audit-duplicates.ts"
+    "audit:duplicates": "vite-node scripts/audit-duplicates.ts",
+    "review:questions": "vite-node scripts/review-questions.ts"
   },
   "devDependencies": {
     "@types/node": "^20.14.0",

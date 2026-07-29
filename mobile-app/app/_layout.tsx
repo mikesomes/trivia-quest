@@ -16,7 +16,8 @@ import {
 } from '@expo-google-fonts/nunito-sans'
 import { useAuthStore } from '../src/store/authStore'
 import { useMenuMusic } from '../src/hooks/useMenuMusic'
-import { initSentry, Sentry } from '../src/lib/sentry'
+import { initSentry, Sentry, setSentryUser } from '../src/lib/sentry'
+import { analytics, initAnalytics, identifyUser } from '../src/lib/analytics'
 import { ErrorBoundary } from '../src/components/ui/ErrorBoundary'
 import { OfflineBanner } from '../src/components/ui/OfflineBanner'
 import { GestureHandlerRootView } from 'react-native-gesture-handler'
@@ -27,6 +28,7 @@ import { useSyncHapticsWithReducedMotion } from '../src/hooks/useReducedMotion'
 SplashScreen.preventAutoHideAsync()
 
 initSentry()
+initAnalytics()
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
@@ -42,11 +44,19 @@ const queryClient = new QueryClient({
 function AuthInitializer({ children }: { children: React.ReactNode }) {
   const initializeAuth = useAuthStore((s) => s.initializeAuth)
   const isInitialized = useAuthStore((s) => s.isInitialized)
+  const userId = useAuthStore((s) => s.userId)
   useMenuMusic()
 
   useEffect(() => {
     initializeAuth()
   }, [])
+
+  // Give both reporters the same identity, so a crash can be lined up with the
+  // session that produced it.
+  useEffect(() => {
+    identifyUser(userId)
+    setSentryUser(userId)
+  }, [userId])
 
   // Each open/foreground pushes the inactivity reminders back out, so they
   // only fire after genuinely being away that long.
@@ -55,6 +65,8 @@ function AuthInitializer({ children }: { children: React.ReactNode }) {
     rescheduleInactivityLadder()
     const sub = AppState.addEventListener('change', (state) => {
       if (state === 'active') rescheduleInactivityLadder()
+      // Backgrounding is where a session's tail is normally lost.
+      else analytics.flush()
     })
     return () => sub.remove()
   }, [])

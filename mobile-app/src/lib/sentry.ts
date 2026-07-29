@@ -9,11 +9,19 @@ export function initSentry() {
     tracesSampleRate: 0.1,
     sampleRate: 1.0,
 
-    // Attach user context once available
-    beforeSend(event) {
-      return event
-    },
   })
+}
+
+/**
+ * Attach the Supabase user id to crash reports.
+ *
+ * beforeSend used to sit here as an empty passthrough with a comment promising
+ * to "attach user context once available" — so every crash was anonymous and
+ * could not be matched to the session that produced it. Setting the same id
+ * PostHog uses lines the two up.
+ */
+export function setSentryUser(userId: string | null) {
+  Sentry.setUser(userId ? { id: userId } : null)
 }
 
 export { Sentry }
