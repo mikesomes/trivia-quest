@@ -15,7 +15,10 @@ export interface GenerateQuestionsOptions {
   category: Category
   difficulty: Difficulty
   count: number
+  /** Exact-match dedup keys for questions already in the bank. */
   existingHashes?: Set<string>
+  /** Sample of bank question text, quoted into the prompt so the model can steer clear of it. */
+  existingQuestions?: string[]
   openaiChat: (params: {
     systemPrompt: string
     userPrompt: string
@@ -43,23 +46,38 @@ export interface GeneratedQuestion {
 export async function generateQuestions(
   opts: GenerateQuestionsOptions
 ): Promise<GeneratedQuestion[]> {
-  const { category, difficulty, count, existingHashes = new Set(), openaiChat } = opts
+  const {
+    category,
+    difficulty,
+    count,
+    existingHashes = new Set(),
+    existingQuestions = [],
+    openaiChat,
+  } = opts
 
   const needsVerification = VERIFICATION_CATEGORIES.includes(category)
   // Request more upfront for categories that go through verification (expect ~30-40% rejection rate)
   const batchSize = needsVerification
     ? Math.ceil(count * 2) + 2
     : Math.ceil(count * 1.3) + 2
-  const recentHashSamples = Array.from(existingHashes).slice(0, 20).map(h => h.substring(0, 16))
 
-  const attemptGeneration = async (diversityBoost = false): Promise<GeneratedQuestion[]> => {
+  const attemptGeneration = async (
+    diversityBoost = false,
+    alreadyGenerated: string[] = [],
+  ): Promise<GeneratedQuestion[]> => {
     const systemPrompt = diversityBoost
       ? SYSTEM_PROMPT + '\n\nIMPORTANT: Generate highly diverse questions. Avoid common facts and well-known trivia.'
       : SYSTEM_PROMPT
 
     const rawJson = await openaiChat({
       systemPrompt,
-      userPrompt: buildUserPrompt(category, difficulty, batchSize, recentHashSamples),
+      // The retry also excludes what attempt 1 produced. Those rows are not in
+      // the bank yet, so without this the retry is free to write them again and
+      // the only thing standing between it and a wasted call is the hash check.
+      userPrompt: buildUserPrompt(category, difficulty, batchSize, [
+        ...alreadyGenerated,
+        ...existingQuestions,
+      ]),
       jsonSchema: OPENAI_QUESTION_JSON_SCHEMA,
       schemaName: 'trivia_questions',
     })
@@ -100,7 +118,7 @@ export async function generateQuestions(
   const minAcceptable = Math.max(3, Math.floor(count * 0.7))
   if (results.length < minAcceptable) {
     console.warn(`[generator] First attempt got ${results.length}/${count}, retrying with diversity boost`)
-    const retryResults = await attemptGeneration(true)
+    const retryResults = await attemptGeneration(true, results.map(r => r.question_text))
     // Combine unique results from both attempts
     const combinedHashes = new Set([...existingHashes, ...results.map(r => r.content_hash)])
     const { unique: additionalUnique } = deduplicateQuestions(

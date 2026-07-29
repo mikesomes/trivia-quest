@@ -5,8 +5,9 @@ import { isValidCategory, isValidDifficulty, parseBody } from '../_shared/valida
 import { createOpenAIClient } from '../_shared/openaiClient.ts'
 import { CATEGORIES, DIFFICULTIES, GAME_CONSTANTS } from '../_shared/types.ts'
 import type { Category } from '../_shared/types.ts'
-import { getExistingHashes, getQuestionInventory } from '../../src/db/questions.ts'
+import { getExistingHashes, getQuestionInventory, getRecentQuestionTexts } from '../../src/db/questions.ts'
 import { generateQuestions } from '../../src/openai/generator.ts'
+import { MAX_EXCLUSIONS } from '../../src/openai/prompts.ts'
 import { makeLogger, getRequestId } from '../_shared/logger.ts'
 
 // Use a more capable model for categories where factual accuracy is harder to get right
@@ -89,13 +90,17 @@ Deno.serve(async (req) => {
         const crossCats = cat === 'general_knowledge'
           ? ['history', 'science', 'geography', 'sports', 'movies_tv']
           : []
-        const hashes = await getExistingHashes(supabase, cat, diff, crossCats)
+        const [hashes, existingQuestions] = await Promise.all([
+          getExistingHashes(supabase, cat, diff, crossCats),
+          getRecentQuestionTexts(supabase, cat, diff, MAX_EXCLUSIONS, crossCats),
+        ])
         const modelOverride = CATEGORY_MODEL_OVERRIDE[cat as Category]
         const questions = await generateQuestions({
           category: cat,
           difficulty: diff,
           count: needed,
           existingHashes: hashes,
+          existingQuestions,
           openaiChat: (params) => openai.chat({ ...params, model: modelOverride }),
         })
         if (questions.length > 0) {
@@ -128,13 +133,17 @@ Deno.serve(async (req) => {
   const start = Date.now()
   log.info('Generating questions', { category: body.category, difficulty: body.difficulty, count })
 
-  const existingHashes = await getExistingHashes(supabase, body.category, body.difficulty, crossCategories)
+  const [existingHashes, existingQuestions] = await Promise.all([
+    getExistingHashes(supabase, body.category, body.difficulty, crossCategories),
+    getRecentQuestionTexts(supabase, body.category, body.difficulty, MAX_EXCLUSIONS, crossCategories),
+  ])
   const modelOverride = CATEGORY_MODEL_OVERRIDE[body.category]
   const questions = await generateQuestions({
     category: body.category,
     difficulty: body.difficulty,
     count,
     existingHashes,
+    existingQuestions,
     openaiChat: (params) => openai.chat({ ...params, model: modelOverride }),
   })
 

@@ -204,3 +204,46 @@ export async function getExistingHashes(
   if (error) throw new Error(`Failed to get hashes: ${error.message}`)
   return new Set((data ?? []).map(r => r.content_hash))
 }
+
+/** How many bank questions to read before sampling the prompt exclusion list. */
+const EXCLUSION_POOL_LIMIT = 500
+
+/**
+ * Sample question text already in the bank, to show the model what not to write.
+ *
+ * Sampled at random rather than taken newest-first: the newest rows are all from
+ * the last top-up, so excluding those alone still lets the model reproduce what
+ * it wrote a month ago. A random draw covers the whole bucket and varies per
+ * call, which pushes successive top-ups toward different corners of the subject.
+ *
+ * This only biases the model. Questions that come back similar anyway are caught
+ * by the dedup pass, which is what actually enforces uniqueness.
+ */
+export async function getRecentQuestionTexts(
+  supabase: ReturnType<typeof import('../../functions/_shared/supabaseClient.ts').createServiceClient>,
+  category: string,
+  difficulty: string,
+  sampleSize: number,
+  extraCategories: string[] = []
+): Promise<string[]> {
+  const allCategories = [category, ...extraCategories]
+
+  const { data, error } = await supabase
+    .from('question_bank')
+    .select('question_text')
+    .in('category', allCategories)
+    .eq('difficulty', difficulty)
+    .limit(EXCLUSION_POOL_LIMIT)
+
+  if (error) throw new Error(`Failed to get question texts: ${error.message}`)
+
+  const texts = (data ?? []).map(r => r.question_text as string).filter(Boolean)
+  if (texts.length <= sampleSize) return texts
+
+  // Partial Fisher-Yates: shuffle only the prefix we intend to return.
+  for (let i = 0; i < sampleSize; i++) {
+    const j = i + Math.floor(Math.random() * (texts.length - i))
+    ;[texts[i], texts[j]] = [texts[j], texts[i]]
+  }
+  return texts.slice(0, sampleSize)
+}

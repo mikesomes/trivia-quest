@@ -1,4 +1,4 @@
-import type { Category, Difficulty } from '../../supabase/functions/_shared/types.ts'
+import type { Category, Difficulty } from '../../functions/_shared/types.ts'
 
 const CATEGORY_DISPLAY: Record<Category, string> = {
   general_knowledge: 'General Knowledge',
@@ -29,6 +29,10 @@ const DIFFICULTY_DESCRIPTION: Record<Difficulty, string> = {
   easy: 'common knowledge that most adults would know',
   medium: 'requires some study or general interest in the topic',
   hard: 'specialist knowledge or deep expertise in the topic',
+  // 'boss' is in the Difficulty union but not yet in DIFFICULTIES, so nothing
+  // generates it today. The record is total over the union so that whenever it
+  // is switched on, the prompt says something rather than 'boss (undefined)'.
+  boss: 'expert-level, the hardest questions in the category — should challenge someone who knows the subject well',
 }
 
 export const SYSTEM_PROMPT = `You are an expert trivia question writer for a mobile quiz game. Generate high-quality, factually accurate multiple-choice trivia questions.
@@ -43,15 +47,24 @@ Rules:
 - Avoid profanity, vulgar slang, or crude internet acronyms
 - Each explanation should clearly state why the answer is correct in 1-2 sentences`
 
+/** Cap on how many existing questions to quote back, to bound prompt size. */
+export const MAX_EXCLUSIONS = 40
+
 export function buildUserPrompt(
   category: Category,
   difficulty: Difficulty,
   count: number,
-  recentHashSamples: string[] = []
+  existingQuestions: string[] = []
 ): string {
+  // This list used to be truncated SHA-256 hashes, which no model can read back
+  // into content — the instruction to avoid "semantically similar" questions was
+  // a no-op that cost tokens. It has to be the question text to mean anything.
   const exclusionSection =
-    recentHashSamples.length > 0
-      ? `\nAvoid questions semantically similar to these recent questions (identified by hash): ${recentHashSamples.slice(0, 20).join(', ')}`
+    existingQuestions.length > 0
+      ? `\n\nThe question bank already contains the questions below. Do not write a question that tests the same fact as any of them, even if worded differently or asked from the opposite direction. Pick different subject matter.\n${existingQuestions
+          .slice(0, MAX_EXCLUSIONS)
+          .map(q => `- ${q}`)
+          .join('\n')}`
       : ''
 
   const guidance = CATEGORY_GUIDANCE[category]
@@ -62,7 +75,7 @@ export function buildUserPrompt(
 
   return `Generate ${count} ${categoryLabel} for:
 - Category: ${CATEGORY_DISPLAY[category]}
-- Difficulty: ${difficulty} (${DIFFICULTY_DESCRIPTION[difficulty]})${guidance}
+- Difficulty: ${difficulty} (${DIFFICULTY_DESCRIPTION[difficulty]})${guidance}${exclusionSection}
 
-Return ONLY a JSON array of questions matching the schema. No additional text.${exclusionSection}`
+Return ONLY a JSON array of questions matching the schema. No additional text.`
 }
