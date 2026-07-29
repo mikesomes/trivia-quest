@@ -17,15 +17,19 @@ describe('category metadata', () => {
   })
 
   // The comingSoon flag is what the category picker, the blitz picker and the
-  // leaderboard chips all key off. If it is dropped here, NFL becomes tappable
-  // again and create-round will reject the request — the category is out of
-  // CATEGORIES server-side and its questions are deactivated.
-  it('keeps NFL Football flagged as coming soon', () => {
-    const nfl = byId('nfl_football')
-    expect(nfl).toBeDefined()
-    expect(nfl?.comingSoon).toBe(true)
-    expect(playable.map((c) => c.id)).not.toContain('nfl_football')
-  })
+  // leaderboard chips all key off. If it is dropped for any of these, the
+  // category becomes tappable again and create-round will reject the request —
+  // each is out of CATEGORIES server-side and its questions are deactivated
+  // (migrations 20240068, 20240069).
+  it.each(['nfl_football', 'roman_history', 'harry_potter'])(
+    'keeps %s flagged as coming soon',
+    (id) => {
+      const category = byId(id)
+      expect(category).toBeDefined()
+      expect(category?.comingSoon).toBe(true)
+      expect(playable.map((c) => c.id)).not.toContain(id)
+    }
+  )
 
   it('groups the coming-soon categories after the playable ones', () => {
     const firstComingSoon = CATEGORIES.findIndex((c) => c.comingSoon)

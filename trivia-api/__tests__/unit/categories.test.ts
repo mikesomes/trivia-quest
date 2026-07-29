@@ -15,14 +15,18 @@ describe('playable categories', () => {
     }
   })
 
-  // nfl_football is out of rotation while its bank is rebuilt. It stays a valid
-  // Category at the type level — historical rounds, scores and question rows
-  // still carry it — but it must not be selectable, or create-round will happily
-  // build a round from questions that migration 20240068 deactivated.
-  it('does not offer nfl_football while it is marked coming soon', () => {
-    expect(CATEGORIES).not.toContain('nfl_football')
-    expect(isValidCategory('nfl_football')).toBe(false)
-  })
+  // These are out of rotation while their banks are rebuilt. Each stays a
+  // valid Category at the type level — historical rounds, scores and question
+  // rows still carry it — but must not be selectable, or create-round will
+  // happily build a round from questions migrations 20240068/20240069
+  // deactivated.
+  it.each(['nfl_football', 'roman_history', 'harry_potter'])(
+    'does not offer %s while it is marked coming soon',
+    (category) => {
+      expect(CATEGORIES).not.toContain(category)
+      expect(isValidCategory(category)).toBe(false)
+    }
+  )
 
   // Same shape one level down: 'boss' is in the Difficulty union but is not a
   // difficulty anything generates or serves.

@@ -142,9 +142,10 @@ export interface RoundXpBreakdown {
  * checks against this, so dropping an entry is what actually takes a category
  * out of play: create-round rejects it and topUpAll stops generating for it.
  *
- * 'nfl_football' stays in the Category union because historical rounds, scores
- * and question rows still carry it; it is only absent here. See migration
- * 20240068 for why it is out and what bringing it back involves.
+ * 'nfl_football', 'roman_history' and 'harry_potter' stay in the Category
+ * union because historical rounds, scores and question rows still carry them;
+ * they are only absent here. See migrations 20240068 and 20240069 for why each
+ * is out and what bringing it back involves.
  */
 export const CATEGORIES: Category[] = [
   'general_knowledge',
@@ -153,8 +154,6 @@ export const CATEGORIES: Category[] = [
   'sports',
   'movies_tv',
   'geography',
-  'roman_history',
-  'harry_potter',
   'famous_quotes',
   'music',
   'odd_one_out',

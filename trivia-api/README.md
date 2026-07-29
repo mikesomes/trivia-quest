@@ -300,7 +300,7 @@ supabase functions invoke generate-questions \
   --env-file .env.local
 ```
 
-`topUpAll: true` loops through every category/difficulty combination and generates questions for each bucket below `QUESTION_BANK_MIN_THRESHOLD` (11 playable categories × 3 difficulties = up to 33 OpenAI calls; expect a few minutes). Use `npm run audit:duplicates` to see the current state of the bank before and after. Import scripts in `scripts/` (Open Trivia DB, The Trivia API) offer a no-cost alternative for some categories. `scripts/import-nfl.mjs` is kept for when NFL Football returns — see migration 20240068 for why it is currently out of rotation.
+`topUpAll: true` loops through every category/difficulty combination and generates questions for each bucket below `QUESTION_BANK_MIN_THRESHOLD` (9 playable categories × 3 difficulties = up to 27 OpenAI calls; expect a few minutes). Use `npm run audit:duplicates` to see the current state of the bank before and after. Import scripts in `scripts/` (Open Trivia DB, The Trivia API) offer a no-cost alternative for some categories. NFL Football, Roman History and Harry Potter are currently out of rotation — see migrations 20240068 and 20240069.
 
 ### 7. Test an endpoint
 
