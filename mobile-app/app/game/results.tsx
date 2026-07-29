@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useRef, useState } from 'react'
 import { View, Text, StyleSheet, ScrollView, ActivityIndicator, Alert } from 'react-native'
 import { ScreenWrapper } from '../../src/components/ui/ScreenWrapper'
 import { LevelUpModal } from '../../src/components/game/LevelUpModal'
@@ -10,9 +10,7 @@ import { useGameStore } from '../../src/store/gameStore'
 import { useSubmitXp } from '../../src/hooks/useSubmitXp'
 import { useCreateRound } from '../../src/hooks/useRound'
 import { useProfile } from '../../src/hooks/useProfile'
-import { useQuestStore } from '../../src/store/questStore'
-import { QUEST_CATEGORIES } from '../../src/config/questConfig'
-import { calculateStars, calculateQuestXp, getNewlyRevealedNodes } from '../../src/utils/questProgress'
+import { useCompleteQuestNode } from '../../src/hooks/useQuestMap'
 import { useSoundEffects } from '../../src/hooks/useSoundEffects'
 import { useAudioPlayer, setAudioModeAsync } from 'expo-audio'
 import { colors, spacing, fontSize, radius } from '../../src/constants/theme'
@@ -34,6 +32,7 @@ import { WalletBadge } from '../../src/components/game/WalletBadge'
 import { tabularNums } from '../../src/components/ui/Typography'
 import { GameIcon, XpIcon, CalendarIcon, FlameIcon, TrophyIcon } from '../../src/components/icons'
 import { Skeleton, SkeletonBox } from '../../src/components/ui/Skeleton'
+import { haptics } from '../../src/lib/haptics'
 
 function formatMmSs(totalSeconds: number): string {
   const m = Math.floor(totalSeconds / 60)
@@ -48,20 +47,29 @@ function finiteNumber(value: unknown) {
 // ─── Quest results layout ────────────────────────────────────────────────────
 function QuestResults({
   questResult,
+  completionError,
   totalXp,
   onRetry,
   onQuestMap,
-  onNextNode,
 }: {
   questResult: QuestRoundResult | null
+  completionError?: string | null
   totalXp?: number
   onRetry: () => void
   onQuestMap: () => void
-  onNextNode: (nodeId: string) => void
 }) {
   const roundResult = useGameStore((s) => s.roundResult)
 
   if (!questResult) {
+    if (completionError) {
+      return (
+        <View style={styles.questEvaluating}>
+          <Text style={styles.failedText}>EXPEDITION NOT SAVED</Text>
+          <Text style={styles.evaluatingText}>{completionError}</Text>
+          <Button title="Return to Quest Map" onPress={onQuestMap} variant="secondary" />
+        </View>
+      )
+    }
     return (
       <View style={styles.questEvaluating}>
         <ActivityIndicator color={colors.primary} size="small" />
@@ -124,31 +132,27 @@ function QuestResults({
         </Reveal>
       )}
 
-      {/* Newly revealed nodes */}
-      {questResult.passed && questResult.newlyRevealedNodeIds.length > 0 && (
+      {questResult.passed && questResult.reward && !questResult.reward.alreadyClaimed && (
         <Reveal delay={380}>
           <View style={styles.mapCompleteCard}>
-            <GameIcon name="unlock" size={34} />
-            <Text style={styles.mapCompleteText}>New node{questResult.newlyRevealedNodeIds.length > 1 ? 's' : ''} unlocked!</Text>
-            <Text style={styles.mapCompleteSub}>Continue in the category map to see what's next.</Text>
+            <GameIcon name="chest" size={34} />
+            <Text style={styles.mapCompleteText}>
+              {questResult.reward.tier.toUpperCase()} CHEST OPENED
+            </Text>
+            <Text style={styles.mapCompleteSub}>
+              {questResult.reward.rewardType === 'jackpot'
+                ? `${questResult.reward.amount} bonus coins`
+                : `${questResult.reward.amount} ${questResult.reward.rewardType.replace('_', ' ')}`}
+            </Text>
           </View>
         </Reveal>
       )}
 
       <Reveal delay={500} style={styles.questActions}>
         {questResult.passed ? (
-          questResult.newlyRevealedNodeIds.length > 0 ? (
-            <Pulse>
-              <Button
-                title="Next Level →"
-                onPress={() => onNextNode(questResult.newlyRevealedNodeIds[0])}
-                size="lg"
-                variant="primary"
-              />
-            </Pulse>
-          ) : (
-            <Button title="Category Map" onPress={onQuestMap} size="lg" variant="primary" />
-          )
+          <Pulse>
+            <Button title="Continue Expedition →" onPress={onQuestMap} size="lg" variant="primary" />
+          </Pulse>
         ) : (
           <Button title="Try Again" onPress={onRetry} size="lg" variant="primary" />
         )}
@@ -172,6 +176,7 @@ export default function ResultsScreen() {
   const questNodeId = useGameStore((s) => s.questNodeId)
   const questCategoryId = useGameStore((s) => s.questCategoryId)
   const questGameMode = useGameStore((s) => s.questGameMode)
+  const questRunId = useGameStore((s) => s.questRunId)
   const isBlitzStore = useGameStore((s) => s.isBlitz)
   const isBlitz = questGameMode === 'blitz' || isBlitzStore
   const setDifficulty = useGameStore((s) => s.setDifficulty)
@@ -183,8 +188,10 @@ export default function ResultsScreen() {
   const { data: profile } = useProfile()
   const { data: challengesData } = useChallenges()
   const [questRoundResult, setQuestRoundResult] = useState<QuestRoundResult | null>(null)
+  const [questCompletionError, setQuestCompletionError] = useState<string | null>(null)
+  const questCompletionStarted = useRef(false)
   const { play } = useSoundEffects()
-  const completeNode = useQuestStore((s) => s.completeNode)
+  const completeQuestNode = useCompleteQuestNode()
 
   const interimMusic = useAudioPlayer(require('../../assets/sounds/interim-round.mp3'))
   const [showLevelUp, setShowLevelUp] = useState(false)
@@ -255,41 +262,53 @@ export default function ResultsScreen() {
   }, [questNodeId, questLeveledUp])
 
   useEffect(() => {
+    if (!questRoundResult?.reward || questRoundResult.reward.alreadyClaimed) return
+    play('extraLife')
+    haptics.reward()
+  }, [questRoundResult?.reward])
+
+  useEffect(() => {
     if (isDailyChallenge && xpResult && roundId && !completeDailyChallenge.isPending && !completeDailyChallenge.isSuccess) {
       completeDailyChallenge.mutate(roundId)
     }
   }, [isDailyChallenge, xpResult, roundId])
 
   useEffect(() => {
-    if (!questNodeId || !questCategoryId || !roundResult || questRoundResult) return
-    const category = QUEST_CATEGORIES.find(c => c.id === questCategoryId)
-    const node = category?.nodes.find(n => n.id === questNodeId)
-    if (!node || !category) return
+    if (
+      !questNodeId ||
+      !questCategoryId ||
+      !roundId ||
+      !roundResult ||
+      questRoundResult ||
+      questCompletionStarted.current ||
+      completeQuestNode.isPending
+    ) return
 
-    const stars = calculateStars(node, roundResult.correctCount, roundResult.totalQuestions)
-    const questState = useQuestStore.getState()
-    const catProgress = questState.categoryProgress[questCategoryId]
-    const prevBestStars = catProgress?.bestStars[questNodeId] ?? 0
-    const isFirstClear = !(catProgress?.completedNodeIds ?? []).includes(questNodeId)
-    const xpEarned = calculateQuestXp(node, stars, isFirstClear, prevBestStars)
-    const updatedCompleted = [...(catProgress?.completedNodeIds ?? []), questNodeId]
-    const newlyRevealed = getNewlyRevealedNodes(category, updatedCompleted)
-
-    const result: QuestRoundResult = {
-      nodeId: questNodeId,
-      categoryId: questCategoryId,
-      stars,
-      passed: stars > 0,
-      correctCount: roundResult.correctCount,
-      totalAnswered: roundResult.totalQuestions,
-      xpEarned,
-      newlyRevealedNodeIds: newlyRevealed.map(n => n.id),
-      isFirstClear,
-    }
-    completeNode(result)
-    setQuestRoundResult(result)
-    if (roundId) submitXp.mutate(roundId)
-  }, [questNodeId, questCategoryId, roundResult])
+    questCompletionStarted.current = true
+    completeQuestNode.mutateAsync({ nodeId: questNodeId, roundId, questRunId })
+      .then(serverResult => {
+        setQuestRoundResult({
+          nodeId: questNodeId,
+          categoryId: questCategoryId,
+          stars: serverResult.stars,
+          passed: serverResult.passed,
+          correctCount: serverResult.correctCount,
+          totalAnswered: serverResult.totalAnswers,
+          xpEarned: serverResult.xpAwarded + serverResult.roundXp,
+          newlyRevealedNodeIds: [],
+          isFirstClear: serverResult.passed && serverResult.previousStars === 0,
+          reward: serverResult.reward,
+        })
+        submitXp.mutate(roundId)
+      })
+      .catch(error => {
+        setQuestCompletionError(error instanceof Error ? error.message : 'Please try again.')
+        Alert.alert(
+          'Could not save expedition',
+          error instanceof Error ? error.message : 'Please try again.',
+        )
+      })
+  }, [questNodeId, questCategoryId, questRunId, roundId, roundResult, questRoundResult, completeQuestNode.isPending])
 
   if (!roundResult) {
     return (
@@ -354,12 +373,18 @@ export default function ResultsScreen() {
           {/* Quest-specific result block */}
           <QuestResults
             questResult={questRoundResult}
+            completionError={questCompletionError}
             totalXp={profile?.xp}
-            onRetry={() => { resetGame(); router.replace(`/quest/${questCategoryId}` as never) }}
-            onQuestMap={() => { resetGame(); router.replace(`/quest/${questCategoryId}` as never) }}
-            onNextNode={(nodeId) => {
+            onRetry={() => {
+              const nodeId = questNodeId
               resetGame()
-              router.replace(`/quest/${questCategoryId}?autoplay=${nodeId}` as never)
+              router.replace(`/quest?focus=${nodeId}` as never)
+            }}
+            onQuestMap={() => {
+              const nodeId = questNodeId
+              const didPass = questRoundResult?.passed
+              resetGame()
+              router.replace(didPass ? `/quest?completed=${nodeId}` as never : '/quest')
             }}
           />
 
@@ -647,7 +672,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  nextCardEmoji: { fontSize: 32 },
   nextCardBody: {
     padding: spacing.md,
     gap: 3,
@@ -667,7 +691,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: spacing.sm,
   },
-  mapCompleteEmoji: { fontSize: 40 },
   mapCompleteText: { fontSize: fontSize.lg, fontWeight: '800', color: colors.streakActive },
   mapCompleteSub: { fontSize: fontSize.sm, color: colors.textSecondary, textAlign: 'center' },
 

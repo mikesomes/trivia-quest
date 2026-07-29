@@ -21,4 +21,8 @@ export const queryKeys = {
   dailyReward: {
     status: () => ['daily-reward', 'status'] as const,
   },
+  quest: {
+    all: () => ['quest'] as const,
+    map: (userId: string) => ['quest', 'map', userId] as const,
+  },
 } as const

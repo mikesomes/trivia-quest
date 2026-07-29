@@ -52,4 +52,5 @@ export interface QuestRoundResult {
   xpEarned: number
   newlyRevealedNodeIds: string[]
   isFirstClear: boolean
+  reward?: import('./questMap').QuestReward | null
 }

@@ -14,20 +14,19 @@ import { DailyQuestsCard } from '../../src/components/home/DailyQuestsCard'
 import { Reveal } from '../../src/components/ui/Reveal'
 import { Lightning, Brain, Fire, PuzzlePiece } from 'phosphor-react-native'
 import { QuestHeroCard } from '../../src/components/home/QuestHeroCard'
-import { useQuestStore } from '../../src/store/questStore'
-import { QUEST_CATEGORIES } from '../../src/config/questConfig'
+import { useQuestMap } from '../../src/hooks/useQuestMap'
 import { GAME_CONFIG } from '../../src/constants/game'
 import { tabularNums } from '../../src/components/ui/Typography'
 import { CoinIcon, FlameIcon } from '../../src/components/icons'
 
 export default function HomeScreen() {
   const { data: profile } = useProfile()
-  const categoryProgress = useQuestStore(s => s.categoryProgress)
-  const totalNodes = QUEST_CATEGORIES.reduce((sum, cat) => sum + cat.nodes.length, 0)
-  const completedNodes = QUEST_CATEGORIES.reduce((sum, cat) => {
-    const prog = categoryProgress[cat.id]
-    return sum + (prog?.completedNodeIds.length ?? 0)
-  }, 0)
+  // Node counts come from the server map, the same source the quest tab reads.
+  // Deriving them from local state here would drift the moment a round is
+  // completed on another device.
+  const { data: questMap, isLoading: isQuestMapLoading } = useQuestMap()
+  const totalNodes = questMap?.nodes.length ?? 0
+  const completedNodes = questMap?.nodes.filter(node => node.status === 'completed').length ?? 0
 
   const hour = new Date().getHours()
   const greeting = hour < 12 ? 'Good Morning' : hour < 18 ? 'Good Afternoon' : 'Good Evening'
@@ -97,7 +96,7 @@ export default function HomeScreen() {
           <QuestHeroCard
             totalNodes={totalNodes}
             completedNodes={completedNodes}
-            isLoading={false}
+            isLoading={isQuestMapLoading}
             onPress={() => router.push('/quest')}
           />
         </Reveal>
