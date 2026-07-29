@@ -1,5 +1,6 @@
 import { createHash } from 'node:crypto'
 import type { QuestionOutput } from './schema.ts'
+import { NEAR_DUPLICATE_THRESHOLD, answerKey, similarity, trigrams } from './similarity.ts'
 
 /**
  * Compute a content hash for deduplication.
@@ -48,4 +49,65 @@ export function deduplicateQuestions(
   }
 
   return { unique, duplicates }
+}
+
+export interface NearDuplicatePair<T> {
+  kept: T
+  dropped: T
+  score: number
+}
+
+/**
+ * Drop questions that duplicate an earlier question *in the same batch*.
+ *
+ * The bank-side check cannot see these — the batch has not been inserted yet —
+ * and a single generation call routinely produces the same fact twice under two
+ * phrasings, which the content hash lets straight through.
+ *
+ * Same rule as the SQL side: a shared correct answer is the gate, text
+ * similarity is the confirmation. See NEAR_DUPLICATE_THRESHOLD for why
+ * similarity alone is not usable.
+ */
+export function dropNearDuplicatesWithinBatch<T extends QuestionOutput>(
+  questions: T[],
+  threshold: number = NEAR_DUPLICATE_THRESHOLD
+): { unique: T[]; nearDuplicates: Array<NearDuplicatePair<T>> } {
+  const optionMap = { a: 'optionA', b: 'optionB', c: 'optionC', d: 'optionD' } as const
+
+  const unique: T[] = []
+  const nearDuplicates: Array<NearDuplicatePair<T>> = []
+  // Keyed by normalized answer so only plausible collisions are ever scored.
+  const keptByAnswer = new Map<string, Array<{ question: T; grams: Set<string> }>>()
+
+  for (const question of questions) {
+    const correct = question[optionMap[question.correctOption]]
+    const key = answerKey(correct ?? '')
+    const grams = trigrams(question.questionText)
+
+    if (!key) {
+      unique.push(question)
+      continue
+    }
+
+    const peers = keptByAnswer.get(key) ?? []
+    let collision: { question: T; score: number } | null = null
+
+    for (const peer of peers) {
+      const score = similarity(peer.grams, grams)
+      if (score >= threshold && (!collision || score > collision.score)) {
+        collision = { question: peer.question, score }
+      }
+    }
+
+    if (collision) {
+      nearDuplicates.push({ kept: collision.question, dropped: question, score: collision.score })
+      continue
+    }
+
+    unique.push(question)
+    peers.push({ question, grams })
+    keptByAnswer.set(key, peers)
+  }
+
+  return { unique, nearDuplicates }
 }

@@ -13,6 +13,28 @@ import { makeLogger, getRequestId } from '../_shared/logger.ts'
 // Use a more capable model for categories where factual accuracy is harder to get right
 const CATEGORY_MODEL_OVERRIDE: Partial<Record<Category, string>> = {}
 
+/**
+ * Bind the near-duplicate RPC to a category. Injected into the generator so it
+ * stays free of a database dependency.
+ */
+function bankDuplicateFinder(
+  supabase: ReturnType<typeof createServiceClient>,
+  category: string
+) {
+  return async (candidates: Array<{ idx: number; text: string; answer: string }>) => {
+    const { data, error } = await supabase.rpc('check_question_duplicates', {
+      p_category: category,
+      p_candidates: candidates,
+    })
+    if (error) throw new Error(error.message)
+    return (data ?? []).map((row: { idx: number; match_text: string; score: number }) => ({
+      idx: row.idx,
+      matchText: row.match_text,
+      score: row.score,
+    }))
+  }
+}
+
 /** Run tasks with at most `concurrency` running simultaneously. */
 async function withConcurrency<T>(
   tasks: Array<() => Promise<T>>,
@@ -101,6 +123,7 @@ Deno.serve(async (req) => {
           count: needed,
           existingHashes: hashes,
           existingQuestions,
+          findBankDuplicates: bankDuplicateFinder(supabase, cat),
           openaiChat: (params) => openai.chat({ ...params, model: modelOverride }),
         })
         if (questions.length > 0) {
@@ -144,6 +167,7 @@ Deno.serve(async (req) => {
     count,
     existingHashes,
     existingQuestions,
+    findBankDuplicates: bankDuplicateFinder(supabase, body.category),
     openaiChat: (params) => openai.chat({ ...params, model: modelOverride }),
   })
 

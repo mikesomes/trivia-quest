@@ -33,8 +33,11 @@ const CATEGORY_DISPLAY: Partial<Record<Category, string>> = {
   famous_quotes: 'Famous Quotes',
 }
 
-export async function verifyQuestions(
-  questions: QuestionOutput[],
+// Generic because this only ever filters: whatever the caller passes in comes
+// back out unchanged. Typing it as QuestionOutput[] silently discarded the
+// contentHash that deduplicateQuestions had already attached.
+export async function verifyQuestions<T extends QuestionOutput>(
+  questions: T[],
   category: Category,
   openaiChat: (params: {
     systemPrompt: string
@@ -43,7 +46,7 @@ export async function verifyQuestions(
     schemaName: string
     temperature?: number
   }) => Promise<string>
-): Promise<QuestionOutput[]> {
+): Promise<T[]> {
   if (questions.length === 0) return []
 
   const categoryLabel = CATEGORY_DISPLAY[category] ?? category
@@ -76,7 +79,7 @@ Respond with a JSON object mapping each question index to its verdict and a brie
     const parsed = JSON.parse(rawJson) as { results: VerificationResult[] }
     const resultsByIndex = new Map(parsed.results.map(r => [r.index, r]))
 
-    const kept: QuestionOutput[] = []
+    const kept: T[] = []
     const rejected: Array<{ index: number; reason: string }> = []
 
     for (let i = 0; i < questions.length; i++) {
