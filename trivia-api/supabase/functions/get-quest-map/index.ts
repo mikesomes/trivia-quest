@@ -2,6 +2,8 @@ import { handleCors } from '../_shared/cors.ts'
 import { requireAuth, isAuthError } from '../_shared/auth.ts'
 import { createServiceClient } from '../_shared/supabaseClient.ts'
 import { errorResponse, jsonResponse } from '../_shared/errors.ts'
+import { CHEST_TIERS } from '../_shared/chest.ts'
+import { isQuestNodeUnlocked } from '../_shared/questUnlock.ts'
 
 Deno.serve(async (req) => {
   const corsResult = handleCors(req)
@@ -40,29 +42,33 @@ Deno.serve(async (req) => {
     (progressResult.data ?? []).filter(r => r.stars > 0).map(r => r.node_id)
   )
 
-  // Starting nodes (no incoming connections) are always available at level 1
-  const hasIncoming = new Set(connections.map(c => c.to_node_id))
-
   const nodesWithStatus = nodes.map(node => {
     const prog = progress.get(node.id)
     const isCompleted = completedIds.has(node.id)
+    const predecessors = connections
+      .filter(c => c.to_node_id === node.id)
+      .map(c => c.from_node_id)
 
-    // Determine if unlocked
-    let isUnlocked = false
-    if (!hasIncoming.has(node.id)) {
-      // Starting node
-      isUnlocked = userLevel >= node.unlock_level
-    } else {
-      // All predecessor nodes must be completed AND user meets level req
-      const predecessors = connections.filter(c => c.to_node_id === node.id).map(c => c.from_node_id)
-      const allPredsComplete = predecessors.every(pid => completedIds.has(pid))
-      isUnlocked = allPredsComplete && userLevel >= node.unlock_level
-    }
+    const isUnlocked = isQuestNodeUnlocked({
+      nodeId: node.id,
+      unlockLevel: node.unlock_level,
+      unlockRule: node.unlock_rule,
+      predecessorIds: predecessors,
+      completedNodeIds: completedIds,
+      userLevel,
+    })
+    const isCoolingDown = Boolean(
+      prog?.cooldown_until && new Date(prog.cooldown_until) > new Date()
+    )
 
-    let status: 'locked' | 'available' | 'completed'
+    let status: 'locked' | 'available' | 'completed' | 'cooldown'
     if (isCompleted) status = 'completed'
+    else if (isUnlocked && isCoolingDown) status = 'cooldown'
     else if (isUnlocked) status = 'available'
     else status = 'locked'
+
+    const tier = (node.loot_tier ?? 'wood') as keyof typeof CHEST_TIERS
+    const tierConfig = CHEST_TIERS[tier] ?? CHEST_TIERS.wood
 
     return {
       id: node.id,
@@ -74,7 +80,17 @@ Deno.serve(async (req) => {
       branch: node.branch,
       positionX: node.position_x,
       positionY: node.position_y,
+      regionId: node.region_id,
+      visualMetadata: node.visual_metadata ?? {},
+      unlockRule: node.unlock_rule ?? 'all',
       xpReward: node.xp_reward,
+      lootTier: tier,
+      rewardPreview: {
+        label: tierConfig.label,
+        coinMin: tierConfig.coinMin,
+        coinMax: tierConfig.coinMax,
+        possibleTypes: ['coins', 'life', 'hammer', 'shield', 'xp_booster', 'jackpot'],
+      },
       passThreshold: node.pass_threshold,
       star2Threshold: node.star_2_threshold,
       star3Threshold: node.star_3_threshold,

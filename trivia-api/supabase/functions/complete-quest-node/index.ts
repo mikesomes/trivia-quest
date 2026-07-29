@@ -3,6 +3,8 @@ import { requireAuth, isAuthError } from '../_shared/auth.ts'
 import { createServiceClient } from '../_shared/supabaseClient.ts'
 import { errorResponse, jsonResponse } from '../_shared/errors.ts'
 import { isValidUUID, parseBody } from '../_shared/validation.ts'
+import { isQuestNodeUnlocked } from '../_shared/questUnlock.ts'
+import { isFirstClearRewardEligible } from '../_shared/questReward.ts'
 
 // Cooldown after each failed quest attempt.
 const FAILURE_COOLDOWN_MS = 5 * 60 * 1000
@@ -13,6 +15,24 @@ function cooldownMs(failureCount: number): number {
 
 function numberFrom(value: unknown, fallback: number): number {
   return typeof value === 'number' && Number.isFinite(value) ? value : fallback
+}
+
+async function claimFirstClearReward(
+  supabase: ReturnType<typeof createServiceClient>,
+  userId: string,
+  nodeId: string,
+  eligible: boolean,
+) {
+  if (!eligible) return null
+  const { data, error } = await supabase.rpc('claim_quest_node_reward', {
+    p_user_id: userId,
+    p_node_id: nodeId,
+  })
+  if (error) {
+    console.error('[complete-quest-node] quest reward failed', error.message)
+    return null
+  }
+  return data
 }
 
 Deno.serve(async (req) => {
@@ -83,6 +103,18 @@ Deno.serve(async (req) => {
   if (round.quest_node_id !== body.nodeId) {
     return errorResponse('Round does not belong to this quest node', 400)
   }
+
+  const { data: answers } = await supabase
+    .from('answers')
+    .select('is_correct')
+    .eq('round_id', body.roundId)
+
+  const totalAnswers = answers?.length ?? 0
+  const correctCount = answers?.filter((answer: { is_correct: boolean }) => answer.is_correct).length ?? 0
+  const accuracy = totalAnswers > 0 ? correctCount / totalAnswers : 0
+  const maxStreak = round.max_streak ?? 0
+  const modeConfig = (round.mode_config ?? {}) as Record<string, unknown>
+  const gameMode: string = node.game_mode ?? 'classic'
 
   // ── Multi-round run handling ──────────────────────────────────────────────
   // If a questRunId is provided, we advance the run rather than immediately
@@ -265,6 +297,12 @@ Deno.serve(async (req) => {
     if (xpAwarded > 0) {
       await supabase.rpc('award_challenge_xp', { p_user_id: auth.userId, p_xp: xpAwarded })
     }
+    const reward = await claimFirstClearReward(
+      supabase,
+      auth.userId,
+      body.nodeId,
+      isFirstClearRewardEligible(true, prevStars),
+    )
 
     return jsonResponse({
       runComplete: true,
@@ -282,40 +320,31 @@ Deno.serve(async (req) => {
       gameMode: roundGameMode,
       xpAwarded,
       roundXp,
+      reward,
       cooldownUntil: null,
       failureCount: 0,
     })
   }
   // ── End multi-round run handling ──────────────────────────────────────────
 
-  if (!completedNodeIds.has(body.nodeId)) {
-    const isUnlocked =
-      userLevel >= node.unlock_level &&
-      predecessorIds.every((predecessorId) => completedNodeIds.has(predecessorId))
-    if (!isUnlocked) return errorResponse('Quest node is locked', 403)
-  }
+  const isUnlocked = isQuestNodeUnlocked({
+    nodeId: body.nodeId,
+    unlockLevel: node.unlock_level,
+    unlockRule: node.unlock_rule,
+    predecessorIds,
+    completedNodeIds,
+    userLevel,
+  })
+  if (!isUnlocked) return errorResponse('Quest node is locked', 403)
 
   if (existing?.cooldown_until && new Date(existing.cooldown_until) > now) {
     return errorResponse('Quest node is cooling down', 409)
   }
 
-  // Count correct answers
-  const { data: answers } = await supabase
-    .from('answers')
-    .select('is_correct')
-    .eq('round_id', body.roundId)
-
-  const totalAnswers = answers?.length ?? 0
-  const correctCount = answers?.filter((a: { is_correct: boolean }) => a.is_correct).length ?? 0
-  const accuracy = totalAnswers > 0 ? correctCount / totalAnswers : 0
-  const maxStreak = round.max_streak ?? 0
-  const modeConfig = (round.mode_config ?? {}) as Record<string, unknown>
-
   // Mode-specific star calculation
   //   classic/boss_battle → accuracy thresholds (default behaviour)
   //   blitz               → correct-count thresholds from mode_config
   //   survival/streak     → streak-length thresholds from mode_config
-  const gameMode: string = node.game_mode ?? 'classic'
   let stars = 0
 
   if (gameMode === 'blitz') {
@@ -388,6 +417,12 @@ Deno.serve(async (req) => {
   if (xpAwarded > 0) {
     await supabase.rpc('award_challenge_xp', { p_user_id: auth.userId, p_xp: xpAwarded })
   }
+  const reward = await claimFirstClearReward(
+    supabase,
+    auth.userId,
+    body.nodeId,
+    isFirstClearRewardEligible(passed, prevStars),
+  )
 
   return jsonResponse({
     passed,
@@ -400,6 +435,7 @@ Deno.serve(async (req) => {
     gameMode,
     xpAwarded,
     roundXp,
+    reward,
     cooldownUntil,
     failureCount: newFailureCount,
   })

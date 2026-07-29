@@ -9,6 +9,7 @@ import { getActiveRoundForUser } from '../../src/db/rounds.ts'
 import { selectQuestionsForRound, selectQuestionsWithMix, selectQuestionsWithSegments } from '../../src/db/questions.ts'
 import { checkRoundCreationLimit } from '../_shared/rateLimit.ts'
 import { makeLogger, getRequestId } from '../_shared/logger.ts'
+import { isQuestNodeUnlocked } from '../_shared/questUnlock.ts'
 import { isMomentumEligible } from '../_shared/momentum.ts'
 
 Deno.serve(async (req) => {
@@ -119,7 +120,7 @@ async function handler(req: Request, requestId: string): Promise<Response> {
 
     const { data: questNode, error: questNodeError } = await supabase
       .from('quest_nodes')
-      .select('id, category, difficulty, game_mode, mode_config, is_active, unlock_level')
+      .select('id, category, difficulty, game_mode, mode_config, is_active, unlock_level, unlock_rule')
       .eq('id', body.questNodeId)
       .eq('is_active', true)
       .maybeSingle()
@@ -169,12 +170,15 @@ async function handler(req: Request, requestId: string): Promise<Response> {
     const predecessorIds = (predecessorResult.data ?? []).map((row) => row.from_node_id)
     questPlayerLevel = userResult.data?.level ?? 1
 
-    if (!completedNodeIds.has(questNode.id)) {
-      const isUnlocked =
-        questPlayerLevel >= questNode.unlock_level &&
-        predecessorIds.every((predecessorId) => completedNodeIds.has(predecessorId))
-      if (!isUnlocked) return errorResponse('Quest node is locked', 403)
-    }
+    const isUnlocked = isQuestNodeUnlocked({
+      nodeId: questNode.id,
+      unlockLevel: questNode.unlock_level,
+      unlockRule: questNode.unlock_rule,
+      predecessorIds,
+      completedNodeIds,
+      userLevel: questPlayerLevel,
+    })
+    if (!isUnlocked) return errorResponse('Quest node is locked', 403)
 
     if (
       progressResult.data?.cooldown_until &&

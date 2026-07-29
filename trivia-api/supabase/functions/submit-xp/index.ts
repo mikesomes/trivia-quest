@@ -63,10 +63,6 @@ Deno.serve(async (req) => {
 
   if (roundError) return errorResponse('Failed to fetch round', 500)
   if (!round) return errorResponse('Completed round not found', 404)
-  if (round.is_quest) {
-    return errorResponse('Quest rounds award XP during play and cannot be submitted here', 400)
-  }
-
   // Check for duplicate XP submission
   const { data: existing } = await supabase
     .from('scores')

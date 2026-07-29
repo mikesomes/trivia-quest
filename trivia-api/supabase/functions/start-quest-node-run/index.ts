@@ -4,6 +4,7 @@ import { createServiceClient } from '../_shared/supabaseClient.ts'
 import { errorResponse, jsonResponse } from '../_shared/errors.ts'
 import { parseBody } from '../_shared/validation.ts'
 import { makeLogger, getRequestId } from '../_shared/logger.ts'
+import { isQuestNodeUnlocked } from '../_shared/questUnlock.ts'
 
 Deno.serve(async (req) => {
   const requestId = getRequestId(req)
@@ -39,7 +40,7 @@ async function handler(req: Request, requestId: string): Promise<Response> {
   // Verify node exists and is active
   const { data: node, error: nodeError } = await supabase
     .from('quest_nodes')
-    .select('id, category, difficulty, game_mode, unlock_level, is_active')
+    .select('id, category, difficulty, game_mode, unlock_level, unlock_rule, is_active')
     .eq('id', nodeId)
     .eq('is_active', true)
     .maybeSingle()
@@ -78,12 +79,15 @@ async function handler(req: Request, requestId: string): Promise<Response> {
   const predecessorIds = (predecessorResult.data ?? []).map((r: { from_node_id: string }) => r.from_node_id)
   const userLevel = userResult.data?.level ?? 1
 
-  if (!completedNodeIds.has(nodeId)) {
-    const isUnlocked =
-      userLevel >= node.unlock_level &&
-      predecessorIds.every((id: string) => completedNodeIds.has(id))
-    if (!isUnlocked) return errorResponse('Quest node is locked', 403)
-  }
+  const isUnlocked = isQuestNodeUnlocked({
+    nodeId,
+    unlockLevel: node.unlock_level,
+    unlockRule: node.unlock_rule,
+    predecessorIds,
+    completedNodeIds,
+    userLevel,
+  })
+  if (!isUnlocked) return errorResponse('Quest node is locked', 403)
 
   if (
     progressResult.data?.cooldown_until &&
