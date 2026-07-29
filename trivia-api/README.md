@@ -115,7 +115,7 @@ Migrations live in `supabase/migrations/` and are applied in order — 55 files 
 | `20240058` | "One more round" momentum bonus (`momentum_bonus_active` on `rounds`) |
 | `20240059/60` | Achievement expansion schema (`user_category_stats`, personal-best columns) + 23 new achievements |
 | `20240061` | `leaderboard_rank_snapshots` (rank-delta arrows) |
-| `20240070` | Video Games category (bank seeded from Open Trivia DB, not the generator) |
+| `20240073` | Video Games category (bank seeded from Open Trivia DB, not the generator) |
 
 ---
 
