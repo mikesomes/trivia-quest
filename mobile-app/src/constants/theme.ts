@@ -82,6 +82,23 @@ export const fontSize = {
   xxxl: 32,
 } as const
 
+/**
+ * Icon sizing scale. Marks drawn at these sizes stay optically consistent with
+ * each other and with the text they sit beside — prefer them over ad-hoc px.
+ */
+export const iconSize = {
+  /** Inline with small text: chips, dense list rows, inline badges. */
+  sm: 16,
+  /** Default. Buttons, list rows, stat labels. */
+  md: 22,
+  /** Section headers and prominent status marks. */
+  lg: 30,
+  /** Hero moments: empty states, modal glyphs. */
+  xl: 40,
+  /** Game-mode selection cards. */
+  gameMode: 48,
+} as const
+
 export const fonts = {
   regular: 'NunitoSans_400Regular',
   medium: 'NunitoSans_500Medium',

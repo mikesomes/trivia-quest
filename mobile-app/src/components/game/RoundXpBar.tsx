@@ -74,7 +74,7 @@ export function RoundXpBar({
       <View style={styles.header}>
         <Text style={styles.levelLabel}>
           Level {displayLevel}
-          {leveledUp && <SparkleIcon size={13} />}
+          {leveledUp && <SparkleIcon size={13} inline />}
         </Text>
         <Text style={styles.xpLabel}>
           {hasRoundXp && <Text style={styles.roundXpLabel}>+{xpEarnedInRound} XP</Text>}

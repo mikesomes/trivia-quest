@@ -1,5 +1,5 @@
 import React, { useEffect, useRef } from 'react'
-import { View, Text, Animated } from 'react-native'
+import { View, Animated } from 'react-native'
 import { getAvatarStage, AVATAR_STAGES } from '../../constants/quest'
 import { colors } from '../../constants/theme'
 import { HumanFaceSvg } from './HumanFaceSvg'

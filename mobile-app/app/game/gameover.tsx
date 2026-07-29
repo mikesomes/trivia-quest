@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useRef, useState } from 'react'
 import { View, Text, StyleSheet, ScrollView, ActivityIndicator } from 'react-native'
 import { ScreenWrapper } from '../../src/components/ui/ScreenWrapper'
 import { LevelUpModal } from '../../src/components/game/LevelUpModal'
@@ -9,6 +9,7 @@ import { useGameStore } from '../../src/store/gameStore'
 import { useAuthStore } from '../../src/store/authStore'
 import { useSubmitXp } from '../../src/hooks/useSubmitXp'
 import { useProfile } from '../../src/hooks/useProfile'
+import { useCompleteQuestNode } from '../../src/hooks/useQuestMap'
 import { useAudioPlayer, setAudioModeAsync } from 'expo-audio'
 import { colors, spacing, fontSize, radius } from '../../src/constants/theme'
 import { Button } from '../../src/components/ui/Button'
@@ -33,10 +34,13 @@ export default function GameOverScreen() {
   const selectedDifficulty = useGameStore((s) => s.selectedDifficulty)
   const questNodeId = useGameStore((s) => s.questNodeId)
   const questCategoryId = useGameStore((s) => s.questCategoryId)
+  const questRunId = useGameStore((s) => s.questRunId)
   const resetGame = useGameStore((s) => s.resetGame)
   const displayName = useAuthStore((s) => s.displayName)
   const setDisplayName = useAuthStore((s) => s.setDisplayName)
   const submitXp = useSubmitXp()
+  const completeQuestNode = useCompleteQuestNode()
+  const questCompletionStarted = useRef(false)
   const { data: profile } = useProfile()
   const gameOverMusic = useAudioPlayer(require('../../assets/sounds/game-over.mp3'))
   const [showLevelUp, setShowLevelUp] = useState(false)
@@ -64,6 +68,20 @@ export default function GameOverScreen() {
       submitXp.mutate(roundId)
     }
   }, [roundId, roundResult])
+
+  useEffect(() => {
+    if (
+      !questNodeId ||
+      !roundId ||
+      !roundResult ||
+      questCompletionStarted.current
+    ) return
+    questCompletionStarted.current = true
+    completeQuestNode.mutate(
+      { nodeId: questNodeId, roundId, questRunId },
+      { onError: () => { questCompletionStarted.current = false } },
+    )
+  }, [questNodeId, questRunId, roundId, roundResult])
 
   const handlePlayAgain = () => {
     resetGame()
@@ -214,7 +232,11 @@ export default function GameOverScreen() {
         <View style={styles.actions}>
           {questNodeId && questCategoryId ? (
             <>
-              <Button title="Try Again" onPress={() => { resetGame(); router.replace(`/quest/${questCategoryId}` as never) }} size="lg" />
+              <Button title="Try Again" onPress={() => {
+                const nodeId = questNodeId
+                resetGame()
+                router.replace(`/quest?focus=${nodeId}` as never)
+              }} size="lg" />
               <Button title="Quest Hub" onPress={() => { resetGame(); router.replace('/quest' as never) }} variant="secondary" size="lg" />
             </>
           ) : (

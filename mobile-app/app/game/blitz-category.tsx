@@ -88,7 +88,7 @@ export default function BlitzCategoryScreen() {
                     <Text style={[styles.badgeText, styles.comingSoonBadgeText]}>Coming Soon</Text>
                   </View>
                 )}
-                <View style={[styles.badgeIcon, cat.comingSoon && styles.emojiDisabled]}>
+                <View style={[styles.badgeIcon, cat.comingSoon && styles.badgeIconDisabled]}>
                   <CategoryBadge category={cat} size={46} muted={cat.comingSoon} />
                 </View>
                 <Text style={[styles.label, cat.comingSoon && styles.labelDisabled]}>
@@ -152,7 +152,7 @@ const styles = StyleSheet.create({
   cardDisabled: { opacity: 0.5, borderColor: colors.border },
   comingSoonBadge: { backgroundColor: '#66666622', borderColor: '#66666644' },
   comingSoonBadgeText: { color: '#999999' },
-  emojiDisabled: { opacity: 0.6 },
+  badgeIconDisabled: { opacity: 0.6 },
   labelDisabled: { color: colors.textSecondary },
   descriptionDisabled: { color: colors.textDisabled },
   spinner: { marginTop: spacing.xs },

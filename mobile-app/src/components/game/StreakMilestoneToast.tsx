@@ -115,10 +115,6 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.9,
     shadowRadius: 14,
   },
-  emoji: {
-    fontSize: 26,
-    lineHeight: 32,
-  },
   textBlock: {
     gap: 1,
   },

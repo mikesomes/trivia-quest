@@ -19,7 +19,7 @@ import { MyRankBanner } from '../../src/components/leaderboard/MyRankBanner'
 import { LeaderboardSkeletonList } from '../../src/components/leaderboard/LeaderboardRowSkeleton'
 import type { LeaderboardMode, LeaderboardPeriod } from '../../src/types/api'
 import { getXpGapToNextRank, getNextRankLabel } from '../../src/utils/leaderboard'
-import { GameIcon, WarningIcon, type GameIconName } from '../../src/components/icons'
+import { GameIcon, type GameIconName } from '../../src/components/icons'
 import { EmptyState } from '../../src/components/ui/EmptyState'
 import { ErrorState } from '../../src/components/ui/ErrorState'
 
@@ -137,7 +137,7 @@ export default function LeaderboardScreen() {
                     }}
                     activeOpacity={0.7}
                   >
-                    <Text style={styles.modeTabIcon}>{tab.icon}</Text>
+                    <GameIcon name={tab.icon} size={18} />
                     <Text style={[styles.modeTabLabel, activeGameMode === tab.id && styles.modeTabLabelActive]}>
                       {tab.label}
                     </Text>
@@ -249,9 +249,6 @@ const styles = StyleSheet.create({
   modeTabActive: {
     borderColor: colors.primary,
     backgroundColor: `${colors.primary}18`,
-  },
-  modeTabIcon: {
-    fontSize: 18,
   },
   modeTabLabel: {
     fontSize: 10,

@@ -47,7 +47,6 @@ const styles = StyleSheet.create({
     padding: spacing.xl,
     gap: spacing.md,
   },
-  emoji: { fontSize: 48 },
   title: { fontSize: fontSize.xl, fontWeight: '800', color: colors.textPrimary, textAlign: 'center' },
   subtitle: { fontSize: fontSize.sm, color: colors.textSecondary, textAlign: 'center', lineHeight: 20 },
   eventId: { fontSize: fontSize.xs, color: colors.textMuted, fontFamily: 'monospace' },

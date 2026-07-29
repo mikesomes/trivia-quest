@@ -1,59 +1,45 @@
 import React from 'react'
 import { StyleSheet, View } from 'react-native'
 import { LinearGradient } from 'expo-linear-gradient'
-import {
-  Bank,
-  Brain,
-  FilmSlate,
-  FilmStrip,
-  Flask,
-  Football,
-  GlobeHemisphereWest,
-  MagicWand,
-  MusicNotes,
-  Palette,
-  PuzzlePiece,
-  Quotes,
-  Scroll,
-  SoccerBall,
-  Star,
-  type IconProps,
-} from 'phosphor-react-native'
-import { colors, radius } from '../../constants/theme'
+import type { IconWeight } from 'phosphor-react-native'
+import { colors, iconSize, radius } from '../../constants/theme'
 import type { CategoryMeta } from '../../constants/categories'
+import { AppIcon } from './AppIcon'
+import { categoryIconName } from './iconRegistry'
 
 // Replaces emoji-as-iconography: one duotone mark per category on a gradient
-// squircle tile tinted with the category's accent color.
-const CATEGORY_ICONS: Record<string, React.ComponentType<IconProps>> = {
-  general_knowledge: Brain,
-  history: Scroll,
-  science: Flask,
-  sports: SoccerBall,
-  movies_tv: FilmSlate,
-  geography: GlobeHemisphereWest,
-  nfl_football: Football,
-  roman_history: Bank,
-  harry_potter: MagicWand,
-  famous_quotes: Quotes,
-  music: MusicNotes,
-  odd_one_out: PuzzlePiece,
-  art_history: Palette,
-  movie_quotes: FilmStrip,
-  pop_culture: Star,
-}
+// squircle tile tinted with the category's accent color. The id-to-mark table
+// lives in the icon registry so a category reads the same here, in the quest
+// map, and on an achievement badge.
+export { categoryIconName, CATEGORY_ICON_NAMES } from './iconRegistry'
 
 interface CategoryIconProps {
   categoryId: string
   size?: number
   color?: string
-  weight?: IconProps['weight']
+  weight?: IconWeight
+  /** Screen-reader text. Omit where the category name is already on screen. */
+  label?: string
 }
 
 /** The bare category mark, no tile. Use inline — chips, badges, title rows —
  * where CategoryBadge's squircle would be too heavy. */
-export function CategoryIcon({ categoryId, size = 16, color, weight = 'duotone' }: CategoryIconProps) {
-  const Icon = CATEGORY_ICONS[categoryId] ?? Brain
-  return <Icon weight={weight} size={size} color={color ?? colors.textSecondary} />
+export function CategoryIcon({
+  categoryId,
+  size = iconSize.sm,
+  color,
+  weight = 'duotone',
+  label,
+}: CategoryIconProps) {
+  return (
+    <AppIcon
+      name={categoryIconName(categoryId)}
+      size={size}
+      weight={weight}
+      color={color ?? colors.textSecondary}
+      label={label}
+    />
+  )
 }
 
 interface CategoryBadgeProps {
@@ -63,9 +49,8 @@ interface CategoryBadgeProps {
 }
 
 export function CategoryBadge({ category, size = 48, muted = false }: CategoryBadgeProps) {
-  const Icon = CATEGORY_ICONS[category.id] ?? Brain
   const color = muted ? colors.textDisabled : category.color
-  const iconSize = Math.round(size * 0.55)
+  const markSize = Math.round(size * 0.55)
 
   return (
     <View
@@ -92,7 +77,7 @@ export function CategoryBadge({ category, size = 48, muted = false }: CategoryBa
         start={{ x: 0.5, y: 0 }}
         end={{ x: 0.5, y: 1 }}
       />
-      <Icon weight="duotone" size={iconSize} color={color} />
+      <AppIcon name={categoryIconName(category.id)} size={markSize} color={color} />
     </View>
   )
 }

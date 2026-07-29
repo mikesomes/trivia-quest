@@ -2,7 +2,8 @@ import React from 'react'
 import { View, Text, StyleSheet } from 'react-native'
 import { MapTrifold } from 'phosphor-react-native'
 import { LinearGradient } from 'expo-linear-gradient'
-import { colors, spacing, fontSize, radius } from '../../constants/theme'
+import { colors, spacing, fontSize, iconSize, radius } from '../../constants/theme'
+import { AppIcon } from '../ui/AppIcon'
 import { AnimatedPressable } from '../ui/AnimatedPressable'
 
 interface QuestHeroCardProps {
@@ -60,7 +61,7 @@ export function QuestHeroCard({ totalNodes, completedNodes, isLoading, onPress }
             <Text style={styles.ctaText}>
               {hasProgress ? 'Continue Journey' : 'Begin Your Journey'}
             </Text>
-            <Text style={styles.ctaArrow}>→</Text>
+            <AppIcon name="next" size={iconSize.md} color={colors.textPrimary} />
           </AnimatedPressable>
         </View>
       </View>
@@ -139,11 +140,6 @@ const styles = StyleSheet.create({
     marginTop: spacing.xs,
   },
   ctaText: {
-    fontSize: fontSize.lg,
-    fontWeight: '700',
-    color: colors.textPrimary,
-  },
-  ctaArrow: {
     fontSize: fontSize.lg,
     fontWeight: '700',
     color: colors.textPrimary,

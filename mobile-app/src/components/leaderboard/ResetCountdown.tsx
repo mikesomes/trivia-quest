@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react'
 import { View, Text, StyleSheet } from 'react-native'
 import type { LeaderboardPeriod } from '../../types/api'
-import { colors, spacing, radius, fontSize } from '../../constants/theme'
+import { colors, spacing, radius, fontSize, iconSize } from '../../constants/theme'
 import { getResetMs, formatCountdown } from '../../utils/leaderboard'
 import { tabularNums } from '../ui/Typography'
+import { AppIcon } from '../ui/AppIcon'
 
 interface Props {
   period: LeaderboardPeriod
@@ -26,7 +27,7 @@ export function ResetCountdown({ period }: Props) {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.icon}>⏱</Text>
+      <AppIcon name="timer" size={iconSize.sm} color={colors.textSecondary} />
       <Text style={styles.text}>
         {label} in <Text style={styles.time}>{formatCountdown(msLeft)}</Text>
       </Text>
@@ -46,9 +47,6 @@ const styles = StyleSheet.create({
     alignSelf: 'center',
     borderWidth: 1,
     borderColor: colors.border,
-  },
-  icon: {
-    fontSize: fontSize.xs,
   },
   text: {
     fontSize: fontSize.xs,

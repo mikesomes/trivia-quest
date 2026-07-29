@@ -6,38 +6,34 @@ import { ScreenWrapper } from '../../src/components/ui/ScreenWrapper'
 import { AnimatedPressable } from '../../src/components/ui/AnimatedPressable'
 import { router } from 'expo-router'
 import { colors, spacing, fontSize, radius } from '../../src/constants/theme'
-import { ArrowLeft } from 'phosphor-react-native'
 import { GAME_CONFIG } from '../../src/constants/game'
-import { GameIcon, type GameIconName } from '../../src/components/icons'
+import { AppIcon } from '../../src/components/ui/AppIcon'
+import { GameModeArtwork, type GameModeId } from '../../src/components/ui/GameModeArtwork'
 
 const MODES = [
   {
-    id: 'classic',
-    icon: 'brain' as GameIconName,
+    id: 'classic' as GameModeId,
     label: 'Classic',
     description: 'Pick a topic, 10 questions, earn XP',
     color: colors.primary,
     route: '/game/mode-intro?mode=classic',
   },
   {
-    id: 'blitz',
-    icon: 'xp' as GameIconName,
+    id: 'blitz' as GameModeId,
     label: 'Blitz',
     description: `${GAME_CONFIG.BLITZ_SECONDS} seconds, unlimited questions, no hammers`,
     color: colors.gold,
     route: '/game/mode-intro?mode=blitz',
   },
   {
-    id: 'survival',
-    icon: 'skull' as GameIconName,
+    id: 'survival' as GameModeId,
     label: 'Survival',
     description: 'One life, endless rounds, go as far as you can',
     color: colors.incorrect,
     route: '/game/mode-intro?mode=survival',
   },
   {
-    id: 'odd_one_out',
-    icon: 'puzzle' as GameIconName,
+    id: 'odd_one_out' as GameModeId,
     label: 'Odd One Out',
     description: 'Pick the item that does not belong',
     color: '#10B981',
@@ -56,7 +52,7 @@ export default function ModeSelectScreen() {
       <ScrollView style={styles.container} contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
         <View style={styles.topRow}>
           <AnimatedPressable style={styles.back} onPress={() => router.back()} accessibilityLabel="Go back">
-            <ArrowLeft weight="bold" size={24} color={colors.textPrimary} />
+            <AppIcon name="back" size={24} />
           </AnimatedPressable>
         </View>
 
@@ -84,7 +80,7 @@ export default function ModeSelectScreen() {
                 end={{ x: 1, y: 0 }}
               />
               <View style={styles.cardRow}>
-                <GameIcon name={mode.icon} size={34} />
+                <GameModeArtwork mode={mode.id} />
                 <View style={styles.cardText}>
                   <Text style={styles.label}>{mode.label}</Text>
                   <Text style={styles.description}>{mode.description}</Text>
@@ -122,7 +118,6 @@ const styles = StyleSheet.create({
     height: 2,
   },
   cardRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.md },
-  emoji: { fontSize: 40 },
   cardText: { flex: 1, gap: spacing.xs },
   label: { fontSize: fontSize.xl, fontWeight: '800', color: colors.textPrimary },
   description: { fontSize: fontSize.sm, color: colors.textSecondary, lineHeight: 18 },

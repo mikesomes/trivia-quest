@@ -13,6 +13,7 @@ import { useProfile } from '../../src/hooks/useProfile'
 import { useSoundEffects } from '../../src/hooks/useSoundEffects'
 import { useAnimatedNumber } from '../../src/hooks/useAnimatedNumber'
 import { AnimatedPressable } from '../../src/components/ui/AnimatedPressable'
+import { AppIcon } from '../../src/components/ui/AppIcon'
 import ConfettiCannon from 'react-native-confetti-cannon'
 import { QuestionCard } from '../../src/components/game/QuestionCard'
 import { ProgressDots } from '../../src/components/game/ProgressDots'
@@ -488,8 +489,16 @@ export default function PlayScreen() {
             onPress={pauseGame}
             style={styles.pauseBtn}
             disabled={answerState !== 'revealed'}
+            accessibilityLabel="Pause game"
+            // Icon is 20px inside 8px padding — pad the rest of the way to the
+            // 44px minimum touch target without changing the header layout.
+            hitSlop={8}
           >
-            <Text style={[styles.pauseIcon, answerState !== 'revealed' && styles.pauseIconDisabled]}>⏸</Text>
+            <AppIcon
+              name="pause"
+              size={20}
+              style={answerState !== 'revealed' ? styles.pauseIconDisabled : undefined}
+            />
           </AnimatedPressable>
         </View>
 
@@ -640,7 +649,6 @@ const styles = StyleSheet.create({
   xpValue: { fontSize: fontSize.xxl, fontWeight: '900', color: colors.primary, textAlign: 'center' },
   xpGlow: { position: 'absolute', top: -12, left: -16, right: -16, bottom: -12, borderRadius: 16, backgroundColor: colors.primary },
   pauseBtn: { padding: spacing.sm },
-  pauseIcon: { fontSize: 20 },
   pauseIconDisabled: { opacity: 0.4 },
   streakRow: { minHeight: 32, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   sdCounter: { fontSize: fontSize.sm, fontWeight: '800', letterSpacing: 1 },

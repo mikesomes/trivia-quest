@@ -1,5 +1,5 @@
 import React from 'react'
-import { Text, StyleSheet, View } from 'react-native'
+import { StyleSheet, View } from 'react-native'
 import { spacing } from '../../constants/theme'
 import { GAME_CONFIG } from '../../constants/game'
 import { AnimatedPressable } from '../ui/AnimatedPressable'

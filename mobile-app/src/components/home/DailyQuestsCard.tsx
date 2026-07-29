@@ -1,13 +1,24 @@
 import React, { useEffect, useRef } from 'react'
 import { Animated, StyleSheet, Text, View } from 'react-native'
 import { Target } from 'phosphor-react-native'
-import { colors, fontSize, radius, spacing, surfaces } from '../../constants/theme'
+import { colors, fontSize, iconSize, radius, spacing, surfaces } from '../../constants/theme'
 import { useChallenges } from '../../hooks/useChallenges'
 import type { Challenge } from '../../api/challenges'
 import { GradientCard } from '../ui/GradientCard'
 import { tabularNums } from '../ui/Typography'
 import { CorrectIcon } from '../icons'
 import { Skeleton, SkeletonBox } from '../ui/Skeleton'
+import { AppIcon } from '../ui/AppIcon'
+import type { IconName } from '../ui/iconRegistry'
+
+// The API also sends an `emoji` per challenge. We render a themed mark instead
+// so quests match the rest of the app's iconography; the field is left on the
+// response type so the backend contract is unchanged.
+function challengeIconName(challenge: Challenge): IconName {
+  if (challenge.id.includes('rounds')) return 'victory'
+  if (challenge.id.includes('correct')) return 'target'
+  return challenge.period === 'weekly' ? 'calendar' : 'quickPlay'
+}
 
 function QuestRow({ challenge }: { challenge: Challenge }) {
   const pct = Math.min(1, challenge.progress / challenge.target)
@@ -23,7 +34,7 @@ function QuestRow({ challenge }: { challenge: Challenge }) {
 
   return (
     <View style={styles.row}>
-      <Text style={styles.rowEmoji}>{challenge.emoji}</Text>
+      <AppIcon name={challengeIconName(challenge)} size={iconSize.md} style={styles.rowIcon} />
       <View style={styles.rowBody}>
         <View style={styles.rowTop}>
           <Text style={[styles.rowLabel, challenge.isComplete && styles.rowLabelDone]} numberOfLines={1}>
@@ -173,7 +184,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: spacing.sm,
   },
-  rowEmoji: { fontSize: 20, width: 28, textAlign: 'center' },
+  rowIcon: { width: 28, alignItems: 'center' },
   rowBody: { flex: 1, gap: 4 },
   rowTop: {
     flexDirection: 'row',

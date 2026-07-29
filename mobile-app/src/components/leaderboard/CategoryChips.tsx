@@ -66,9 +66,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 6,
   },
-  emoji: {
-    fontSize: fontSize.md,
-  },
   label: {
     fontSize: fontSize.sm,
     fontWeight: '600',

@@ -6,6 +6,8 @@ function challenge(overrides: Partial<Challenge>): Challenge {
     id: 'daily_correct_25',
     period: 'daily',
     label: 'Answer 25 questions correctly',
+    // The API still sends an emoji per challenge; the app ignores it and draws
+    // its own mark. Kept here so the fixture matches the real payload shape.
     emoji: '🎯',
     target: 25,
     xpReward: 200,

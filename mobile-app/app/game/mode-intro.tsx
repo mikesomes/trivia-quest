@@ -150,17 +150,17 @@ export default function ModeIntroScreen() {
             <Text style={styles.cardTitle}>Difficulty Ramp</Text>
             <View style={styles.ladder}>
               <View style={styles.ladderRow}>
-                <Text style={[styles.ladderDot, { color: colors.easy }]}>●</Text>
+                <View style={[styles.ladderDot, { backgroundColor: colors.easy }]} />
                 <Text style={styles.ladderLabel}>Early rounds</Text>
                 <Text style={[styles.ladderLevel, { color: colors.easy }]}>MOSTLY EASY</Text>
               </View>
               <View style={styles.ladderRow}>
-                <Text style={[styles.ladderDot, { color: colors.medium }]}>●</Text>
+                <View style={[styles.ladderDot, { backgroundColor: colors.medium }]} />
                 <Text style={styles.ladderLabel}>Mid rounds</Text>
                 <Text style={[styles.ladderLevel, { color: colors.medium }]}>MIXED</Text>
               </View>
               <View style={styles.ladderRow}>
-                <Text style={[styles.ladderDot, { color: colors.hard }]}>●</Text>
+                <View style={[styles.ladderDot, { backgroundColor: colors.hard }]} />
                 <Text style={styles.ladderLabel}>Late rounds</Text>
                 <Text style={[styles.ladderLevel, { color: colors.hard }]}>ALL HARD</Text>
               </View>
@@ -212,7 +212,10 @@ const styles = StyleSheet.create({
   cardTitle: { fontSize: fontSize.md, fontWeight: '700', color: colors.textPrimary },
   ladder: { gap: spacing.sm },
   ladderRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
-  ladderDot: { fontSize: 10, width: 16 },
+  // A drawn dot rather than a "●" glyph: exact size, no font metrics involved.
+  // The difficulty is also spelled out in the row's label, so color is never
+  // the only cue.
+  ladderDot: { width: 8, height: 8, borderRadius: radius.full, marginHorizontal: 4 },
   ladderLabel: { flex: 1, fontSize: fontSize.sm, color: colors.textSecondary },
   ladderLevel: { fontSize: fontSize.xs, fontWeight: '800', letterSpacing: 1 },
   ruleRow: { flexDirection: 'row', alignItems: 'flex-start', gap: spacing.md },

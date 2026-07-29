@@ -73,8 +73,8 @@ function InfoSlide({ slide, width }: { slide: typeof SLIDES[number]; width: numb
       />
 
       {/* Emoji glow */}
-      <View style={styles.emojiWrap}>
-        <View style={[styles.emojiGlow, { backgroundColor: `${slide.accentColor}22` }]} />
+      <View style={styles.markWrap}>
+        <View style={[styles.markGlow, { backgroundColor: `${slide.accentColor}22` }]} />
         <GameIcon name={slide.icon} size={72} color={slide.accentColor} />
       </View>
 
@@ -291,12 +291,12 @@ const styles = StyleSheet.create({
     gap: spacing.lg,
   },
 
-  emojiWrap: {
+  markWrap: {
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: spacing.sm,
   },
-  emojiGlow: {
+  markGlow: {
     position: 'absolute',
     width: 140,
     height: 140,

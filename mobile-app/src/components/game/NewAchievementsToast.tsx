@@ -1,8 +1,10 @@
 import React, { useEffect, useRef } from 'react'
 import { Animated, StyleSheet, Text, View } from 'react-native'
-import { colors, fontSize, radius, spacing, surfaces } from '../../constants/theme'
+import { colors, fontSize, iconSize, radius, spacing, surfaces } from '../../constants/theme'
 import type { Achievement } from '../../types/user'
 import { MedalIcon } from '../icons'
+import { AppIcon } from '../ui/AppIcon'
+import { achievementIconName } from '../ui/iconRegistry'
 
 const RARITY_COLORS: Record<string, string> = {
   common:    '#6b7280',
@@ -42,7 +44,7 @@ export function NewAchievementsToast({ achievements }: Props) {
         const color = RARITY_COLORS[a.rarity] ?? RARITY_COLORS.common
         return (
           <View key={a.id} style={[styles.row, { borderLeftColor: color }]}>
-            <Text style={styles.rowIcon}>{a.icon}</Text>
+            <AppIcon name={achievementIconName(a.id)} size={iconSize.lg} color={color} style={styles.rowIcon} />
             <View style={styles.rowText}>
               <Text style={styles.rowName}>{a.name}</Text>
               <Text style={styles.rowDesc}>{a.description}</Text>
@@ -77,7 +79,7 @@ const styles = StyleSheet.create({
     borderLeftWidth: 3,
     paddingLeft: spacing.sm,
   },
-  rowIcon: { fontSize: 24, width: 32 },
+  rowIcon: { width: 32, alignItems: 'center' },
   rowText: { flex: 1 },
   rowName: { fontSize: fontSize.sm, fontWeight: '700', color: colors.textPrimary },
   rowDesc: { fontSize: fontSize.xs, color: colors.textSecondary },

@@ -92,7 +92,7 @@ export default function CategoryScreen() {
                 )}
 
                 {/* Category mark */}
-                <View style={[styles.badgeIcon, cat.comingSoon && styles.emojiDisabled]}>
+                <View style={[styles.badgeIcon, cat.comingSoon && styles.badgeIconDisabled]}>
                   <CategoryBadge category={cat} size={46} muted={cat.comingSoon} />
                 </View>
 
@@ -199,7 +199,7 @@ const styles = StyleSheet.create({
   comingSoonBadgeText: {
     color: '#999999',
   },
-  emojiDisabled: {
+  badgeIconDisabled: {
     opacity: 0.6,
   },
   labelDisabled: {

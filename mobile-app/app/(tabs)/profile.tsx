@@ -20,7 +20,6 @@ import { MAX_PLAYER_LEVEL } from '../../src/utils/scoring'
 import { formatNumber, formatAccuracy, formatDate } from '../../src/utils/format'
 import { tabularNums } from '../../src/components/ui/Typography'
 import { GameIcon } from '../../src/components/icons'
-import { MedalIcon } from '../../src/components/icons'
 import { Skeleton, SkeletonBox, SkeletonCircle } from '../../src/components/ui/Skeleton'
 import { EmptyState } from '../../src/components/ui/EmptyState'
 import { router } from 'expo-router'
@@ -350,7 +349,6 @@ const styles = StyleSheet.create({
   },
   statCard: { width: (SCREEN_WIDTH - spacing.lg * 2 - spacing.md) / 2 },
   statContent: { padding: spacing.lg, alignItems: 'center', gap: spacing.xs },
-  statEmoji: { fontSize: 28 },
   statValue: { ...tabularNums, fontSize: fontSize.xxl, fontWeight: '900' },
   statLabel: {
     fontSize: fontSize.xs,
@@ -389,7 +387,6 @@ const styles = StyleSheet.create({
     paddingVertical: spacing.xl,
     paddingHorizontal: spacing.lg,
   },
-  emptyEmoji: { fontSize: 40 },
   emptyText: { fontSize: fontSize.sm, color: colors.textSecondary, textAlign: 'center' },
 
   // Footer

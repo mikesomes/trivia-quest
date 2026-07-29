@@ -2,11 +2,19 @@ import React from 'react'
 import { StyleSheet, Text, View } from 'react-native'
 import { colors, radius } from '../../constants/theme'
 import type { RankMovement } from '../../utils/leaderboard'
+import { AppIcon } from '../ui/AppIcon'
 
 interface Props {
   movement: RankMovement
 }
 
+/**
+ * Rank change since the last leaderboard snapshot.
+ *
+ * Direction is carried by the caret's shape, the delta number, and the
+ * accessibility label — not by color alone, so it survives a colorblind reader
+ * and a screen reader equally.
+ */
 export function MovementBadge({ movement }: Props) {
   if (movement.direction === 'new') {
     return (
@@ -17,21 +25,23 @@ export function MovementBadge({ movement }: Props) {
   }
   if (movement.direction === 'up') {
     return (
-      <View style={[styles.base, styles.up]}>
-        <Text style={[styles.text, styles.upText]}>↑{movement.delta}</Text>
+      <View style={[styles.base, styles.up]} accessible accessibilityLabel={`Up ${movement.delta}`}>
+        <AppIcon name="rankUp" size={10} />
+        <Text style={[styles.text, styles.upText]}>{movement.delta}</Text>
       </View>
     )
   }
   if (movement.direction === 'down') {
     return (
-      <View style={[styles.base, styles.down]}>
-        <Text style={[styles.text, styles.downText]}>↓{movement.delta}</Text>
+      <View style={[styles.base, styles.down]} accessible accessibilityLabel={`Down ${movement.delta}`}>
+        <AppIcon name="rankDown" size={10} />
+        <Text style={[styles.text, styles.downText]}>{movement.delta}</Text>
       </View>
     )
   }
   return (
-    <View style={[styles.base, styles.same]}>
-      <Text style={[styles.text, styles.sameText]}>—</Text>
+    <View style={[styles.base, styles.same]} accessible accessibilityLabel="No change">
+      <AppIcon name="rankSame" size={10} />
     </View>
   )
 }
@@ -42,7 +52,10 @@ const styles = StyleSheet.create({
     paddingHorizontal: 6,
     paddingVertical: 2,
     minWidth: 32,
+    flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'center',
+    gap: 1,
   },
   text: {
     fontSize: 10,
@@ -53,7 +66,6 @@ const styles = StyleSheet.create({
   down:     { backgroundColor: 'rgba(244,67,54,0.2)' },
   downText: { color: colors.incorrect },
   same:     { backgroundColor: colors.bgCard },
-  sameText: { color: colors.textMuted },
   new:      { backgroundColor: `${colors.primary}30` },
   newText:  { color: colors.primaryLight },
 })
