@@ -134,6 +134,18 @@ export interface RoundXpBreakdown {
   momentumBonus?: number
 }
 
+/**
+ * Playable categories.
+ *
+ * This is the runtime allow-list, not the full set of values the database may
+ * hold — same relationship DIFFICULTIES has to Difficulty. isValidCategory
+ * checks against this, so dropping an entry is what actually takes a category
+ * out of play: create-round rejects it and topUpAll stops generating for it.
+ *
+ * 'nfl_football' stays in the Category union because historical rounds, scores
+ * and question rows still carry it; it is only absent here. See migration
+ * 20240068 for why it is out and what bringing it back involves.
+ */
 export const CATEGORIES: Category[] = [
   'general_knowledge',
   'history',
@@ -141,7 +153,6 @@ export const CATEGORIES: Category[] = [
   'sports',
   'movies_tv',
   'geography',
-  'nfl_football',
   'roman_history',
   'harry_potter',
   'famous_quotes',
