@@ -33,6 +33,13 @@ describe('icon registry', () => {
     }
   })
 
+  // The loop above is satisfied by the fallback, so it would still pass if the
+  // mapping were dropped. This pins that video_games has a mark of its own.
+  it('gives video games a dedicated mark rather than the fallback', () => {
+    expect(categoryIconName('video_games')).toBe('videoGames')
+    expect(ICONS.videoGames).toBeDefined()
+  })
+
   it('falls back for ids the client does not know about', () => {
     // New categories and achievements can appear server-side before the client
     // ships a mapping — they must still render something.

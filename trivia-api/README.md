@@ -115,6 +115,7 @@ Migrations live in `supabase/migrations/` and are applied in order — 55 files 
 | `20240058` | "One more round" momentum bonus (`momentum_bonus_active` on `rounds`) |
 | `20240059/60` | Achievement expansion schema (`user_category_stats`, personal-best columns) + 23 new achievements |
 | `20240061` | `leaderboard_rank_snapshots` (rank-delta arrows) |
+| `20240070` | Video Games category (bank seeded from Open Trivia DB, not the generator) |
 
 ---
 
@@ -300,7 +301,22 @@ supabase functions invoke generate-questions \
   --env-file .env.local
 ```
 
-`topUpAll: true` loops through every category/difficulty combination and generates questions for each bucket below `QUESTION_BANK_MIN_THRESHOLD` (9 playable categories × 3 difficulties = up to 27 OpenAI calls; expect a few minutes). Use `npm run audit:duplicates` to see the current state of the bank before and after. Import scripts in `scripts/` (Open Trivia DB, The Trivia API) offer a no-cost alternative for some categories. NFL Football, Roman History and Harry Potter are currently out of rotation — see migrations 20240068 and 20240069.
+`topUpAll: true` loops through every category/difficulty combination and generates questions for each bucket below `QUESTION_BANK_MIN_THRESHOLD` (10 playable categories × 3 difficulties = up to 30 OpenAI calls; expect a few minutes). Use `npm run audit:duplicates` to see the current state of the bank before and after. Import scripts in `scripts/` (Open Trivia DB, The Trivia API) offer a no-cost alternative for some categories. NFL Football, Roman History and Harry Potter are currently out of rotation — see migrations 20240068 and 20240069.
+
+`scripts/import-opentdb.mjs` drains a category rather than sampling it, so it is
+the cheapest way to fill a new bank from scratch:
+
+```bash
+node scripts/import-opentdb.mjs --category video_games --dry-run  # inspect first
+node scripts/import-opentdb.mjs --category video_games
+```
+
+It walks each difficulty down to the last question rather than stopping at a
+batch boundary, which for Video Games yields 1,018 rows (317 easy / 489 medium
+/ 212 hard). OTDB advertises 1,185 for that category; the gap is true/false
+questions, which `question_bank` cannot store because `option_a`–`option_d` are
+`NOT NULL`, so the importer requests `type=multiple` only. Requests are
+rate-limited to one per 6s, so a full category takes a few minutes.
 
 ### 7. Test an endpoint
 

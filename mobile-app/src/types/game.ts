@@ -11,6 +11,7 @@ export type Category =
   | 'famous_quotes'
   | 'music'
   | 'odd_one_out'
+  | 'video_games'
   | 'art_history'
   | 'movie_quotes'
   | 'pop_culture'

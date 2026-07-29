@@ -167,6 +167,9 @@ export const ICONS = {
   quotes: spec(Quotes, colors.textSecondary),
   art: spec(Palette, colors.textSecondary),
   popCulture: spec(Star, colors.textSecondary),
+  // Distinct from the `games` mark below, which is a navigation/mode icon in
+  // the accent colour — category marks are all textSecondary.
+  videoGames: spec(GameController, colors.textSecondary),
 
   // ── Status & progression ───────────────────────────────────────────────
   victory: VICTORY,
@@ -272,6 +275,7 @@ export const CATEGORY_ICON_NAMES: Record<string, IconName> = {
   famous_quotes: 'quotes',
   music: 'music',
   odd_one_out: 'puzzle',
+  video_games: 'videoGames',
   art_history: 'art',
   movie_quotes: 'movieQuotes',
   pop_culture: 'popCulture',

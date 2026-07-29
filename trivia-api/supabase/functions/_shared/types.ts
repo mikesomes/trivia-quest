@@ -11,6 +11,7 @@ export type Category =
   | 'famous_quotes'
   | 'music'
   | 'odd_one_out'
+  | 'video_games'
 
 // 'boss' exists only on quest nodes; boss rounds draw 'hard' questions
 // (mapped in create-round and start-quest-node-run), so question_bank and
@@ -157,6 +158,7 @@ export const CATEGORIES: Category[] = [
   'famous_quotes',
   'music',
   'odd_one_out',
+  'video_games',
 ]
 
 export const DIFFICULTIES: Difficulty[] = ['easy', 'medium', 'hard']

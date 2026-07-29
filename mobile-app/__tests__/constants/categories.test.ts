@@ -31,6 +31,16 @@ describe('category metadata', () => {
     }
   )
 
+  // Seeded from Open Trivia DB category 15 rather than the generator, so it
+  // ships playable from the start — see migration 20240070.
+  it('offers video games as a playable category', () => {
+    const category = byId('video_games')
+    expect(category).toBeDefined()
+    expect(category?.comingSoon).toBeUndefined()
+    expect(category?.modeOnly).toBeUndefined()
+    expect(playable.map((c) => c.id)).toContain('video_games')
+  })
+
   it('groups the coming-soon categories after the playable ones', () => {
     const firstComingSoon = CATEGORIES.findIndex((c) => c.comingSoon)
     const lastPlayable = CATEGORIES.map((c) => Boolean(c.comingSoon)).lastIndexOf(false)
