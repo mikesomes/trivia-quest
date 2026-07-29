@@ -13,6 +13,25 @@ import { makeLogger, getRequestId } from '../_shared/logger.ts'
 // Use a more capable model for categories where factual accuracy is harder to get right
 const CATEGORY_MODEL_OVERRIDE: Partial<Record<Category, string>> = {}
 
+/** Questions requested per bucket per top-up run. */
+const DEFAULT_TOPUP_COUNT = 15
+
+/**
+ * Read a positive integer from the environment, falling back to a default.
+ *
+ * README.md has documented QUESTION_BANK_MIN_THRESHOLD and
+ * QUESTION_BANK_TOPUP_COUNT as tunable since the beginning, and both sit in
+ * .env.local, but no code ever read them — the values were hardcoded. Raising
+ * the documented knob did nothing. They are honoured now, so the bank floor and
+ * batch size can be adjusted for cost without a redeploy.
+ */
+function envInt(name: string, fallback: number): number {
+  const raw = Deno.env.get(name)
+  if (!raw) return fallback
+  const parsed = Number.parseInt(raw, 10)
+  return Number.isFinite(parsed) && parsed > 0 ? parsed : fallback
+}
+
 /**
  * Bind the near-duplicate RPC to a category. Injected into the generator so it
  * stays free of a database dependency.
@@ -89,6 +108,8 @@ Deno.serve(async (req) => {
   // Top-up mode: check all buckets and fill those below threshold
   if (body.topUpAll === true) {
     const start = Date.now()
+    const minPerBucket = envInt('QUESTION_BANK_MIN_THRESHOLD', GAME_CONSTANTS.QUESTION_BANK_MIN)
+    const topUpCount = envInt('QUESTION_BANK_TOPUP_COUNT', DEFAULT_TOPUP_COUNT)
     const inventory = await getQuestionInventory(supabase)
 
     // Collect all buckets that need topping up
@@ -97,17 +118,17 @@ Deno.serve(async (req) => {
       for (const diff of DIFFICULTIES) {
         const existing = inventory.find(i => i.category === cat && i.difficulty === diff)
         const currentCount = existing?.count ?? 0
-        if (currentCount < GAME_CONSTANTS.QUESTION_BANK_MIN) {
+        if (currentCount < minPerBucket) {
           bucketsToFill.push({ cat, diff })
         }
       }
     }
 
-    log.info('Starting topUpAll', { bucketsToFill: bucketsToFill.length })
+    log.info('Starting topUpAll', { bucketsToFill: bucketsToFill.length, minPerBucket, topUpCount })
 
     // Process up to 4 buckets concurrently to avoid OpenAI rate limits
     const tasks = bucketsToFill.map(({ cat, diff }) => async () => {
-      const needed = 15
+      const needed = topUpCount
       try {
         const crossCats = cat === 'general_knowledge'
           ? ['history', 'science', 'geography', 'sports', 'movies_tv']

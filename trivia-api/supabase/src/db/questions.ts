@@ -160,27 +160,19 @@ export async function selectQuestionsWithSegments(
 
 /**
  * Get count of available questions per category/difficulty.
+ *
+ * Aggregated in SQL. The previous version selected every active row and counted
+ * them here, which meant reading the whole bank — 11,525 rows and growing — on
+ * every topUpAll call just to find out which buckets were short.
  */
 export async function getQuestionInventory(
   supabase: ReturnType<typeof import('../../functions/_shared/supabaseClient.ts').createServiceClient>
 ): Promise<Array<{ category: string; difficulty: string; count: number }>> {
-  const { data, error } = await supabase
-    .from('question_bank')
-    .select('category, difficulty')
-    .eq('is_active', true)
+  const { data, error } = await supabase.rpc('get_question_inventory')
 
   if (error) throw new Error(`Failed to get inventory: ${error.message}`)
 
-  const counts: Record<string, number> = {}
-  for (const row of data ?? []) {
-    const key = `${row.category}::${row.difficulty}`
-    counts[key] = (counts[key] || 0) + 1
-  }
-
-  return Object.entries(counts).map(([key, count]) => {
-    const [category, difficulty] = key.split('::')
-    return { category, difficulty, count }
-  })
+  return (data ?? []) as Array<{ category: string; difficulty: string; count: number }>
 }
 
 /**

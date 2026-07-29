@@ -165,7 +165,19 @@ export const GAME_CONSTANTS = {
   MAX_LIVES: 7,
   MAX_HAMMERS: 5,
   ROUND_EXPIRY_MINUTES: 15,
-  QUESTION_BANK_MIN: 30,
+  // Minimum active questions per category/difficulty before top-up kicks in.
+  //
+  // 30 was below one Classic round's worth of headroom and a third of a single
+  // Blitz round, which draws 30 questions from one category. 150 per bucket is
+  // 450 per category — roughly 15 Blitz rounds or 45 Classic rounds before a
+  // player can see a repeat.
+  //
+  // Measured against the live bank this targets exactly the starved buckets:
+  // odd_one_out sits at 12/12/12 and famous_quotes at 98/72/94, while every
+  // other category is already above 150. Raise again once those fill; going
+  // straight to a higher number would just queue generation for categories
+  // that do not need it.
+  QUESTION_BANK_MIN: 150,
   MOMENTUM_WINDOW_MS: 2 * 60 * 1000,
   MOMENTUM_BONUS_MULTIPLIER: 0.15,
 } as const

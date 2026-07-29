@@ -47,7 +47,7 @@ Supabase Edge Functions  ──────►  PostgreSQL (RLS-enabled)
 - **All API endpoints are Supabase Edge Functions** running on Deno. No separate Node/Express server to manage.
 - **Database: PostgreSQL via Supabase** with Row Level Security (RLS) enabled on every table. Direct client database access is restricted; all mutations go through Edge Functions using the service role key.
 - **Auth: Supabase anonymous auth.** Players get a JWT automatically on first launch — no email or password required for the MVP. The JWT is passed as a Bearer token on every request.
-- **Question generation: OpenAI gpt-4o-mini** with structured JSON output via the responses API. Questions are generated in batches and stored in `question_bank`. Generation is decoupled from gameplay — a cron job tops up the bank when it falls below `QUESTION_BANK_MIN` (30) questions per category/difficulty combination.
+- **Question generation: OpenAI gpt-4o-mini** with structured JSON output via the responses API. Questions are generated in batches and stored in `question_bank`. Generation is decoupled from gameplay — a nightly pg_cron job tops up the bank when it falls below `QUESTION_BANK_MIN` (150) questions per category/difficulty combination. Generated batches are screened for near-duplicates before insert (see `supabase/src/openai/similarity.ts`).
 - **XP validation: All gameplay XP is computed server-side** in `supabase/functions/_shared/scoring.ts`. The client sends only `roundId`, `selectedOption`, and `timeTakenMs`. XP is never accepted from the client.
 - **Content deduplication:** Each question is hashed (SHA-256 of normalized question text) before insert. The `content_hash` column has a UNIQUE constraint, so duplicate questions from OpenAI are silently dropped.
 
@@ -234,7 +234,7 @@ Copy `.env.example` to `.env.local` for local development. For production, use `
 | `SUPABASE_ANON_KEY` | Public anon key. Safe to expose. Used by the mobile app. |
 | `OPENAI_API_KEY` | OpenAI secret key (`sk-...`). Used only by `generate-questions`. |
 | `OPENAI_MODEL` | OpenAI model to use for generation. Default: `gpt-4o-mini`. Change to `gpt-4o` for higher quality questions at higher cost. |
-| `QUESTION_BANK_MIN_THRESHOLD` | Minimum questions per category/difficulty before a top-up is triggered. Default: `30`. |
+| `QUESTION_BANK_MIN_THRESHOLD` | Minimum questions per category/difficulty before a top-up is triggered. Overrides `GAME_CONSTANTS.QUESTION_BANK_MIN`. Default: `150`. |
 | `QUESTION_BANK_TOPUP_COUNT` | How many questions to generate per batch when topping up. Default: `15`. |
 | `CRON_SECRET` | A random secret string you generate. Used to authenticate calls to `generate-questions` from a cron job. Generate with: `openssl rand -hex 32` |
 | `APP_ENV` | `development` or `production`. Controls logging verbosity. |
@@ -300,7 +300,7 @@ supabase functions invoke generate-questions \
   --env-file .env.local
 ```
 
-`topUpAll: true` loops through every category/difficulty combination and generates questions until each bucket reaches `QUESTION_BANK_MIN_THRESHOLD` (12 categories × 3 difficulties = up to 36 OpenAI calls; expect a few minutes). Import scripts in `scripts/` (Open Trivia DB, NFL, etc.) offer a no-cost alternative for some categories.
+`topUpAll: true` loops through every category/difficulty combination and generates questions for each bucket below `QUESTION_BANK_MIN_THRESHOLD` (12 categories × 3 difficulties = up to 36 OpenAI calls; expect a few minutes). Use `npm run audit:duplicates` to see the current state of the bank before and after. Import scripts in `scripts/` (Open Trivia DB, NFL, etc.) offer a no-cost alternative for some categories.
 
 ### 7. Test an endpoint
 
@@ -369,7 +369,7 @@ supabase secrets set \
   OPENAI_API_KEY=sk-... \
   CRON_SECRET=$(openssl rand -hex 32) \
   OPENAI_MODEL=gpt-4o-mini \
-  QUESTION_BANK_MIN_THRESHOLD=30 \
+  QUESTION_BANK_MIN_THRESHOLD=150 \
   QUESTION_BANK_TOPUP_COUNT=15 \
   APP_ENV=production
 ```
@@ -404,24 +404,35 @@ supabase functions invoke generate-questions \
   --body '{"topUpAll":true}'
 ```
 
-### 7. Set up a question bank cron job (optional but recommended)
+### 7. Enable the scheduled maintenance jobs
 
-Use an external cron service (e.g., [cron-job.org](https://cron-job.org), GitHub Actions, or Supabase's own pg_cron) to call `generate-questions` on a schedule. A daily top-up is sufficient for most traffic levels.
+Two jobs keep the game healthy, and both are scheduled by migration
+`20240065000000_schedule_maintenance_jobs.sql` using pg_cron — you do not need
+an external cron service.
 
-Example cron-job.org request:
-- URL: `https://<project-ref>.supabase.co/functions/v1/generate-questions`
-- Method: POST
-- Header: `Authorization: Bearer <CRON_SECRET>`
-- Body: `{}`
+| Job | Schedule | What it does |
+|---|---|---|
+| `question-bank-topup` | 09:00 UTC daily | Calls `generate-questions` with `{"topUpAll": true}`, filling any category/difficulty below `QUESTION_BANK_MIN`. |
+| `leaderboard-rank-snapshot` | 04:30 UTC daily | Calls `snapshot-leaderboard-ranks` so `get-leaderboard` has a "rank as of yesterday" to diff against. Without it, movement badges stay hidden — the client degrades gracefully. |
 
-### 8. Set up the leaderboard rank-snapshot cron job (needed for rank-delta arrows)
+The migration reads the function URL and the shared secret from Vault rather
+than hardcoding them. Create both once per project, then re-run the scheduler:
 
-Same pattern as above, once daily: call `snapshot-leaderboard-ranks` so `get-leaderboard` has a "rank as of yesterday" to diff against. Skipping this just means movement badges stay hidden (the client already degrades gracefully when `previousRank` is absent).
+```sql
+select vault.create_secret('https://<project-ref>.supabase.co/functions/v1', 'functions_base_url');
+select vault.create_secret('<your CRON_SECRET>', 'cron_secret');
+select public.schedule_maintenance_jobs();
+```
 
-- URL: `https://<project-ref>.supabase.co/functions/v1/snapshot-leaderboard-ranks`
-- Method: POST
-- Header: `Authorization: Bearer <CRON_SECRET>`
-- Body: `{}`
+If the secrets are missing the migration still applies cleanly and tells you
+what to create, so a fresh environment never fails its deploy over this.
+
+Confirm the jobs are registered and running:
+
+```sql
+select jobname, schedule, active from cron.job;
+select jobname, status, start_time from cron.job_run_details order by start_time desc limit 10;
+```
 
 ---
 
