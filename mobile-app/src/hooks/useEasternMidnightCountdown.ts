@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { formatCompactDuration } from '../utils/format'
 
 /**
  * Returns the UTC timestamp (ms) of the next midnight in America/New_York.
@@ -45,6 +46,31 @@ export function useEasternMidnightCountdown(): string {
       const m = Math.floor((diff % 3600000) / 60000)
       const s = Math.floor((diff % 60000) / 1000)
       setTimeLeft(`${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`)
+    }
+    tick()
+    const id = setInterval(tick, 1000)
+    return () => clearInterval(id)
+  }, [])
+
+  return timeLeft
+}
+
+/**
+ * The same countdown at a glance — `4h 12m` rather than `04:12:55`. A monospaced
+ * clock ticking every second reads as urgency; on a resting surface the reset is
+ * ambient information, so it gets the calmer form. Still ticks each second so
+ * the final minute counts down properly.
+ */
+export function useEasternMidnightCompactCountdown(): string {
+  const [timeLeft, setTimeLeft] = useState(() =>
+    formatCompactDuration(getNextEasternMidnightMs() - Date.now())
+  )
+
+  useEffect(() => {
+    // setState bails out when the string is unchanged, so a 1s interval costs
+    // one comparison a second and re-renders only when the display changes.
+    function tick() {
+      setTimeLeft(formatCompactDuration(getNextEasternMidnightMs() - Date.now()))
     }
     tick()
     const id = setInterval(tick, 1000)

@@ -3,6 +3,7 @@ import {
   computeXpEarned,
   createActiveScoringTimerSnapshot,
   levelFromXp,
+  levelProgress,
   xpRequiredForLevel,
   MAX_PLAYER_LEVEL,
 } from '../../src/utils/scoring'
@@ -127,5 +128,26 @@ describe('levelFromXp', () => {
 
   it('caps at the current max level', () => {
     expect(levelFromXp(xpRequiredForLevel(MAX_PLAYER_LEVEL + 1) + 100000)).toBe(MAX_PLAYER_LEVEL)
+  })
+})
+
+describe('levelProgress', () => {
+  it('is empty at the start of a level', () => {
+    expect(levelProgress(xpRequiredForLevel(5), 5)).toBe(0)
+  })
+
+  it('is half full at the midpoint of a level', () => {
+    const start = xpRequiredForLevel(5)
+    const span = xpRequiredForLevel(6) - start
+    expect(levelProgress(start + span / 2, 5)).toBeCloseTo(0.5)
+  })
+
+  it('reads full at the level-up boundary', () => {
+    expect(levelProgress(xpRequiredForLevel(6), 5)).toBe(1)
+  })
+
+  it('reads full at the level cap, where there is no next level', () => {
+    expect(levelProgress(xpRequiredForLevel(MAX_PLAYER_LEVEL), MAX_PLAYER_LEVEL)).toBe(1)
+    expect(levelProgress(0, MAX_PLAYER_LEVEL)).toBe(1)
   })
 })

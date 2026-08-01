@@ -139,6 +139,63 @@ export const motion = {
   reanimatedSpringBouncy: { damping: 10, stiffness: 160, mass: 0.6 },
 } as const
 
+/**
+ * Drop shadows for surface layering, resting to floating.
+ *
+ * The shadow color is the palette's own near-black rather than `#000`: on a
+ * `bg` this dark, pure black is only a few percent darker than the backdrop, so
+ * it reads as a smudge instead of depth. Pair these with a lighter surface fill
+ * and a top highlight — on dark UI, value stepping does most of the work and
+ * the shadow only seats the object.
+ *
+ * NOTE: iOS maps `overflow: 'hidden'` to `clipsToBounds`, which clips the
+ * shadow away entirely. Put these on an outer wrapper and clip on an inner
+ * view. `SurfaceCard` already does this — prefer it over hand-rolling.
+ */
+export const elevation = {
+  /** Resting objects: secondary rows, mode tiles, buttons. */
+  low: {
+    shadowColor: '#05050c',
+    shadowOpacity: 0.45,
+    shadowRadius: 12,
+    shadowOffset: { width: 0, height: 4 },
+    elevation: 3,
+  },
+  /** The screen's primary object. Roughly one per screen. */
+  medium: {
+    shadowColor: '#05050c',
+    shadowOpacity: 0.55,
+    shadowRadius: 20,
+    shadowOffset: { width: 0, height: 10 },
+    elevation: 6,
+  },
+  /** Floating over content: modals, toasts, sheets. */
+  high: {
+    shadowColor: '#05050c',
+    shadowOpacity: 0.65,
+    shadowRadius: 32,
+    shadowOffset: { width: 0, height: 16 },
+    elevation: 12,
+  },
+} as const
+
+/**
+ * Light-catching edges, for layered surfaces that would otherwise need a
+ * border. Prefer these over `colors.border` on anything raised: `border` has
+ * hue and reads as a drawn line, while a white alpha reads as an edge catching
+ * the light — same silhouette, a fraction of the visual weight.
+ */
+export const edges = {
+  /** Whole-perimeter silhouette. Pair with `StyleSheet.hairlineWidth`. */
+  hairline: 'rgba(255,255,255,0.05)',
+  /** 1px specular top edge on a raised surface. */
+  highlightStrong: 'rgba(255,255,255,0.09)',
+  /** 1px specular top edge on a resting surface. */
+  highlightSoft: 'rgba(255,255,255,0.06)',
+  /** Inset tracks and dividers sitting inside a card. */
+  track: 'rgba(255,255,255,0.07)',
+} as const
+
 /** Soft glow shadow keyed by accent color; spread via style arrays. */
 export function glow(color: string, opacity = 0.35, radiusPx = 12) {
   return {
