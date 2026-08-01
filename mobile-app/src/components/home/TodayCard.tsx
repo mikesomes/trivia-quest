@@ -1,14 +1,10 @@
-import React, { useEffect, useRef, useState } from 'react'
+import React, { useEffect, useRef } from 'react'
 import { ActivityIndicator, Animated, StyleSheet, Text, View } from 'react-native'
 import { CalendarStar, Target } from 'phosphor-react-native'
-import { haptics } from '../../lib/haptics'
 import { colors, fontSize, iconSize, radius, spacing } from '../../constants/theme'
 import { useDailyChallengeStatus, useStartDailyChallenge } from '../../hooks/useDailyChallenge'
-import { useDailyRewardStatus, useClaimDailyReward } from '../../hooks/useDailyReward'
 import { useChallenges } from '../../hooks/useChallenges'
 import { useEasternMidnightCountdown } from '../../hooks/useEasternMidnightCountdown'
-import { CHEST_TIER_META, CHEST_REWARD_META } from '../../constants/chest'
-import type { ChestReward, ChestTier } from '../../api/dailyReward'
 import type { Challenge } from '../../api/challenges'
 import { GradientCard } from '../ui/GradientCard'
 import { AnimatedPressable } from '../ui/AnimatedPressable'
@@ -17,9 +13,8 @@ import { IconTile } from '../ui/IconTile'
 import { Skeleton, SkeletonBox } from '../ui/Skeleton'
 import { AppIcon } from '../ui/AppIcon'
 import type { IconName } from '../ui/iconRegistry'
-import { ChestOpenModal } from './ChestOpenModal'
 import { tabularNums } from '../ui/Typography'
-import { FlameIcon, CorrectIcon, GameIcon } from '../icons'
+import { FlameIcon, CorrectIcon } from '../icons'
 
 function RowSkeleton({ label }: { label: string }) {
   return (
@@ -92,99 +87,6 @@ function ChallengeRow() {
         </Pulse>
       )}
     </View>
-  )
-}
-
-function ChestRow() {
-  const { data: status, isLoading } = useDailyRewardStatus()
-  const claimReward = useClaimDailyReward()
-  const timeLeft = useEasternMidnightCountdown()
-  const wiggle = useRef(new Animated.Value(0)).current
-
-  const [modalTier, setModalTier] = useState<ChestTier>('wood')
-  const [modalReward, setModalReward] = useState<ChestReward | null>(null)
-  const [showModal, setShowModal] = useState(false)
-
-  const claimable = !!status && !status.alreadyClaimed
-
-  // Gentle recurring wiggle invites the tap while the chest is unclaimed.
-  useEffect(() => {
-    if (!claimable) return
-    const loop = Animated.loop(
-      Animated.sequence([
-        Animated.delay(1400),
-        Animated.timing(wiggle, { toValue: 1, duration: 80, useNativeDriver: true }),
-        Animated.timing(wiggle, { toValue: -1, duration: 80, useNativeDriver: true }),
-        Animated.timing(wiggle, { toValue: 1, duration: 80, useNativeDriver: true }),
-        Animated.timing(wiggle, { toValue: 0, duration: 80, useNativeDriver: true }),
-      ])
-    )
-    loop.start()
-    return () => loop.stop()
-  }, [claimable])
-
-  if (isLoading || !status) return <RowSkeleton label="Loading daily chest" />
-
-  const tierMeta = CHEST_TIER_META[status.tier]
-
-  const handleOpen = () => {
-    if (claimReward.isPending) return
-    haptics.punch()
-    claimReward.mutate(undefined, {
-      onSuccess: (result) => {
-        setModalTier(result.tier)
-        setModalReward(result.reward)
-        setShowModal(true)
-      },
-    })
-  }
-
-  const rotate = wiggle.interpolate({ inputRange: [-1, 1], outputRange: ['-6deg', '6deg'] })
-
-  return (
-    <>
-      <AnimatedPressable
-        style={styles.row}
-        onPress={handleOpen}
-        disabled={status.alreadyClaimed || claimReward.isPending}
-        activeOpacity={0.85}
-      >
-        <Animated.View style={{ transform: [{ rotate: status.alreadyClaimed ? '0deg' : rotate }] }}>
-          <IconTile color={tierMeta.color}>
-            <GameIcon name={tierMeta.icon} size={22} color={tierMeta.color} />
-          </IconTile>
-        </Animated.View>
-        <View style={styles.rowBody}>
-          <Text style={styles.rowTitle}>Daily Chest</Text>
-          {status.alreadyClaimed ? (
-            <View style={styles.rowStatusLine}>
-              {status.reward && (
-                <GameIcon name={CHEST_REWARD_META[status.reward.type].icon} size={13} />
-              )}
-              <Text style={styles.rowStatusText} numberOfLines={1}>
-                {status.reward
-                  ? `${CHEST_REWARD_META[status.reward.type].label(status.reward.amount)} · next in ${timeLeft}`
-                  : `Claimed · next in ${timeLeft}`}
-              </Text>
-            </View>
-          ) : (
-            <Text style={styles.rowSubtitle}>{tierMeta.label} · {status.chestStreak}-day streak</Text>
-          )}
-        </View>
-        {!status.alreadyClaimed && (
-          <View style={styles.actionPill}>
-            <Text style={styles.actionPillText}>{claimReward.isPending ? '…' : 'Open'}</Text>
-          </View>
-        )}
-      </AnimatedPressable>
-
-      <ChestOpenModal
-        visible={showModal}
-        tier={modalTier}
-        reward={modalReward}
-        onDismiss={() => setShowModal(false)}
-      />
-    </>
   )
 }
 
@@ -281,13 +183,11 @@ function QuestsSection() {
   )
 }
 
-/** Consolidates the daily challenge, daily chest and daily/weekly quests into one card. */
+/** Consolidates the daily challenge and daily/weekly quests into one card. */
 export function TodayCard() {
   return (
     <GradientCard accentColor={colors.primary} contentStyle={styles.card}>
       <ChallengeRow />
-      <Divider />
-      <ChestRow />
       <QuestsSection />
     </GradientCard>
   )
