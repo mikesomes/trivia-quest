@@ -33,6 +33,24 @@ enabled = true
 [functions.generate-questions]
 verify_jwt = false
 
+[functions.review-question-candidates]
+verify_jwt = false
+
+[functions.promote-question-candidate]
+verify_jwt = false
+
+[functions.run-ai-blind-review]
+verify_jwt = false
+
+[functions.run-ai-fact-verification]
+verify_jwt = false
+
+[functions.run-ai-editorial-review]
+verify_jwt = false
+
+[functions.promote-approved-candidates]
+verify_jwt = false
+
 [functions.get-profile]
 verify_jwt = false
 

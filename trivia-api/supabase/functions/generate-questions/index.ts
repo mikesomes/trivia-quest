@@ -16,6 +16,40 @@ const CATEGORY_MODEL_OVERRIDE: Partial<Record<Category, string>> = {}
 /** Questions requested per bucket per top-up run. */
 const DEFAULT_TOPUP_COUNT = 15
 
+// Keeps the existing three gameplay buckets while giving later coverage planning
+// a stable 1–10 signal. Editorial review may refine this before promotion.
+const DIFFICULTY_RATING: Record<string, number> = { easy: 3, medium: 6, hard: 9 }
+
+function toCandidateRows(questions: Awaited<ReturnType<typeof generateQuestions>>, generationBatchId: string) {
+  return questions.map(question => {
+    const choices = [question.option_a, question.option_b, question.option_c, question.option_d]
+    const correctAnswerIndex = question.correct_option.charCodeAt(0) - 'a'.charCodeAt(0)
+    return {
+      category: question.category,
+      difficulty: question.difficulty,
+      difficulty_rating: DIFFICULTY_RATING[question.difficulty],
+      question_text: question.question_text,
+      choices,
+      correct_answer_index: correctAnswerIndex,
+      correct_answer: choices[correctAnswerIndex],
+      explanation: question.explanation,
+      tags: [],
+      generation_batch_id: generationBatchId,
+      generator_model: question.source,
+    }
+  })
+}
+
+async function stageCandidates(
+  supabase: ReturnType<typeof createServiceClient>,
+  questions: Awaited<ReturnType<typeof generateQuestions>>,
+  generationBatchId = crypto.randomUUID(),
+) {
+  if (questions.length === 0) return
+  const { error } = await supabase.from('question_candidates').insert(toCandidateRows(questions, generationBatchId))
+  if (error) throw new Error(`Failed to stage question candidates: ${error.message}`)
+}
+
 /**
  * Read a positive integer from the environment, falling back to a default.
  *
@@ -147,18 +181,16 @@ Deno.serve(async (req) => {
           findBankDuplicates: bankDuplicateFinder(supabase, cat),
           openaiChat: (params) => openai.chat({ ...params, model: modelOverride }),
         })
-        if (questions.length > 0) {
-          await supabase.from('question_bank').upsert(questions, { onConflict: 'content_hash', ignoreDuplicates: true })
-        }
-        return { category: cat, difficulty: diff, generated: questions.length }
+        await stageCandidates(supabase, questions)
+        return { category: cat, difficulty: diff, staged: questions.length }
       } catch (err) {
         log.error('Bucket generation failed', { category: cat, difficulty: diff, error: String(err) })
-        return { category: cat, difficulty: diff, generated: 0, errors: String(err) }
+        return { category: cat, difficulty: diff, staged: 0, errors: String(err) }
       }
     })
 
     const results = await withConcurrency(tasks, 4)
-    log.timed('topUpAll complete', start, { buckets: results.length, totalGenerated: results.reduce((s, r) => s + r.generated, 0) })
+    log.timed('topUpAll complete', start, { buckets: results.length, totalStaged: results.reduce((s, r) => s + r.staged, 0) })
 
     return jsonResponse({ mode: 'topUpAll', results })
   }
@@ -197,16 +229,17 @@ Deno.serve(async (req) => {
     return errorResponse('Failed to generate any valid questions', 500)
   }
 
-  const { error: insertError } = await supabase.from('question_bank').upsert(questions, { onConflict: 'content_hash', ignoreDuplicates: true })
-  if (insertError) {
-    log.error('Insert failed', { error: insertError.message })
-    return errorResponse(`Failed to insert questions: ${insertError.message}`, 500)
+  try {
+    await stageCandidates(supabase, questions)
+  } catch (err) {
+    log.error('Candidate staging failed', { error: String(err) })
+    return errorResponse(`Failed to stage question candidates: ${String(err)}`, 500)
   }
 
-  log.timed('Questions generated and saved', start, { generated: questions.length })
+  log.timed('Questions generated and staged', start, { staged: questions.length })
 
   return jsonResponse({
-    generated: questions.length,
+    staged: questions.length,
     category: body.category,
     difficulty: body.difficulty,
   })

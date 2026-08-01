@@ -1,0 +1,9 @@
+export interface FactVerificationResult { status: 'verified' | 'failed' | 'unverified'; confidence: number; notes: string; source_url: string | null }
+export const FACT_VERIFICATION_SCHEMA = { type: 'object', properties: { status: { type: 'string', enum: ['verified', 'failed', 'unverified'] }, confidence: { type: 'number', minimum: 0, maximum: 1 }, notes: { type: 'string' }, source_url: { type: ['string', 'null'] } }, required: ['status', 'confidence', 'notes', 'source_url'], additionalProperties: false }
+export function verificationPrompt(candidate: { question_text: string; choices: string[]; correct_answer: string; explanation: string | null }) { return `Fact-check this trivia candidate with web research. Verify whether the stated correct answer is accurate and unambiguous. Mark failed if wrong, ambiguous, or time-sensitive without a stable framing; unverified if evidence is insufficient. Return the URL of one web-search source you actually used.\n\nQuestion: ${candidate.question_text}\nChoices: ${candidate.choices.map((c, i) => `${i}. ${c}`).join('\n')}\nStated answer: ${candidate.correct_answer}\nExplanation: ${candidate.explanation ?? 'None'}` }
+export function parseFactVerification(raw: string, sourceUrls: string[]): FactVerificationResult {
+  const result = JSON.parse(raw) as Partial<FactVerificationResult>
+  if (!['verified', 'failed', 'unverified'].includes(result.status ?? '') || typeof result.confidence !== 'number' || result.confidence < 0 || result.confidence > 1 || typeof result.notes !== 'string' || (result.source_url !== null && typeof result.source_url !== 'string')) throw new Error('Invalid fact-verification response')
+  if (!sourceUrls.length || !result.source_url || !sourceUrls.includes(result.source_url)) return { status: 'unverified', confidence: result.confidence, notes: `${result.notes} No validated web source was returned.`, source_url: null }
+  return result as FactVerificationResult
+}

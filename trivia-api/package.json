@@ -9,7 +9,8 @@
     "test:integration": "vitest run __tests__/integration",
     "typecheck": "tsc --noEmit",
     "audit:duplicates": "vite-node scripts/audit-duplicates.ts",
-    "review:questions": "vite-node scripts/review-questions.ts"
+    "review:questions": "vite-node scripts/review-questions.ts",
+    "seed:question-candidates": "vite-node scripts/seed-question-candidates.ts"
   },
   "devDependencies": {
     "@types/node": "^20.14.0",

@@ -47,7 +47,7 @@ Supabase Edge Functions  ──────►  PostgreSQL (RLS-enabled)
 - **All API endpoints are Supabase Edge Functions** running on Deno. No separate Node/Express server to manage.
 - **Database: PostgreSQL via Supabase** with Row Level Security (RLS) enabled on every table. Direct client database access is restricted; all mutations go through Edge Functions using the service role key.
 - **Auth: Supabase anonymous auth.** Players get a JWT automatically on first launch — no email or password required for the MVP. The JWT is passed as a Bearer token on every request.
-- **Question generation: OpenAI gpt-4o-mini** with structured JSON output via the responses API. Questions are generated in batches and stored in `question_bank`. Generation is decoupled from gameplay — a nightly pg_cron job tops up the bank when it falls below `QUESTION_BANK_MIN` (150) questions per category/difficulty combination. Generated batches are screened for near-duplicates before insert (see `supabase/src/openai/similarity.ts`).
+- **Question generation: OpenAI gpt-4o-mini** with structured JSON output via the responses API. Generated rows are staged in `question_candidates`, never directly in `question_bank`; editorial approval, verification, and the transaction-backed promotion RPC are required before they become playable. See [`docs/question-candidate-pipeline.md`](docs/question-candidate-pipeline.md).
 - **XP validation: All gameplay XP is computed server-side** in `supabase/functions/_shared/scoring.ts`. The client sends only `roundId`, `selectedOption`, and `timeTakenMs`. XP is never accepted from the client.
 - **Content deduplication:** Each question is hashed (SHA-256 of normalized question text) before insert. The `content_hash` column has a UNIQUE constraint, so duplicate questions from OpenAI are silently dropped.
 
@@ -60,7 +60,8 @@ Supabase Edge Functions  ──────►  PostgreSQL (RLS-enabled)
 | Table | Description |
 |---|---|
 | `users` | One row per player. Mirrors `auth.users`, populated by a trigger on signup. Stores level, XP, lifetime stats. |
-| `question_bank` | All generated trivia questions. Stores question text, four options (a–d), correct option, explanation, category, difficulty, and a `content_hash` for deduplication. |
+| `question_bank` | Approved live questions served to players. Stores question text, four options (a–d), correct option, explanation, category, difficulty, a `content_hash` for deduplication, and optional candidate provenance. |
+| `question_candidates` | Private AI/manual staging records with review, verification, duplicate, and generation metadata. |
 | `rounds` | One row per game session. Tracks status (`active` / `completed` / `abandoned`), current question index, round XP, streak, lives remaining, and an `expires_at` timestamp (15 minutes from creation). |
 | `round_questions` | Junction table: 10 rows per round linking `rounds` to `question_bank` with a `position` (0–9). |
 | `answers` | One row per submitted answer. Stores correctness, time taken, XP awarded, and breakdown (speed / streak bonus). |
