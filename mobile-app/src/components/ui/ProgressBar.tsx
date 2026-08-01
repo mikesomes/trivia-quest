@@ -6,13 +6,21 @@ interface ProgressBarProps {
   progress: number // 0-1
   color?: string
   height?: number
+  /** Defaults to `colors.border`. Use `edges.track` on layered surfaces. */
+  trackColor?: string
   style?: ViewStyle
 }
 
-export function ProgressBar({ progress, color = colors.primary, height = 6, style }: ProgressBarProps) {
+export function ProgressBar({
+  progress,
+  color = colors.primary,
+  height = 6,
+  trackColor = colors.border,
+  style,
+}: ProgressBarProps) {
   const clampedProgress = Math.max(0, Math.min(1, progress))
   return (
-    <View style={[styles.track, { height }, style]}>
+    <View style={[styles.track, { height, backgroundColor: trackColor }, style]}>
       <View
         style={[
           styles.fill,
@@ -25,7 +33,6 @@ export function ProgressBar({ progress, color = colors.primary, height = 6, styl
 
 const styles = StyleSheet.create({
   track: {
-    backgroundColor: colors.border,
     borderRadius: radius.full,
     overflow: 'hidden',
     width: '100%',

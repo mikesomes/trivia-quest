@@ -2,7 +2,7 @@ import React from 'react'
 import { View, Text, StyleSheet } from 'react-native'
 import { ProgressBar } from '../ui/ProgressBar'
 import { colors, spacing, fontSize } from '../../constants/theme'
-import { MAX_PLAYER_LEVEL, xpRequiredForLevel } from '../../utils/scoring'
+import { MAX_PLAYER_LEVEL, levelProgress } from '../../utils/scoring'
 import { getKnowledgeRank, getNextLevelUnlock } from '../../constants/progression'
 import { tabularNums } from '../ui/Typography'
 
@@ -13,11 +13,8 @@ interface XpProgressBarProps {
 }
 
 export function XpProgressBar({ currentXp, level, xpToNextLevel }: XpProgressBarProps) {
-  const levelStartXp = xpRequiredForLevel(level)
-  const levelTotalXp = xpRequiredForLevel(level + 1) - levelStartXp
-  const levelCurrentXp = currentXp - levelStartXp
   const isCapped = level >= MAX_PLAYER_LEVEL
-  const progress = isCapped ? 1 : levelTotalXp > 0 ? levelCurrentXp / levelTotalXp : 0
+  const progress = levelProgress(currentXp, level)
   const nextUnlock = getNextLevelUnlock(level)
   const rank = getKnowledgeRank(level)
 

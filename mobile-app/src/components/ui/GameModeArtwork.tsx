@@ -87,8 +87,14 @@ const MODE_ARTWORK: Record<GameModeId, ModeArtwork | null> = {
   survival: null,
 }
 
-/** The mark each mode falls back to, and the tint its plate carries. */
-const MODE_FALLBACK: Record<GameModeId, { icon: IconName; color: string }> = {
+/**
+ * The mark each mode falls back to, and the tint its plate carries.
+ *
+ * Exported so surfaces that draw a mode without this plate — the home screen
+ * shows a bare mark on a calmer card — still agree on what Blitz looks like.
+ * One source of truth for mode identity, whatever frames it.
+ */
+export const MODE_IDENTITY: Record<GameModeId, { icon: IconName; color: string }> = {
   classic: { icon: 'trivia', color: colors.primary },
   blitz: { icon: 'quickPlay', color: colors.gold },
   survival: { icon: 'skull', color: colors.incorrect },
@@ -114,7 +120,7 @@ interface Props {
 
 export function GameModeArtwork({ mode, size = iconSize.gameMode, style, label, testID }: Props) {
   const artwork = MODE_ARTWORK[mode]
-  const { icon, color } = MODE_FALLBACK[mode]
+  const { icon, color } = MODE_IDENTITY[mode]
 
   // The plate owns the accessibility semantics for every variant, so art and
   // fallback announce identically and nothing double-reads.

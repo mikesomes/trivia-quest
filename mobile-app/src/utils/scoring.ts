@@ -144,6 +144,18 @@ export function xpToNextLevel(totalXp: number): number {
   return xpRequiredForLevel(currentLevel + 1) - totalXp
 }
 
+/**
+ * How far through the current level the player is, 0–1. At the level cap there
+ * is no next level to progress toward, so the bar reads full.
+ */
+export function levelProgress(currentXp: number, level: number): number {
+  if (level >= MAX_PLAYER_LEVEL) return 1
+  const levelStartXp = xpRequiredForLevel(level)
+  const levelTotalXp = xpRequiredForLevel(level + 1) - levelStartXp
+  if (levelTotalXp <= 0) return 0
+  return (currentXp - levelStartXp) / levelTotalXp
+}
+
 /** Returns the highest perk tier the player has unlocked for their level. */
 export function getPerksForLevel(playerLevel: number): LevelPerk {
   let perk = LEVEL_PERKS[0]

@@ -175,6 +175,8 @@ export const ICONS = {
   completed: COMPLETED,
   rankUp: spec(CaretUp, colors.correct, 'bold'),
   rankDown: spec(CaretDown, colors.incorrect, 'bold'),
+  /** Neutral disclosure caret for expand/collapse — `rankDown` is red. */
+  expand: spec(CaretDown, colors.textSecondary, 'bold'),
   rankSame: spec(Minus, colors.textMuted, 'bold'),
 
   // ── Currency, power-ups, rewards ───────────────────────────────────────

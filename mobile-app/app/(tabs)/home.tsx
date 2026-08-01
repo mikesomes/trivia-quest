@@ -2,24 +2,23 @@ import React, { useEffect, useRef, useState } from 'react'
 import { View, Text, StyleSheet, ScrollView } from 'react-native'
 import { ScreenWrapper } from '../../src/components/ui/ScreenWrapper'
 import { AnimatedPressable } from '../../src/components/ui/AnimatedPressable'
-import { router, type Href } from 'expo-router'
-import { colors, spacing, fontSize, radius } from '../../src/constants/theme'
+import { colors, edges, fontSize, spacing } from '../../src/constants/theme'
 import { useProfile } from '../../src/hooks/useProfile'
-import { formatLevel } from '../../src/utils/format'
-import { XpProgressBar } from '../../src/components/profile/XpProgressBar'
+import { levelProgress } from '../../src/utils/scoring'
+import { ProgressBar } from '../../src/components/ui/ProgressBar'
 import { EasterEggModal } from '../../src/components/ui/EasterEggModal'
-import { TodayCard } from '../../src/components/home/TodayCard'
+import { DailyChallengeCard } from '../../src/components/home/DailyChallengeCard'
+import { QuestsCard } from '../../src/components/home/QuestsCard'
+import { PlayModes } from '../../src/components/home/PlayModes'
 import { Reveal } from '../../src/components/ui/Reveal'
-import { Lightning, Brain, Fire } from 'phosphor-react-native'
-import { GAME_CONFIG } from '../../src/constants/game'
 import { tabularNums } from '../../src/components/ui/Typography'
-import { CoinIcon, FlameIcon } from '../../src/components/icons'
+import { CoinIcon } from '../../src/components/icons'
 
 export default function HomeScreen() {
   const { data: profile } = useProfile()
 
   const hour = new Date().getHours()
-  const greeting = hour < 12 ? 'Good Morning' : hour < 18 ? 'Good Afternoon' : 'Good Evening'
+  const greeting = hour < 12 ? 'Good morning' : hour < 18 ? 'Good afternoon' : 'Good evening'
 
   const [showEasterEgg, setShowEasterEgg] = useState(false)
   const tapCount = useRef(0)
@@ -44,82 +43,50 @@ export default function HomeScreen() {
 
   return (
     <ScreenWrapper>
-      <ScrollView style={styles.container} contentContainerStyle={styles.content}>
+      <ScrollView
+        style={styles.container}
+        contentContainerStyle={styles.content}
+        showsVerticalScrollIndicator={false}
+      >
         {/* Header */}
-        <Reveal style={styles.headerReveal}>
-          <View style={styles.header}>
-            <AnimatedPressable onPress={handleGreetingTap} activeOpacity={1} scaleTo={1}>
-              <Text style={styles.greeting}>{greeting},</Text>
-              <Text style={styles.greetingName}>{profile?.displayName ?? ''}!</Text>
-            </AnimatedPressable>
-            {profile && (
-              <View style={styles.metaRow}>
-                <Text style={styles.metaText}>{formatLevel(profile.level)}</Text>
-                <Text style={styles.metaDot}>·</Text>
-                <CoinIcon size={14} />
-                <Text style={styles.metaText}>{profile.coins.toLocaleString()}</Text>
-                {(profile.dayStreak ?? 0) > 0 && (
-                  <>
-                    <Text style={styles.metaDot}>·</Text>
-                    <FlameIcon size={14} />
-                    <Text style={styles.metaText}>
-                      {profile.dayStreak} day{profile.dayStreak === 1 ? '' : 's'}
-                    </Text>
-                  </>
-                )}
-              </View>
-            )}
-          </View>
-
-          {/* XP bar */}
+        <Reveal style={styles.header}>
+          <AnimatedPressable onPress={handleGreetingTap} activeOpacity={1} scaleTo={1}>
+            <Text style={styles.greeting}>{greeting}</Text>
+            <Text style={styles.name}>{profile?.displayName ?? ''}</Text>
+          </AnimatedPressable>
           {profile && (
-            <XpProgressBar
-              currentXp={profile.xp}
-              level={profile.level}
-              xpToNextLevel={profile.xpToNextLevel}
-            />
+            <View style={styles.progress}>
+              <View style={styles.metaRow}>
+                <Text style={styles.metaText}>Level {profile.level}</Text>
+                <Text style={styles.metaDot}>·</Text>
+                <CoinIcon size={13} />
+                <Text style={styles.metaText}>{profile.coins.toLocaleString()}</Text>
+              </View>
+              {/* The bar carries no visible labels, so it states its own value
+                  for screen readers rather than dropping the information. */}
+              <View
+                accessibilityRole="progressbar"
+                accessibilityLabel={`Level ${profile.level}, ${profile.xpToNextLevel} XP to level ${profile.level + 1}`}
+              >
+                <ProgressBar
+                  progress={levelProgress(profile.xp, profile.level)}
+                  color={colors.primary}
+                  height={4}
+                  trackColor={edges.track}
+                />
+              </View>
+            </View>
           )}
         </Reveal>
 
-        {/* Today: the daily challenge hero plus daily/weekly quests */}
-        <Reveal delay={70}>
-          <TodayCard />
+        {/* Today: the daily challenge, with quests as a quiet companion row */}
+        <Reveal delay={70} style={styles.today}>
+          <DailyChallengeCard />
+          <QuestsCard />
         </Reveal>
 
-        {/* Play Modes */}
         <Reveal delay={140}>
-          <View style={styles.modesSection}>
-            <Text style={styles.sectionLabel}>Play Modes</Text>
-            <View style={styles.modesRow}>
-              <AnimatedPressable
-                style={styles.modeCard}
-                onPress={() => router.push('/game/mode-intro?mode=classic' as Href)}
-                activeOpacity={0.8}
-              >
-                <Brain weight="duotone" size={24} color={colors.primary} />
-                <Text style={styles.modeTitle}>Classic</Text>
-                <Text style={styles.modeSubtitle}>Pick a topic</Text>
-              </AnimatedPressable>
-              <AnimatedPressable
-                style={styles.modeCard}
-                onPress={() => router.push('/game/mode-intro?mode=blitz' as Href)}
-                activeOpacity={0.8}
-              >
-                <Lightning weight="duotone" size={24} color={colors.timerWarning} />
-                <Text style={styles.modeTitle}>Blitz</Text>
-                <Text style={styles.modeSubtitle}>{GAME_CONFIG.BLITZ_SECONDS}s sprint</Text>
-              </AnimatedPressable>
-              <AnimatedPressable
-                style={styles.modeCard}
-                onPress={() => router.push('/game/mode-intro?mode=survival' as Href)}
-                activeOpacity={0.8}
-              >
-                <Fire weight="duotone" size={24} color={colors.incorrect} />
-                <Text style={styles.modeTitle}>Survival</Text>
-                <Text style={styles.modeSubtitle}>One life</Text>
-              </AnimatedPressable>
-            </View>
-          </View>
+          <PlayModes />
         </Reveal>
       </ScrollView>
       <EasterEggModal visible={showEasterEgg} onDismiss={() => setShowEasterEgg(false)} />
@@ -129,56 +96,32 @@ export default function HomeScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1 },
-  content: { padding: spacing.lg, gap: spacing.md, paddingBottom: spacing.xxl },
-  headerReveal: { gap: spacing.md },
-  header: { gap: spacing.xs },
-  greeting: { fontSize: fontSize.xl, fontWeight: '600', color: colors.textSecondary },
-  greetingName: { fontSize: fontSize.xxxl, fontWeight: '900', color: colors.textPrimary },
+  content: {
+    paddingHorizontal: spacing.lg,
+    paddingTop: spacing.md,
+    paddingBottom: spacing.xxl,
+    gap: spacing.xl,
+  },
+  header: { gap: spacing.md },
+  greeting: { fontSize: fontSize.md, fontWeight: '600', color: colors.textSecondary },
+  name: {
+    fontSize: fontSize.xxxl,
+    fontWeight: '800',
+    color: colors.textPrimary,
+    letterSpacing: -0.4,
+  },
+  progress: { gap: spacing.sm },
   metaRow: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 5,
-    marginTop: spacing.xs,
   },
   metaText: {
     ...tabularNums,
-    fontSize: fontSize.md,
+    fontSize: fontSize.sm,
     color: colors.textSecondary,
     fontWeight: '600',
   },
-  metaDot: { fontSize: fontSize.md, color: colors.textMuted },
-  modesSection: { gap: spacing.sm },
-  sectionLabel: {
-    fontSize: fontSize.xs,
-    fontWeight: '700',
-    color: colors.textSecondary,
-    textTransform: 'uppercase',
-    letterSpacing: 1,
-  },
-  modesRow: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: spacing.sm,
-  },
-  modeCard: {
-    width: '48%',
-    backgroundColor: colors.bgCard,
-    borderRadius: radius.md,
-    borderWidth: 1,
-    borderColor: colors.border,
-    paddingVertical: spacing.md,
-    paddingHorizontal: spacing.sm,
-    alignItems: 'center',
-    gap: spacing.xs,
-  },
-  modeTitle: {
-    fontSize: fontSize.md,
-    fontWeight: '700',
-    color: colors.textPrimary,
-  },
-  modeSubtitle: {
-    fontSize: fontSize.xs,
-    color: colors.textSecondary,
-    textAlign: 'center',
-  },
+  metaDot: { fontSize: fontSize.sm, color: colors.textMuted },
+  today: { gap: spacing.md },
 })
