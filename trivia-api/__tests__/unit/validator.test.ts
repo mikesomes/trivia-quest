@@ -1,6 +1,5 @@
 import { describe, it, expect } from 'vitest'
 import { validateBatch } from '../../supabase/src/openai/validator.ts'
-import { CATEGORIES } from '../../supabase/functions/_shared/types'
 
 const VALID_QUESTION = {
   questionText: 'What is the chemical symbol for gold?',
@@ -13,10 +12,6 @@ const VALID_QUESTION = {
 }
 
 describe('validateBatch', () => {
-  it('includes odd_one_out in the valid category list', () => {
-    expect(CATEGORIES).toContain('odd_one_out')
-  })
-
   it('accepts a valid batch', () => {
     const json = JSON.stringify({ questions: [VALID_QUESTION] })
     const result = validateBatch(json)
@@ -78,7 +73,7 @@ describe('validateBatch', () => {
     expect(result.valid).toHaveLength(2)
   })
 
-  it('accepts a valid Odd One Out puzzle shape', () => {
+  it('accepts a "pick the item that does not belong" style question shape', () => {
     const json = JSON.stringify({
       questions: [{
         questionText: 'Which item does not belong with the others?',

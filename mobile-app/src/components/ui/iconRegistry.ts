@@ -53,7 +53,6 @@ import {
   PencilSimple,
   Plant,
   Prohibit,
-  PuzzlePiece,
   Quotes,
   Scroll,
   SealCheck,
@@ -216,7 +215,6 @@ export const ICONS = {
   prohibit: spec(Prohibit, colors.textSecondary),
   endless: spec(InfinityIcon, colors.textSecondary),
   trendUp: spec(TrendUp, colors.correct),
-  puzzle: spec(PuzzlePiece, '#10B981'),
   eye: spec(Eye, colors.textSecondary),
   idea: spec(Lightbulb, colors.gold),
 
@@ -274,7 +272,6 @@ export const CATEGORY_ICON_NAMES: Record<string, IconName> = {
   harry_potter: 'wizardry',
   famous_quotes: 'quotes',
   music: 'music',
-  odd_one_out: 'puzzle',
   video_games: 'videoGames',
   art_history: 'art',
   movie_quotes: 'movieQuotes',

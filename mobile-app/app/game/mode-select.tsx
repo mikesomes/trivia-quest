@@ -32,13 +32,6 @@ const MODES = [
     color: colors.incorrect,
     route: '/game/mode-intro?mode=survival',
   },
-  {
-    id: 'odd_one_out' as GameModeId,
-    label: 'Odd One Out',
-    description: 'Pick the item that does not belong',
-    color: '#10B981',
-    route: '/game/mode-intro?mode=odd_one_out',
-  },
 ] as const
 
 export default function ModeSelectScreen() {

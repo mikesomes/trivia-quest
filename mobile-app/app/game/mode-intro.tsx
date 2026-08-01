@@ -7,11 +7,11 @@ import { useCreateRound } from '../../src/hooks/useRound'
 import { useGameStore } from '../../src/store/gameStore'
 import { colors, spacing, fontSize, radius } from '../../src/constants/theme'
 import type { Category } from '../../src/types/game'
-import { getClassicProgressionMix, getSurvivalMix, dominantDifficulty } from '../../src/utils/difficultyMix'
+import { getSurvivalMix, dominantDifficulty } from '../../src/utils/difficultyMix'
 import { GAME_CONFIG } from '../../src/constants/game'
 import { GameIcon, type GameIconName } from '../../src/components/icons'
 
-type Mode = 'classic' | 'blitz' | 'survival' | 'odd_one_out'
+type Mode = 'classic' | 'blitz' | 'survival'
 
 const CATEGORIES: Category[] = ['general_knowledge', 'history', 'science', 'sports', 'movies_tv', 'geography']
 
@@ -65,19 +65,6 @@ const INTRO_CONFIG: Record<Mode, {
     ],
     ctaLabel: 'Start Survival Mode',
   },
-  odd_one_out: {
-    icon: 'puzzle' as GameIconName,
-    title: 'Odd One Out',
-    subtitle: 'Four items. One does not fit.',
-    rules: [
-      { icon: 'puzzle' as GameIconName, text: 'Each puzzle shows four items' },
-      { icon: 'eye' as GameIconName, text: 'Pick the one that does not belong' },
-      { icon: 'timer' as GameIconName, text: '15 seconds per puzzle' },
-      { icon: 'idea' as GameIconName, text: 'Explanations reveal the shared pattern' },
-      { icon: 'star' as GameIconName, text: 'Earn XP based on speed and accuracy' },
-    ],
-    ctaLabel: 'Start Odd One Out',
-  },
 }
 
 export default function ModeIntroScreen() {
@@ -86,7 +73,6 @@ export default function ModeIntroScreen() {
 
   const createRound = useCreateRound()
   const setIsSuddenDeath = useGameStore((s) => s.setIsSuddenDeath)
-  const setCategory = useGameStore((s) => s.setCategory)
   const setDifficulty = useGameStore((s) => s.setDifficulty)
   const resetGame = useGameStore((s) => s.resetGame)
 
@@ -108,29 +94,9 @@ export default function ModeIntroScreen() {
     }
   }
 
-  const handleOddOneOutStart = async () => {
-    resetGame()
-    setIsSuddenDeath(false)
-    setCategory('odd_one_out')
-    setDifficulty('easy')
-    try {
-      await createRound.mutateAsync({
-        category: 'odd_one_out',
-        difficulty: 'easy',
-        difficultyMix: getClassicProgressionMix(0, GAME_CONFIG.QUESTIONS_PER_ROUND),
-      })
-      router.replace('/game/play')
-    } catch (err) {
-      const msg = err instanceof Error ? err.message : 'Could not start Odd One Out. Please try again.'
-      Alert.alert('Error', msg)
-    }
-  }
-
   const handleCta = () => {
     if (mode === 'survival') {
       handleSurvivalStart()
-    } else if (mode === 'odd_one_out') {
-      handleOddOneOutStart()
     } else if (config.nextRoute) {
       router.push(config.nextRoute as Parameters<typeof router.push>[0])
     }
@@ -182,7 +148,7 @@ export default function ModeIntroScreen() {
             title={config.ctaLabel}
             onPress={handleCta}
             size="lg"
-            disabled={(mode === 'survival' || mode === 'odd_one_out') && createRound.isPending}
+            disabled={mode === 'survival' && createRound.isPending}
           />
           <Button
             title="Back"

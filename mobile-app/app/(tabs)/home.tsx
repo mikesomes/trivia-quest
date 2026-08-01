@@ -8,11 +8,9 @@ import { useProfile } from '../../src/hooks/useProfile'
 import { formatLevel } from '../../src/utils/format'
 import { XpProgressBar } from '../../src/components/profile/XpProgressBar'
 import { EasterEggModal } from '../../src/components/ui/EasterEggModal'
-import { DailyChallengeCard } from '../../src/components/home/DailyChallengeCard'
-import { DailyChestCard } from '../../src/components/home/DailyChestCard'
-import { DailyQuestsCard } from '../../src/components/home/DailyQuestsCard'
+import { TodayCard } from '../../src/components/home/TodayCard'
 import { Reveal } from '../../src/components/ui/Reveal'
-import { Lightning, Brain, Fire, PuzzlePiece } from 'phosphor-react-native'
+import { Lightning, Brain, Fire } from 'phosphor-react-native'
 import { QuestHeroCard } from '../../src/components/home/QuestHeroCard'
 import { useQuestMap } from '../../src/hooks/useQuestMap'
 import { GAME_CONFIG } from '../../src/constants/game'
@@ -101,23 +99,13 @@ export default function HomeScreen() {
           />
         </Reveal>
 
-        {/* Daily challenge */}
+        {/* Today: daily challenge, daily chest, daily/weekly quests */}
         <Reveal delay={140}>
-          <DailyChallengeCard />
-        </Reveal>
-
-        {/* Daily loot chest */}
-        <Reveal delay={210}>
-          <DailyChestCard />
-        </Reveal>
-
-        {/* Daily/weekly XP quests */}
-        <Reveal delay={280}>
-          <DailyQuestsCard />
+          <TodayCard />
         </Reveal>
 
         {/* Play Modes */}
-        <Reveal delay={350}>
+        <Reveal delay={210}>
           <View style={styles.modesSection}>
             <Text style={styles.sectionLabel}>Play Modes</Text>
             <View style={styles.modesRow}>
@@ -147,15 +135,6 @@ export default function HomeScreen() {
                 <Fire weight="duotone" size={24} color={colors.incorrect} />
                 <Text style={styles.modeTitle}>Survival</Text>
                 <Text style={styles.modeSubtitle}>One life</Text>
-              </AnimatedPressable>
-              <AnimatedPressable
-                style={styles.modeCard}
-                onPress={() => router.push('/game/mode-intro?mode=odd_one_out' as Href)}
-                activeOpacity={0.8}
-              >
-                <PuzzlePiece weight="duotone" size={24} color="#10B981" />
-                <Text style={styles.modeTitle}>Odd One Out</Text>
-                <Text style={styles.modeSubtitle}>Find the misfit</Text>
               </AnimatedPressable>
             </View>
           </View>

@@ -147,6 +147,13 @@ export interface RoundXpBreakdown {
  * union because historical rounds, scores and question rows still carry them;
  * they are only absent here. See migrations 20240068 and 20240069 for why each
  * is out and what bringing it back involves.
+ *
+ * 'odd_one_out' is out for a different reason: it was never a distinct game
+ * mechanic, just a category wearing a "mode" costume (its own entry in
+ * mode-select alongside classic/blitz/survival, despite reusing the exact
+ * same question-answering flow). That dual modeling was confusing enough to
+ * retire outright rather than fix. Unlike the three above, it isn't coming
+ * back — see migration 20240074.
  */
 export const CATEGORIES: Category[] = [
   'general_knowledge',
@@ -157,7 +164,6 @@ export const CATEGORIES: Category[] = [
   'geography',
   'famous_quotes',
   'music',
-  'odd_one_out',
   'video_games',
 ]
 

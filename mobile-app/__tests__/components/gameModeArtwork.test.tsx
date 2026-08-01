@@ -9,7 +9,7 @@ import {
   type ModeArtworkSvgProps,
 } from '../../src/components/ui/GameModeArtwork'
 
-const MODES: GameModeId[] = ['classic', 'blitz', 'survival', 'odd_one_out']
+const MODES: GameModeId[] = ['classic', 'blitz', 'survival']
 
 describe('GameModeArtwork', () => {
   it('renders every mode', () => {

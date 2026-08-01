@@ -19,7 +19,6 @@ export const CATEGORIES: CategoryMeta[] = [
   { id: 'famous_quotes',   label: 'Famous Quotes',     description: 'Who said it?',               color: '#0EA5E9' },
   { id: 'music',            label: 'Music',             description: 'Songs and artists',          color: '#8B5CF6' },
   { id: 'video_games',      label: 'Video Games',       description: 'Consoles, classics & characters', color: '#84CC16' },
-  { id: 'odd_one_out',      label: 'Odd One Out',       description: 'Find what does not fit',      color: '#10B981', modeOnly: true },
   // Pulled from rotation while their question banks are rebuilt — each carried
   // more near-duplicate pairs than a healthy category should. Server side, all
   // three are out of CATEGORIES in _shared/types.ts and their rows are
