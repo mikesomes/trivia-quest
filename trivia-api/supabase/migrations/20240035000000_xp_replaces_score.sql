@@ -31,7 +31,18 @@ WHERE best.user_id = u.id;
 CREATE INDEX IF NOT EXISTS idx_scores_session_xp
   ON public.scores (session_xp_earned DESC);
 
-CREATE OR REPLACE VIEW public.leaderboard_today AS
+-- These three views are dropped and recreated rather than replaced. 20240030
+-- defined their fourth column as `best_score`; here it becomes `best_xp`, and
+-- CREATE OR REPLACE VIEW cannot rename a column ("cannot change name of view
+-- column"). On the databases where this migration already ran the statements
+-- below are equivalent, but a replay from scratch — a fresh environment or a
+-- restore — used to fail here.
+--
+-- Deliberately not CASCADE: nothing reads these (the live boards are
+-- xp_/classic_/blitz_leaderboard_*, and no edge function queries them), so a
+-- dependency appearing later should fail loudly instead of being dropped.
+DROP VIEW IF EXISTS public.leaderboard_today;
+CREATE VIEW public.leaderboard_today AS
 SELECT
   u.id          AS user_id,
   u.display_name,
@@ -44,7 +55,8 @@ JOIN public.scores s ON s.user_id = u.id
 WHERE s.completed_at >= date_trunc('day', now() AT TIME ZONE 'UTC')
 GROUP BY u.id, u.display_name, u.level;
 
-CREATE OR REPLACE VIEW public.leaderboard_weekly AS
+DROP VIEW IF EXISTS public.leaderboard_weekly;
+CREATE VIEW public.leaderboard_weekly AS
 SELECT
   u.id          AS user_id,
   u.display_name,
@@ -57,7 +69,8 @@ JOIN public.scores s ON s.user_id = u.id
 WHERE s.completed_at >= date_trunc('week', now())
 GROUP BY u.id, u.display_name, u.level;
 
-CREATE OR REPLACE VIEW public.leaderboard_all_time AS
+DROP VIEW IF EXISTS public.leaderboard_all_time;
+CREATE VIEW public.leaderboard_all_time AS
 SELECT
   u.id          AS user_id,
   u.display_name,
