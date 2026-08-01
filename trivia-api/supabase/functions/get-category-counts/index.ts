@@ -10,16 +10,29 @@ Deno.serve(async (req) => {
 
   const supabase = createServiceClient()
 
-  const { data, error } = await supabase
-    .from('question_bank')
-    .select('category')
-    .eq('is_active', true)
-
-  if (error) return errorResponse('Failed to fetch counts', 500)
-
+  // PostgREST caps an unpaginated select at 1,000 rows, and the bank is well
+  // past that — so this walked pages instead of trusting a single response,
+  // which was silently dropping every category the 1,000-row cap fell short of.
+  const PAGE_SIZE = 1000
   const counts: Record<string, number> = {}
-  for (const row of data ?? []) {
-    counts[row.category] = (counts[row.category] ?? 0) + 1
+  let from = 0
+
+  while (true) {
+    const { data, error } = await supabase
+      .from('question_bank')
+      .select('category')
+      .eq('is_active', true)
+      .range(from, from + PAGE_SIZE - 1)
+
+    if (error) return errorResponse('Failed to fetch counts', 500)
+    if (!data || data.length === 0) break
+
+    for (const row of data) {
+      counts[row.category] = (counts[row.category] ?? 0) + 1
+    }
+
+    if (data.length < PAGE_SIZE) break
+    from += PAGE_SIZE
   }
 
   return jsonResponse(counts)
