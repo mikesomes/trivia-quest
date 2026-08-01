@@ -42,6 +42,9 @@ verify_jwt = false
 [functions.get-daily-challenge]
 verify_jwt = false
 
+[functions.get-category-counts]
+verify_jwt = false
+
 [functions.create-round]
 verify_jwt = false
 
