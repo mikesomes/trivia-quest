@@ -42,7 +42,7 @@ export const haptics = {
   punch: () => haptics.tapMedium(),
   /** Earning something: coins, XP milestone, chest payout, purchase complete. */
   reward: () => haptics.success(),
-  /** Big celebratory moment: level up, quest category cleared. */
+  /** Big celebratory moment: level up, daily challenge cleared. */
   celebrate: () => {
     haptics.success()
     setTimeout(() => haptics.success(), 150)

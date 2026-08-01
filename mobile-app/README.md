@@ -2,7 +2,7 @@
 
 Expo React Native app (TypeScript) for the Trivia Quest trivia game. Uses Expo Router for file-based navigation, React Query for server state, and Zustand for client state.
 
-Players sign in anonymously on first launch (no account required) and play one of four modes — Classic (10 questions, 3 lives), Blitz (one global clock, unlimited questions), Survival (one life, progressive difficulty), and Odd One Out — plus a Daily Challenge and a 12-category Quest campaign with star ratings and boss nodes. XP, coins, a power-up shop, achievements, and multi-mode leaderboards round out the meta-game. The backend is authoritative for all scoring.
+Players sign in anonymously on first launch (no account required) and play one of three modes — Classic (10 questions, 3 lives), Blitz (one global clock, unlimited questions), and Survival (one life, progressive difficulty) — plus a Daily Challenge, which is the home screen's featured card. XP, coins, a power-up shop, achievements, and multi-mode leaderboards round out the meta-game. The backend is authoritative for all scoring.
 
 ---
 
@@ -31,24 +31,20 @@ app/index.tsx                  — Splash / redirect (checks auth, routes to tab
 app/onboarding.tsx             — First-launch slides + display-name entry
 │
 ├── app/(tabs)/_layout.tsx     — Bottom tab navigator
-│   ├── (tabs)/home.tsx        — Greeting, XP bar, quest hero card, daily challenge, mode cards
+│   ├── (tabs)/home.tsx        — Greeting, XP bar, daily challenge hero, quests, mode cards
 │   ├── (tabs)/leaderboard.tsx — Mode tabs (XP/Classic/Survival/Blitz) × period tabs
 │   ├── (tabs)/profile.tsx     — Avatar, editable name, stats grid, achievements
 │   └── (tabs)/shop.tsx        — Spend coins on power-ups; equip loadout for next round
 │
 ├── app/game/
-│   ├── game/mode-select.tsx        — Pick Classic / Blitz / Survival / Odd One Out
+│   ├── game/mode-select.tsx        — Pick Classic / Blitz / Survival
 │   ├── game/mode-intro.tsx         — Per-mode rules screen
 │   ├── game/category.tsx           — Classic category picker
 │   ├── game/blitz-category.tsx     — Blitz category picker
 │   ├── game/play.tsx               — Active game: timer, question, answers, lives/power-ups
-│   ├── game/results.tsx            — Round summary (classic/blitz/daily/quest variants)
-│   ├── game/gameover.tsx           — All-lives-lost screen
-│   └── game/sudden-death-over.tsx  — Survival-run-ended screen
-│
-└── app/quest/
-    ├── quest/index.tsx        — Quest category hub
-    └── quest/[categoryId].tsx — Node map for a category (stars, unlock gating)
+│   ├── game/results.tsx            — Round summary (classic/blitz/daily variants)
+    ├── game/gameover.tsx           — All-lives-lost screen
+    └── game/sudden-death-over.tsx  — Survival-run-ended screen
 ```
 
 ### Source layout
@@ -276,9 +272,7 @@ eas update --branch production --message "Fix leaderboard sorting"
 - **Classic**: 10 multiple-choice questions (4 options each) in a chosen category. Each question has a **15-second timer** (`TIMER_SECONDS`); timeouts count as wrong and cost a life. Players start with **3 lives** (more with level perks).
 - **Blitz**: one global clock (`BLITZ_SECONDS`, currently 45s), unlimited questions; streaks add time, wrong answers subtract it.
 - **Survival**: one life, chained 10-question batches with a progressive difficulty ramp and rotating categories.
-- **Odd One Out**: pick the item that doesn't belong.
-- **Daily Challenge**: a shared 10-question set for all players, resetting at midnight Eastern, with a day-streak counter.
-- **Quest**: a campaign of 12 categories × 5 nodes (classic/timed/survival/boss), 1–3 stars per node, unlock gating.
+- **Daily Challenge**: a shared 10-question set for all players, resetting at midnight Eastern, with a day-streak counter. Featured on the home screen.
 - Power-ups from the shop: extra lives, hammers (remove 2 wrong options), shields (block one wrong answer), XP booster.
 - After a round, the results screen shows XP earned (with speed/streak breakdown), coins, session totals, and rank.
 

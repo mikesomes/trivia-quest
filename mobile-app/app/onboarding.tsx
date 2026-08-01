@@ -41,22 +41,6 @@ const SLIDES = [
       { icon: 'crown' as GameIconName, label: 'Immortal',   color: '#B71C1C' },
     ],
   },
-  {
-    key: 'quest',
-    icon: 'target' as GameIconName,
-    accentColor: '#4CAF50',
-    gradientColors: ['#0a1a0a', '#0f0f1a'] as const,
-    title: 'Conquer the\nQuest Map',
-    body: 'Journey through 6 category zones. Master each one to unlock the next, building up to the ultimate Trivia Gauntlet.',
-    extras: [
-      { icon: 'brain' as GameIconName, label: 'General',       color: '#7B68EE' },
-      { icon: 'trophy' as GameIconName, label: 'History',        color: '#FF9800' },
-      { icon: 'idea' as GameIconName, label: 'Science',        color: '#2196F3' },
-      { icon: 'trophy' as GameIconName, label: 'Sports',         color: '#4CAF50' },
-      { icon: 'games' as GameIconName, label: 'Entertainment',  color: '#9C27B0' },
-      { icon: 'star' as GameIconName, label: 'Special',        color: '#FFD700' },
-    ],
-  },
 ] as const
 
 type SlideKey = typeof SLIDES[number]['key'] | 'name'

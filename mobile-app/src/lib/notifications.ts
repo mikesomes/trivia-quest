@@ -23,7 +23,7 @@ const INACTIVITY_LADDER: { id: string; days: number; title: string; body: string
     id: 'inactivity-12d',
     days: 12,
     title: 'One round. For old times’ sake ✨',
-    body: 'Your quest map is exactly where you left it. Pick up your next star tonight.',
+    body: 'Today’s challenge is waiting — same 10 questions for everyone. Start a new streak tonight.',
   },
 ]
 

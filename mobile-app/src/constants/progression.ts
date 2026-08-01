@@ -1,18 +1,21 @@
+// Levels 5/8/10/17/23/40/50 mirror LEVEL_PERKS in the backend's
+// _shared/types.ts. Those perks used to apply only to quest rounds, so most of
+// this table described something a player would never see; create-round now
+// applies them to Classic.
 export const LEVEL_UNLOCKS = [
   { level: 2, label: 'Daily Challenge', detail: 'A new challenge every day' },
   { level: 3, label: 'Science Category', detail: 'More ways to prove what you know' },
-  { level: 5, label: 'Higher Life Cap', detail: 'Quest rounds can hold up to 6 lives' },
+  { level: 5, label: 'Higher Life Cap', detail: 'Classic rounds can hold up to 6 lives' },
   { level: 7, label: 'Medium XP Bonus', detail: 'Medium questions pay better' },
-  { level: 8, label: 'Starting Shield', detail: 'Quest rounds begin with 1 shield' },
-  { level: 10, label: 'Second Hammer Slot', detail: 'Quest rounds begin with 2 hammers' },
+  { level: 8, label: 'Starting Shield', detail: 'Classic rounds begin with 1 shield' },
+  { level: 10, label: 'Second Hammer Slot', detail: 'Classic rounds begin with 2 hammers' },
   { level: 15, label: 'Hard Difficulty', detail: 'Bigger risks, bigger XP' },
-  { level: 17, label: 'Extra Life Start', detail: 'Quest rounds begin with 4 lives' },
+  { level: 17, label: 'Extra Life Start', detail: 'Classic rounds begin with 4 lives' },
   { level: 20, label: 'Streak Flame', detail: 'A stronger streak identity' },
-  { level: 23, label: 'Higher Life Cap II', detail: 'Quest rounds can hold up to 7 lives' },
-  { level: 25, label: 'Quest Region II', detail: 'The map opens wider' },
-  { level: 30, label: 'Boss Nodes', detail: 'High-stakes knowledge checks' },
-  { level: 40, label: 'Third Hammer Slot', detail: 'Quest rounds begin with 3 hammers' },
-  { level: 50, label: 'Five-Life Start', detail: 'Quest rounds begin with 5 lives' },
+  { level: 23, label: 'Higher Life Cap II', detail: 'Classic rounds can hold up to 7 lives' },
+  { level: 30, label: 'Sage Avatar', detail: 'A new avatar stage and knowledge rank' },
+  { level: 40, label: 'Third Hammer Slot', detail: 'Classic rounds begin with 3 hammers' },
+  { level: 50, label: 'Five-Life Start', detail: 'Classic rounds begin with 5 lives' },
 ] as const
 
 export const KNOWLEDGE_RANKS = [

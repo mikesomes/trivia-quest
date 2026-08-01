@@ -31,13 +31,12 @@ Mobile App (Expo)
       ▼
 Supabase Edge Functions  ──────►  PostgreSQL (RLS-enabled)
   (Deno runtime,                  ├── users, question_bank, rounds,
-   ~28 functions)                 │   round_questions, answers, scores
+   21 functions)                  │   round_questions, answers, scores
       │                           ├── achievements, user_achievements
       │  OpenAI API calls         ├── daily_challenges, daily_challenge_completions
       ▼                           ├── user_challenge_progress
-  gpt-4o-mini                     ├── quest_nodes, quest_node_connections,
-  (question gen only)             │   user_quest_progress, quest_node_rounds
-                                  ├── sudden_death_scores, question_flags
+  gpt-4o-mini                     ├── sudden_death_scores, question_flags
+  (question gen only)             │
                                   └── leaderboard views (global, by-category,
                                       per-mode × daily/weekly/all-time)
 ```
@@ -69,7 +68,7 @@ Supabase Edge Functions  ──────►  PostgreSQL (RLS-enabled)
 | `user_category_stats` | Per-user correct-answer count per category, incremented in `submit-answer` for every mode. Feeds `category_master_*` achievements. |
 | `daily_challenges` / `daily_challenge_completions` | Shared 10-question set per Eastern-time calendar day + completion/streak tracking. |
 | `user_challenge_progress` | Progress on rotating daily/weekly XP challenges (`_shared/challenges.ts`). |
-| `quest_nodes` / `quest_node_connections` / `user_quest_progress` / `quest_node_rounds` | Quest campaign schema — **not currently used by the shipped client.** `complete-quest-node` and `start-quest-node-run` are fully built (cooldowns, multi-round runs, server-computed star thresholds) but the mobile app computes quest stars/XP/unlocks client-side and never calls them; quest progress lives only in a local Zustand store. Quest XP/stars are therefore not server-validated today. |
+| `quest_nodes` / `quest_node_connections` / `user_quest_progress` / `quest_node_rounds` / `quest_node_reward_claims` | **Retired — schema retained, no longer read.** Quest mode was removed in `20240075`, which deactivates every `quest_nodes` row; the client, the three quest endpoints and the `isQuest` path in `create-round` are all deleted. The tables are kept because `user_quest_progress` and `quest_node_reward_claims` hold real player history, and the latter's `UNIQUE (user_id, node_id)` is what made first-clear loot idempotent. See the migration's header for the full rationale. |
 | `sudden_death_scores` | Survival-mode run depth records (feeds survival/blitz leaderboards). |
 | `leaderboard_rank_snapshots` | Most recent rank per (mode, period, user), refreshed daily by `snapshot-leaderboard-ranks`. Feeds rank-delta ("▲3 since yesterday") badges for xp/classic/blitz × alltime/weekly. Survival isn't snapshotted — its ranking is computed in-memory rather than from a ranked view. |
 | `question_flags` | Player reports of bad questions. |
@@ -116,6 +115,8 @@ Migrations live in `supabase/migrations/` and are applied in order — 55 files 
 | `20240059/60` | Achievement expansion schema (`user_category_stats`, personal-best columns) + 23 new achievements |
 | `20240061` | `leaderboard_rank_snapshots` (rank-delta arrows) |
 | `20240073` | Video Games category (bank seeded from Open Trivia DB, not the generator) |
+| `20240074` | Retire Odd One Out (`question_bank` rows deactivated) |
+| `20240075` | Retire quest mode (all `quest_nodes` deactivated; tables kept for player history) |
 
 ---
 
@@ -130,7 +131,7 @@ Every endpoint requires a valid Supabase JWT in the `Authorization: Bearer <toke
 
 | Method | Endpoint | Description |
 |---|---|---|
-| POST | `/create-round` | Creates a round (classic/blitz/survival/quest; supports difficulty mixes/segments and level-perk starting lives/hammers/shields; rate-limited 60/hr). When `continuationRoundId` points to a just-completed round, also resolves classic life carry-over, survival streak carry-over, and "one more round" momentum-bonus eligibility (see `_shared/momentum.ts`). |
+| POST | `/create-round` | Creates a round (classic/blitz/survival; supports difficulty mixes/segments; rate-limited 60/hr). Classic rounds apply the player's level perks to starting lives/hammers/shields and the life cap (`getPerksForLevel`) — these used to apply only to quest rounds. When `continuationRoundId` points to a just-completed round, also resolves classic life carry-over, survival streak carry-over, and "one more round" momentum-bonus eligibility (see `_shared/momentum.ts`). |
 | GET | `/get-round-questions?roundId=<id>` | Returns the round's questions with correct answers stripped. |
 | POST | `/submit-answer` | Validates the answer server-side, computes XP, updates round state, increments challenge progress, returns correctness + breakdown. |
 | POST | `/finish-round` | Marks the round `completed`; returns a full round summary. |
@@ -153,7 +154,6 @@ Every endpoint requires a valid Supabase JWT in the `Authorization: Bearer <toke
 | GET | `/get-challenges` | Daily/weekly XP challenge progress. |
 | GET | `/get-daily-reward`, POST `/claim-daily-reward` | Free daily loot chest — GET previews today's tier/streak without claiming; POST rolls and grants the reward (idempotent per Eastern day; see `_shared/chest.ts`). |
 | GET | `/get-achievements` | Full achievement catalogue with earned status and, for counter-backed achievements, progress toward the next tier (see `_shared/achievements.ts`). |
-| GET | `/get-quest-map`, POST `/start-quest-node-run`, `/complete-quest-node` | Quest campaign progression. |
 | POST | `/submit-sudden-death` | Survival-mode run records. |
 | POST/DELETE | `/flag-question` | Player question reporting. |
 
@@ -567,7 +567,7 @@ const multipliers = { easy: 1.0, medium: 1.5, hard: 2.0 }
 
 ## Post-MVP TODOs
 
-- [ ] Wire the mobile client to `complete-quest-node`/`start-quest-node-run` for real — quest progress is currently client-side only (see the note on quest tables above); this would also unlock quest-native achievements (nodes completed, stars earned)
+- [ ] Drop the now-unreachable `rounds.is_quest` branches in `submit-answer` and `submit-xp` (and the `mode_config.target_streak` reads in `get-round-questions`) — dead since quest mode was retired in `20240075`, but they alter XP accrual, so they want their own PR with scoring tests
 - [ ] Email/social auth (Supabase supports Google, Apple, GitHub OAuth out of the box)
 - [ ] Admin question review dashboard — approve/reject flagged and AI-generated questions
 - [ ] Server push notifications (Expo Push + `push_tokens` table + pg_cron senders)

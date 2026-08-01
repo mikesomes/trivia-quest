@@ -32,7 +32,12 @@ function Divider() {
   return <View style={styles.divider} />
 }
 
-function ChallengeRow() {
+/**
+ * The home screen's featured slot. The daily challenge is the one thing that is
+ * different every day and pairs with the day-streak counter, so it carries the
+ * hero treatment rather than sitting in a compact row.
+ */
+function DailyChallengeHero() {
   const { data: status, isLoading } = useDailyChallengeStatus()
   const startChallenge = useStartDailyChallenge()
   const timeLeft = useEasternMidnightCountdown()
@@ -43,45 +48,54 @@ function ChallengeRow() {
   const streak = status?.streak ?? 0
 
   return (
-    <View style={styles.row}>
-      <IconTile color={colors.primary}>
-        <CalendarStar weight="duotone" size={22} color={colors.primary} />
-      </IconTile>
-      <View style={styles.rowBody}>
-        <View style={styles.rowTitleLine}>
-          <Text style={styles.rowTitle}>Daily Challenge</Text>
-          {streak > 0 && (
-            <View style={styles.streakBadge}>
-              <FlameIcon size={12} />
-              <Text style={styles.streakCount}>{streak}</Text>
+    <View style={styles.hero}>
+      <View style={styles.row}>
+        <IconTile color={colors.primary}>
+          <CalendarStar weight="duotone" size={22} color={colors.primary} />
+        </IconTile>
+        <View style={styles.rowBody}>
+          <View style={styles.rowTitleLine}>
+            <Text style={styles.heroTitle}>Daily Challenge</Text>
+            {streak > 0 && (
+              <View style={styles.streakBadge}>
+                <FlameIcon size={12} />
+                <Text style={styles.streakCount}>{streak}</Text>
+              </View>
+            )}
+          </View>
+          {completed ? (
+            <View style={styles.rowStatusLine}>
+              <CorrectIcon size={13} weight="fill" />
+              <Text style={styles.rowStatusText} numberOfLines={1}>
+                {status?.correctCount !== undefined
+                  ? `${status.correctCount}/10 · ${(status.xpEarned ?? 0).toLocaleString()} XP · next in ${timeLeft}`
+                  : `Completed · next in ${timeLeft}`}
+              </Text>
             </View>
+          ) : (
+            <Text style={styles.rowSubtitle}>
+              Same 10 questions for everyone · resets in {timeLeft}
+            </Text>
           )}
         </View>
-        {completed ? (
-          <View style={styles.rowStatusLine}>
-            <CorrectIcon size={13} weight="fill" />
-            <Text style={styles.rowStatusText} numberOfLines={1}>
-              {status?.correctCount !== undefined
-                ? `${status.correctCount}/10 · ${(status.xpEarned ?? 0).toLocaleString()} XP · next in ${timeLeft}`
-                : `Completed · next in ${timeLeft}`}
-            </Text>
-          </View>
-        ) : (
-          <Text style={styles.rowSubtitle}>Same 10 questions for everyone</Text>
-        )}
       </View>
+
       {!completed && (
         <Pulse>
           <AnimatedPressable
-            style={styles.actionPill}
+            style={styles.heroCta}
             onPress={() => startChallenge.mutate()}
             disabled={startChallenge.isPending}
             activeOpacity={0.85}
+            accessibilityLabel="Play today's daily challenge"
           >
             {startChallenge.isPending ? (
               <ActivityIndicator color={colors.textOnAccent} size="small" />
             ) : (
-              <Text style={styles.actionPillText}>Play</Text>
+              <>
+                <Text style={styles.heroCtaText}>Play Today's Challenge</Text>
+                <AppIcon name="next" size={iconSize.md} color={colors.textOnAccent} />
+              </>
             )}
           </AnimatedPressable>
         </Pulse>
@@ -183,11 +197,11 @@ function QuestsSection() {
   )
 }
 
-/** Consolidates the daily challenge and daily/weekly quests into one card. */
+/** Consolidates the daily challenge hero and daily/weekly quests into one card. */
 export function TodayCard() {
   return (
     <GradientCard accentColor={colors.primary} contentStyle={styles.card}>
-      <ChallengeRow />
+      <DailyChallengeHero />
       <QuestsSection />
     </GradientCard>
   )
@@ -207,6 +221,19 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: spacing.md,
   },
+  hero: { gap: spacing.md },
+  heroTitle: { fontSize: fontSize.xl, fontWeight: '900', color: colors.textPrimary },
+  heroCta: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: spacing.sm,
+    backgroundColor: colors.primary,
+    borderRadius: radius.md,
+    paddingVertical: spacing.md,
+    paddingHorizontal: spacing.lg,
+  },
+  heroCtaText: { fontSize: fontSize.lg, fontWeight: '700', color: colors.textOnAccent },
   rowBody: { flex: 1, gap: 2 },
   rowTitleLine: {
     flexDirection: 'row',
@@ -233,16 +260,6 @@ const styles = StyleSheet.create({
     borderColor: `${colors.streakActive}44`,
   },
   streakCount: { ...tabularNums, fontSize: fontSize.xs, fontWeight: '800', color: colors.streakActive },
-  actionPill: {
-    backgroundColor: colors.primary,
-    borderRadius: radius.full,
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.xs,
-    minWidth: 56,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  actionPillText: { fontSize: fontSize.sm, fontWeight: '700', color: colors.textOnAccent },
   questsSection: { gap: spacing.sm },
   questsHeader: {
     flexDirection: 'row',

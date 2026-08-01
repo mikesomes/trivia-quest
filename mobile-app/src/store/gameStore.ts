@@ -50,11 +50,6 @@ interface GameState {
   // Daily challenge
   isDailyChallenge: boolean
 
-  // Quest
-  questNodeId: string | null
-  questCategoryId: string | null
-  questGameMode: string | null
-  questRunId: string | null
   xpEarnedInRound: number
 
   // Sudden death
@@ -73,7 +68,6 @@ interface GameState {
   setCategory: (category: Category) => void
   setDifficulty: (difficulty: Difficulty) => void
   setIsDailyChallenge: (val: boolean) => void
-  setQuestNode: (nodeId: string, categoryId: string, gameMode: string, runId?: string | null) => void
   setIsSuddenDeath: (val: boolean) => void
   setIsBlitz: (val: boolean) => void
   addSdBatchXp: (batchXp: number) => void
@@ -127,10 +121,6 @@ export const useGameStore = create<GameState>()((set, get) => ({
   roundResult: null,
   xpResult: null,
   isDailyChallenge: false,
-  questNodeId: null,
-  questCategoryId: null,
-  questGameMode: null,
-  questRunId: null,
   xpEarnedInRound: 0,
   isSuddenDeath: false,
   sdBatchNumber: 0,
@@ -141,8 +131,6 @@ export const useGameStore = create<GameState>()((set, get) => ({
 
   setCategory: (category) => set({ selectedCategory: category }),
   setIsDailyChallenge: (val) => set({ isDailyChallenge: val }),
-  setQuestNode: (nodeId, categoryId, gameMode, runId = null) =>
-    set({ questNodeId: nodeId, questCategoryId: categoryId, questGameMode: gameMode, questRunId: runId }),
   setIsSuddenDeath: (val) => set({ isSuddenDeath: val }),
   setIsBlitz: (val) => set({ isBlitz: val }),
   addSdBatchXp: (batchXp) => set((state) => ({
@@ -247,10 +235,6 @@ export const useGameStore = create<GameState>()((set, get) => ({
     roundResult: null,
     xpResult: null,
     isDailyChallenge: false,
-    questNodeId: null,
-    questCategoryId: null,
-    questGameMode: null,
-    questRunId: null,
     xpEarnedInRound: 0,
     isSuddenDeath: false,
     sdBatchNumber: 0,

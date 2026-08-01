@@ -200,7 +200,7 @@ export const GAME_CONSTANTS = {
   MOMENTUM_BONUS_MULTIPLIER: 0.15,
 } as const
 
-/** A perk tier applied at quest round start based on player level */
+/** A perk tier applied at Classic round start based on player level */
 export interface LevelPerk {
   level: number
   startingLives: number

@@ -60,8 +60,6 @@ export default function PlayScreen() {
     pendingResult,
     answerHistory,
     isSuddenDeath,
-    questNodeId,
-    questGameMode,
     xpEarnedInRound,
     sdBatchNumber,
     sdBaseXp,
@@ -80,18 +78,15 @@ export default function PlayScreen() {
     resetGame,
   } = useGameStore()
 
-  const isQuest = !!questNodeId
   const isBlitz = scoringTimerMode === 'round'
 
   // One label for every analytics event from this screen, so content quality
   // can be sliced by how the question was served rather than only by category.
-  const analyticsGameMode = isQuest
-    ? `quest_${questGameMode ?? 'classic'}`
-    : isSuddenDeath
-      ? 'sudden_death'
-      : isBlitz
-        ? 'blitz'
-        : 'classic'
+  const analyticsGameMode = isSuddenDeath
+    ? 'sudden_death'
+    : isBlitz
+      ? 'blitz'
+      : 'classic'
   const BLITZ_MS = GAME_CONFIG.BLITZ_SECONDS * 1000
 
   const [timeRemainingMs, setTimeRemainingMs] = React.useState(

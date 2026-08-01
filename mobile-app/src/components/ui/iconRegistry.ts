@@ -12,7 +12,6 @@ import {
   CheckCircle,
   Coffee,
   Coins,
-  Compass,
   Confetti,
   Crown,
   Detective,
@@ -41,7 +40,6 @@ import {
   LockSimple,
   LockSimpleOpen,
   MagicWand,
-  MapTrifold,
   Medal,
   Minus,
   Moon,
@@ -142,9 +140,7 @@ export const ICONS = {
   shop: spec(ShoppingCart, colors.primary),
   leaderboard: RANK,
 
-  // ── Quest & game modes ─────────────────────────────────────────────────
-  quest: spec(Compass, colors.primary),
-  map: spec(MapTrifold, colors.primary),
+  // ── Game modes ─────────────────────────────────────────────────────────
   challenge: spec(Sword, colors.primaryLight),
   quickPlay: QUICK_PLAY,
   dailyChallenge: spec(CalendarStar, colors.primary),

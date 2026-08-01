@@ -78,11 +78,5 @@ verify_jwt = false
 [functions.get-challenges]
 verify_jwt = false
 
-[functions.get-quest-map]
-verify_jwt = false
-
-[functions.complete-quest-node]
-verify_jwt = false
-
 [functions.purchase-item]
 verify_jwt = false

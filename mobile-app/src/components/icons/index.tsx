@@ -41,7 +41,7 @@ export const FlameIcon = named('streak')
 export const XpIcon = named('xp')
 /** A remaining life. */
 export const LifeIcon = named('life')
-/** Quest node rating. */
+/** Level-up celebration particles. */
 export const StarIcon = named('star')
 /** Fifty-fifty power-up. */
 export const HammerIcon = named('hammer')

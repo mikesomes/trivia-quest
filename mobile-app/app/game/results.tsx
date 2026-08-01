@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import { View, Text, StyleSheet, ScrollView, ActivityIndicator, Alert } from 'react-native'
 import { ScreenWrapper } from '../../src/components/ui/ScreenWrapper'
 import { LevelUpModal } from '../../src/components/game/LevelUpModal'
@@ -10,16 +10,13 @@ import { useGameStore } from '../../src/store/gameStore'
 import { useSubmitXp } from '../../src/hooks/useSubmitXp'
 import { useCreateRound } from '../../src/hooks/useRound'
 import { useProfile } from '../../src/hooks/useProfile'
-import { useCompleteQuestNode } from '../../src/hooks/useQuestMap'
 import { useSoundEffects } from '../../src/hooks/useSoundEffects'
 import { useAudioPlayer, setAudioModeAsync } from 'expo-audio'
 import { colors, spacing, fontSize, radius } from '../../src/constants/theme'
 import { Button } from '../../src/components/ui/Button'
-import { StarRating } from '../../src/components/quest/StarRating'
 import { XpCountUp } from '../../src/components/game/XpCountUp'
 import { Coins } from 'phosphor-react-native'
 import { levelFromXp } from '../../src/utils/scoring'
-import type { QuestRoundResult } from '../../src/types/quest'
 import { getClassicProgressionMix, dominantDifficulty } from '../../src/utils/difficultyMix'
 import { GAME_CONFIG } from '../../src/constants/game'
 import { maybeAskForPermission } from '../../src/lib/notifications'
@@ -32,7 +29,6 @@ import { WalletBadge } from '../../src/components/game/WalletBadge'
 import { tabularNums } from '../../src/components/ui/Typography'
 import { GameIcon, XpIcon, CalendarIcon, FlameIcon, TrophyIcon } from '../../src/components/icons'
 import { Skeleton, SkeletonBox } from '../../src/components/ui/Skeleton'
-import { haptics } from '../../src/lib/haptics'
 
 function formatMmSs(totalSeconds: number): string {
   const m = Math.floor(totalSeconds / 60)
@@ -42,125 +38,6 @@ function formatMmSs(totalSeconds: number): string {
 
 function finiteNumber(value: unknown) {
   return typeof value === 'number' && Number.isFinite(value) ? value : undefined
-}
-
-// ─── Quest results layout ────────────────────────────────────────────────────
-function QuestResults({
-  questResult,
-  completionError,
-  totalXp,
-  onRetry,
-  onQuestMap,
-}: {
-  questResult: QuestRoundResult | null
-  completionError?: string | null
-  totalXp?: number
-  onRetry: () => void
-  onQuestMap: () => void
-}) {
-  const roundResult = useGameStore((s) => s.roundResult)
-
-  if (!questResult) {
-    if (completionError) {
-      return (
-        <View style={styles.questEvaluating}>
-          <Text style={styles.failedText}>EXPEDITION NOT SAVED</Text>
-          <Text style={styles.evaluatingText}>{completionError}</Text>
-          <Button title="Return to Quest Map" onPress={onQuestMap} variant="secondary" />
-        </View>
-      )
-    }
-    return (
-      <View style={styles.questEvaluating}>
-        <ActivityIndicator color={colors.primary} size="small" />
-        <Text style={styles.evaluatingText}>Evaluating result…</Text>
-      </View>
-    )
-  }
-
-  const accuracy = roundResult && roundResult.totalQuestions > 0
-    ? Math.round((roundResult.correctCount / roundResult.totalQuestions) * 100)
-    : 0
-
-  return (
-    <View style={styles.questSection}>
-      {/* Pass / Fail header */}
-      <Reveal>
-        <View style={styles.questHeader}>
-          {questResult.passed ? (
-            <>
-              <Text style={styles.passedText}>LEVEL COMPLETE</Text>
-              <StarRating stars={questResult.stars} size={32} animated />
-            </>
-          ) : (
-            <>
-              <Text style={styles.failedText}>NOT QUITE</Text>
-              <Text style={styles.failedSub}>
-                {`${questResult.correctCount}/${questResult.totalAnswered} correct — keep practicing`}
-              </Text>
-            </>
-          )}
-        </View>
-      </Reveal>
-
-      {/* Stats + XP row */}
-      <Reveal delay={150}>
-        <View style={styles.questStats}>
-          <View style={styles.questStat}>
-            <Text style={styles.questStatValue}>{questResult.correctCount}/{questResult.totalAnswered}</Text>
-            <Text style={styles.questStatLabel}>Correct</Text>
-          </View>
-          <View style={styles.questStatDivider} />
-          <View style={styles.questStat}>
-            <Text style={styles.questStatValue}>{accuracy}%</Text>
-            <Text style={styles.questStatLabel}>Accuracy</Text>
-          </View>
-          <View style={styles.questStatDivider} />
-          <View style={styles.questStat}>
-            <Text style={[styles.questStatValue, { color: colors.primary }]}>+{questResult.xpEarned}</Text>
-            <Text style={styles.questStatLabel}>XP Earned</Text>
-          </View>
-        </View>
-      </Reveal>
-
-      {totalXp !== undefined && (
-        <Reveal delay={250}>
-          <View style={styles.questTotalCard}>
-            <Text style={styles.questTotalLabel}>Total XP</Text>
-            <Text style={styles.questTotalValue}>{totalXp.toLocaleString()} XP</Text>
-          </View>
-        </Reveal>
-      )}
-
-      {questResult.passed && questResult.reward && !questResult.reward.alreadyClaimed && (
-        <Reveal delay={380}>
-          <View style={styles.mapCompleteCard}>
-            <GameIcon name="chest" size={34} />
-            <Text style={styles.mapCompleteText}>
-              {questResult.reward.tier.toUpperCase()} CHEST OPENED
-            </Text>
-            <Text style={styles.mapCompleteSub}>
-              {questResult.reward.rewardType === 'jackpot'
-                ? `${questResult.reward.amount} bonus coins`
-                : `${questResult.reward.amount} ${questResult.reward.rewardType.replace('_', ' ')}`}
-            </Text>
-          </View>
-        </Reveal>
-      )}
-
-      <Reveal delay={500} style={styles.questActions}>
-        {questResult.passed ? (
-          <Pulse>
-            <Button title="Continue Expedition →" onPress={onQuestMap} size="lg" variant="primary" />
-          </Pulse>
-        ) : (
-          <Button title="Try Again" onPress={onRetry} size="lg" variant="primary" />
-        )}
-
-        <Button title="Quest Map" onPress={onQuestMap} variant="ghost" />
-      </Reveal>
-    </View>
-  )
 }
 
 // ─── Main screen ─────────────────────────────────────────────────────────────
@@ -173,12 +50,7 @@ export default function ResultsScreen() {
   const roundNumber = useGameStore((s) => s.roundNumber)
   const xpEarnedInRound = useGameStore((s) => s.xpEarnedInRound)
   const isDailyChallenge = useGameStore((s) => s.isDailyChallenge)
-  const questNodeId = useGameStore((s) => s.questNodeId)
-  const questCategoryId = useGameStore((s) => s.questCategoryId)
-  const questGameMode = useGameStore((s) => s.questGameMode)
-  const questRunId = useGameStore((s) => s.questRunId)
-  const isBlitzStore = useGameStore((s) => s.isBlitz)
-  const isBlitz = questGameMode === 'blitz' || isBlitzStore
+  const isBlitz = useGameStore((s) => s.isBlitz)
   const setDifficulty = useGameStore((s) => s.setDifficulty)
   const incrementRound = useGameStore((s) => s.incrementRound)
   const resetGame = useGameStore((s) => s.resetGame)
@@ -187,18 +59,11 @@ export default function ResultsScreen() {
   const completeDailyChallenge = useCompleteDailyChallenge()
   const { data: profile } = useProfile()
   const { data: challengesData } = useChallenges()
-  const [questRoundResult, setQuestRoundResult] = useState<QuestRoundResult | null>(null)
-  const [questCompletionError, setQuestCompletionError] = useState<string | null>(null)
-  const questCompletionStarted = useRef(false)
   const { play } = useSoundEffects()
-  const completeQuestNode = useCompleteQuestNode()
 
   const interimMusic = useAudioPlayer(require('../../assets/sounds/interim-round.mp3'))
   const [showLevelUp, setShowLevelUp] = useState(false)
   const [showShare, setShowShare] = useState(false)
-  const questXpEarned = questRoundResult ? questRoundResult.xpEarned : roundResult?.xpEarned ?? 0
-  const questPreviousXp = Math.max(0, (profile?.xp ?? 0) - questXpEarned)
-  const questLeveledUp = !!profile && questXpEarned > 0 && profile.level > levelFromXp(questPreviousXp)
 
   const nextRoundNumber = roundNumber + 1
   const nextMix = getClassicProgressionMix(roundNumber, GAME_CONFIG.QUESTIONS_PER_ROUND)
@@ -240,10 +105,10 @@ export default function ResultsScreen() {
   }, [])
 
   useEffect(() => {
-    if (!questNodeId && roundId && roundResult && !xpResult && !submitXp.isPending) {
+    if (roundId && roundResult && !xpResult && !submitXp.isPending) {
       submitXp.mutate(roundId)
     }
-  }, [questNodeId, roundId, roundResult])
+  }, [roundId, roundResult])
 
   useEffect(() => {
     if (xpResult?.leveledUp) setShowLevelUp(true)
@@ -258,57 +123,10 @@ export default function ResultsScreen() {
   }, [roundResult])
 
   useEffect(() => {
-    if (questNodeId && questLeveledUp) setShowLevelUp(true)
-  }, [questNodeId, questLeveledUp])
-
-  useEffect(() => {
-    if (!questRoundResult?.reward || questRoundResult.reward.alreadyClaimed) return
-    play('extraLife')
-    haptics.reward()
-  }, [questRoundResult?.reward])
-
-  useEffect(() => {
     if (isDailyChallenge && xpResult && roundId && !completeDailyChallenge.isPending && !completeDailyChallenge.isSuccess) {
       completeDailyChallenge.mutate(roundId)
     }
   }, [isDailyChallenge, xpResult, roundId])
-
-  useEffect(() => {
-    if (
-      !questNodeId ||
-      !questCategoryId ||
-      !roundId ||
-      !roundResult ||
-      questRoundResult ||
-      questCompletionStarted.current ||
-      completeQuestNode.isPending
-    ) return
-
-    questCompletionStarted.current = true
-    completeQuestNode.mutateAsync({ nodeId: questNodeId, roundId, questRunId })
-      .then(serverResult => {
-        setQuestRoundResult({
-          nodeId: questNodeId,
-          categoryId: questCategoryId,
-          stars: serverResult.stars,
-          passed: serverResult.passed,
-          correctCount: serverResult.correctCount,
-          totalAnswered: serverResult.totalAnswers,
-          xpEarned: serverResult.xpAwarded + serverResult.roundXp,
-          newlyRevealedNodeIds: [],
-          isFirstClear: serverResult.passed && serverResult.previousStars === 0,
-          reward: serverResult.reward,
-        })
-        submitXp.mutate(roundId)
-      })
-      .catch(error => {
-        setQuestCompletionError(error instanceof Error ? error.message : 'Please try again.')
-        Alert.alert(
-          'Could not save expedition',
-          error instanceof Error ? error.message : 'Please try again.',
-        )
-      })
-  }, [questNodeId, questCategoryId, questRunId, roundId, roundResult, questRoundResult, completeQuestNode.isPending])
 
   if (!roundResult) {
     return (
@@ -343,66 +161,17 @@ export default function ResultsScreen() {
   const optimisticNewLevel = finiteNumber(xpResult?.newLevel) ?? (
     optimisticNewXp !== undefined ? levelFromXp(optimisticNewXp) : undefined
   )
-  const showRegularXpSummary = !questNodeId &&
+  const showRegularXpSummary =
     optimisticPreviousXp !== undefined &&
     optimisticNewXp !== undefined
 
-  // Coins earned equal XP earned 1:1 for non-quest rounds (server-enforced).
-  // Sourced from xpResult.newCoins (not profile.coins) so the wallet count-up
-  // never races the profile query's background refetch.
+  // Coins earned equal XP earned 1:1 (server-enforced). Sourced from
+  // xpResult.newCoins (not profile.coins) so the wallet count-up never races
+  // the profile query's background refetch.
   const newCoinsTotal = finiteNumber(xpResult?.newCoins)
   const previousCoinsTotal = newCoinsTotal !== undefined
     ? Math.max(0, newCoinsTotal - optimisticXpEarned)
     : undefined
-
-  // ── Quest mode layout ────────────────────────────────────────────────────
-  if (questNodeId) {
-    return (
-      <ScreenWrapper>
-        <ScrollView style={styles.container} contentContainerStyle={styles.content}>
-          {questRoundResult && profile && questXpEarned > 0 && (
-            <XpCountUp
-              xpEarned={questXpEarned}
-              previousXp={questPreviousXp}
-              newXp={profile.xp}
-              leveledUp={questLeveledUp}
-              newLevel={profile.level}
-            />
-          )}
-
-          {/* Quest-specific result block */}
-          <QuestResults
-            questResult={questRoundResult}
-            completionError={questCompletionError}
-            totalXp={profile?.xp}
-            onRetry={() => {
-              const nodeId = questNodeId
-              resetGame()
-              router.replace(`/quest?focus=${nodeId}` as never)
-            }}
-            onQuestMap={() => {
-              const nodeId = questNodeId
-              const didPass = questRoundResult?.passed
-              resetGame()
-              router.replace(didPass ? `/quest?completed=${nodeId}` as never : '/quest')
-            }}
-          />
-
-        </ScrollView>
-
-        {xpResult?.newAchievements && xpResult.newAchievements.length > 0 && (
-          <View style={styles.toastContainer}>
-            <NewAchievementsToast achievements={xpResult.newAchievements} />
-          </View>
-        )}
-        <LevelUpModal
-          visible={showLevelUp}
-          newLevel={profile?.level ?? 0}
-          onDismiss={() => setShowLevelUp(false)}
-        />
-      </ScreenWrapper>
-    )
-  }
 
   // ── Regular / daily mode layout ──────────────────────────────────────────
   return (
@@ -619,44 +388,6 @@ const styles = StyleSheet.create({
   titleSection: { alignItems: 'center' },
   finishedLabel: { fontSize: fontSize.sm, color: colors.textSecondary, textTransform: 'uppercase', letterSpacing: 0, fontWeight: '600', marginBottom: -spacing.sm },
 
-  // ── Quest styles ──────────────────────────────────────────────────────────
-  questSection: { gap: spacing.lg },
-  questActions: { gap: spacing.sm },
-  questEvaluating: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, justifyContent: 'center', paddingVertical: spacing.md },
-  evaluatingText: { fontSize: fontSize.sm, color: colors.textSecondary },
-
-  questHeader: { alignItems: 'center', gap: spacing.sm, paddingVertical: spacing.md },
-  passedText: { fontSize: 32, fontWeight: '900', color: colors.correct, letterSpacing: 3 },
-  failedText: { fontSize: 32, fontWeight: '900', color: colors.incorrect, letterSpacing: 2 },
-  failedSub: { fontSize: fontSize.sm, color: colors.textSecondary, textAlign: 'center' },
-  improvedText: { fontSize: fontSize.sm, color: colors.streakActive, fontWeight: '700' },
-
-  questStats: {
-    flexDirection: 'row',
-    backgroundColor: colors.bgCard,
-    borderRadius: radius.lg,
-    borderWidth: 1,
-    borderColor: colors.border,
-    padding: spacing.lg,
-    alignItems: 'center',
-  },
-  questStat: { flex: 1, alignItems: 'center', gap: 4 },
-  questStatValue: { ...tabularNums, fontSize: fontSize.xl, fontWeight: '800', color: colors.textPrimary },
-  questStatLabel: { fontSize: fontSize.xs, color: colors.textSecondary, textTransform: 'uppercase', letterSpacing: 0.5 },
-  questStatDivider: { width: 1, height: 32, backgroundColor: colors.border },
-  questTotalCard: {
-    backgroundColor: `${colors.primary}12`,
-    borderRadius: radius.lg,
-    borderWidth: 1,
-    borderColor: `${colors.primary}44`,
-    padding: spacing.md,
-    alignItems: 'center',
-    gap: 4,
-  },
-  questTotalLabel: { fontSize: fontSize.xs, color: colors.textSecondary, textTransform: 'uppercase', letterSpacing: 0.5 },
-  questTotalValue: { ...tabularNums, fontSize: fontSize.lg, fontWeight: '900', color: colors.primary },
-  questBonusText: { fontSize: fontSize.xs, color: colors.textSecondary },
-
   nextSection: { gap: spacing.md },
   nextTitle: { fontSize: fontSize.lg, fontWeight: '900', color: colors.textPrimary, textAlign: 'center', letterSpacing: 0.5 },
   nextCards: { flexDirection: 'row', gap: spacing.md },
@@ -681,18 +412,6 @@ const styles = StyleSheet.create({
   nextCardDiff: { fontSize: fontSize.xs, fontWeight: '800', letterSpacing: 1 },
   nextCardMode: { fontSize: fontSize.xs, color: colors.textSecondary },
   nextCardXp: { ...tabularNums, fontSize: fontSize.xs, fontWeight: '800' },
-
-  mapCompleteCard: {
-    backgroundColor: `${colors.streakActive}15`,
-    borderRadius: radius.lg,
-    borderWidth: 1,
-    borderColor: `${colors.streakActive}44`,
-    padding: spacing.xl,
-    alignItems: 'center',
-    gap: spacing.sm,
-  },
-  mapCompleteText: { fontSize: fontSize.lg, fontWeight: '800', color: colors.streakActive },
-  mapCompleteSub: { fontSize: fontSize.sm, color: colors.textSecondary, textAlign: 'center' },
 
   // ── Regular mode styles ───────────────────────────────────────────────────
   badgeInline: { flexDirection: 'row', alignItems: 'center', gap: 5 },

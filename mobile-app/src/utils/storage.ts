@@ -4,7 +4,6 @@ const KEYS = {
   LAST_CATEGORY: 'trivia:lastCategory',
   LAST_DIFFICULTY: 'trivia:lastDifficulty',
   ONBOARDING_DONE: 'trivia:onboardingDone',
-  QUEST_ONBOARDING_DONE: 'trivia:questOnboardingDone',
 } as const
 
 export const storage = {
@@ -26,12 +25,5 @@ export const storage = {
   },
   async setOnboardingDone(): Promise<void> {
     await AsyncStorage.setItem(KEYS.ONBOARDING_DONE, 'true')
-  },
-  async isQuestOnboardingDone(): Promise<boolean> {
-    const val = await AsyncStorage.getItem(KEYS.QUEST_ONBOARDING_DONE)
-    return val === 'true'
-  },
-  async setQuestOnboardingDone(): Promise<void> {
-    await AsyncStorage.setItem(KEYS.QUEST_ONBOARDING_DONE, 'true')
   },
 }
