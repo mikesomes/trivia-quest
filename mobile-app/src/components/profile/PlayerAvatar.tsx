@@ -1,6 +1,6 @@
 import React, { useEffect, useRef } from 'react'
 import { View, Animated } from 'react-native'
-import { getAvatarStage, AVATAR_STAGES } from '../../constants/quest'
+import { getAvatarStage, AVATAR_STAGES } from '../../constants/avatarStages'
 import { colors } from '../../constants/theme'
 import { HumanFaceSvg } from './HumanFaceSvg'
 import { CrownIcon } from '../icons'

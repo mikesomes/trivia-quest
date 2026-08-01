@@ -54,6 +54,5 @@ describe('buildUserPrompt', () => {
 
   it('applies per-category guidance where it exists', () => {
     expect(buildUserPrompt('famous_quotes', 'easy', 5)).toContain('Who said:')
-    expect(buildUserPrompt('odd_one_out', 'easy', 5)).toContain('Odd One Out puzzles')
   })
 })

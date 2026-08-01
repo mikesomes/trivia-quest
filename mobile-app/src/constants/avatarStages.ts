@@ -16,15 +16,3 @@ export function getAvatarStage(level: number) {
   }
   return AVATAR_STAGES[0]
 }
-
-export const DIFFICULTY_COLOR: Record<string, string> = {
-  easy:   '#4CAF50',
-  medium: '#FF9800',
-  hard:   '#F44336',
-}
-
-// Map layout constants
-export const NODE_COL_WIDTH = 130
-export const NODE_ROW_HEIGHT = 150
-export const NODE_SIZE = 80
-export const MAP_PADDING = 40

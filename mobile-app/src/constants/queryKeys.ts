@@ -18,11 +18,4 @@ export const queryKeys = {
   challenges: {
     list: () => ['challenges'] as const,
   },
-  dailyReward: {
-    status: () => ['daily-reward', 'status'] as const,
-  },
-  quest: {
-    all: () => ['quest'] as const,
-    map: (userId: string) => ['quest', 'map', userId] as const,
-  },
 } as const

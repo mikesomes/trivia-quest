@@ -11,7 +11,6 @@ export const STREAK_TARGETS = [5, 10, 15] as const
 export const SURVIVAL_TARGETS = [10, 25, 50] as const
 export const BLITZ_TARGETS = [15, 25, 35] as const
 export const DAY_STREAK_TARGETS = [7, 30, 100] as const
-export const CHEST_STREAK_TARGETS = [7, 30] as const
 export const CATEGORY_MASTERY_TARGET = 50
 
 /** Builds `{ [prefix]_[target]: value >= target }` for each target in the tier list. */

@@ -9,8 +9,8 @@ import { categoryIconName } from './iconRegistry'
 
 // Replaces emoji-as-iconography: one duotone mark per category on a gradient
 // squircle tile tinted with the category's accent color. The id-to-mark table
-// lives in the icon registry so a category reads the same here, in the quest
-// map, and on an achievement badge.
+// lives in the icon registry so a category reads the same here, in the
+// category picker, and on an achievement badge.
 export { categoryIconName, CATEGORY_ICON_NAMES } from './iconRegistry'
 
 interface CategoryIconProps {

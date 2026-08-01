@@ -23,11 +23,8 @@ export interface CreateRoundRequest {
   difficultyMix?: DifficultyMix
   difficultySegments?: DifficultyMix[]
   isSurvival?: boolean
-  isQuest?: boolean
   isBlitz?: boolean
-  questNodeId?: string
   continuationRoundId?: string
-  questRunId?: string
 }
 
 export interface CreateRoundResponse {

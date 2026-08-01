@@ -7,7 +7,6 @@ import {
   SURVIVAL_TARGETS,
   BLITZ_TARGETS,
   DAY_STREAK_TARGETS,
-  CHEST_STREAK_TARGETS,
   CATEGORY_MASTERY_TARGET,
 } from '../_shared/achievements.ts'
 
@@ -16,6 +15,9 @@ import {
 // Achievements that are per-round pass/fail conditions (perfect_round,
 // speed_demon, survivor, streak_5/10/15, high_scorer, big_brain, first_game)
 // have no natural "progress" number and are omitted from the progress map.
+// chest_streak_7/30 are also omitted now: the daily chest they tracked is
+// retired, so they're frozen earned/not-earned badges rather than a counter
+// still worth showing progress toward.
 
 Deno.serve(async (req) => {
   const corsResult = handleCors(req)
@@ -32,7 +34,7 @@ Deno.serve(async (req) => {
     supabase.from('user_achievements').select('achievement_id, earned_at').eq('user_id', auth.userId),
     supabase
       .from('users')
-      .select('total_games, current_streak, chest_streak, best_survival_depth, best_blitz_correct')
+      .select('total_games, current_streak, best_survival_depth, best_blitz_correct')
       .eq('id', auth.userId)
       .single(),
     supabase.from('user_category_stats').select('category, correct_count').eq('user_id', auth.userId),
@@ -56,9 +58,6 @@ Deno.serve(async (req) => {
     }
     for (const target of DAY_STREAK_TARGETS) {
       if (id === `day_streak_${target}`) return { current: user?.current_streak ?? 0, target }
-    }
-    for (const target of CHEST_STREAK_TARGETS) {
-      if (id === `chest_streak_${target}`) return { current: user?.chest_streak ?? 0, target }
     }
     if (id.startsWith('category_master_')) {
       const category = id.replace('category_master_', '')

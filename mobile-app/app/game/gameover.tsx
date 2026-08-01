@@ -9,7 +9,6 @@ import { useGameStore } from '../../src/store/gameStore'
 import { useAuthStore } from '../../src/store/authStore'
 import { useSubmitXp } from '../../src/hooks/useSubmitXp'
 import { useProfile } from '../../src/hooks/useProfile'
-import { useCompleteQuestNode } from '../../src/hooks/useQuestMap'
 import { useAudioPlayer, setAudioModeAsync } from 'expo-audio'
 import { colors, spacing, fontSize, radius } from '../../src/constants/theme'
 import { Button } from '../../src/components/ui/Button'
@@ -32,30 +31,18 @@ export default function GameOverScreen() {
   const xpEarnedInRound = useGameStore((s) => s.xpEarnedInRound)
   const selectedCategory = useGameStore((s) => s.selectedCategory)
   const selectedDifficulty = useGameStore((s) => s.selectedDifficulty)
-  const questNodeId = useGameStore((s) => s.questNodeId)
-  const questCategoryId = useGameStore((s) => s.questCategoryId)
-  const questRunId = useGameStore((s) => s.questRunId)
   const resetGame = useGameStore((s) => s.resetGame)
   const displayName = useAuthStore((s) => s.displayName)
   const setDisplayName = useAuthStore((s) => s.setDisplayName)
   const submitXp = useSubmitXp()
-  const completeQuestNode = useCompleteQuestNode()
-  const questCompletionStarted = useRef(false)
   const { data: profile } = useProfile()
   const gameOverMusic = useAudioPlayer(require('../../assets/sounds/game-over.mp3'))
   const [showLevelUp, setShowLevelUp] = useState(false)
   const [showShare, setShowShare] = useState(false)
-  const questRoundXp = roundResult?.xpEarned ?? 0
-  const questPreviousXp = Math.max(0, (profile?.xp ?? 0) - questRoundXp)
-  const questLeveledUp = !!profile && questRoundXp > 0 && profile.level > levelFromXp(questPreviousXp)
 
   useEffect(() => {
     if (xpResult?.leveledUp) setShowLevelUp(true)
   }, [xpResult])
-
-  useEffect(() => {
-    if (questNodeId && questLeveledUp) setShowLevelUp(true)
-  }, [questNodeId, questLeveledUp])
 
   useEffect(() => {
     setAudioModeAsync({ playsInSilentMode: true }).catch(() => {})
@@ -68,20 +55,6 @@ export default function GameOverScreen() {
       submitXp.mutate(roundId)
     }
   }, [roundId, roundResult])
-
-  useEffect(() => {
-    if (
-      !questNodeId ||
-      !roundId ||
-      !roundResult ||
-      questCompletionStarted.current
-    ) return
-    questCompletionStarted.current = true
-    completeQuestNode.mutate(
-      { nodeId: questNodeId, roundId, questRunId },
-      { onError: () => { questCompletionStarted.current = false } },
-    )
-  }, [questNodeId, questRunId, roundId, roundResult])
 
   const handlePlayAgain = () => {
     resetGame()
@@ -132,7 +105,7 @@ export default function GameOverScreen() {
   const optimisticNewLevel = finiteNumber(xpResult?.newLevel) ?? (
     optimisticNewXp !== undefined ? levelFromXp(optimisticNewXp) : undefined
   )
-  const showRegularXpSummary = !questNodeId &&
+  const showRegularXpSummary =
     optimisticPreviousXp !== undefined &&
     optimisticNewXp !== undefined
 
@@ -170,16 +143,6 @@ export default function GameOverScreen() {
               </View>
             )}
           </>
-        )}
-
-        {!xpResult && questNodeId && profile && roundResult.xpEarned > 0 && (
-          <XpCountUp
-            xpEarned={roundResult.xpEarned}
-            previousXp={questPreviousXp}
-            newXp={profile.xp}
-            leveledUp={questLeveledUp}
-            newLevel={profile.level}
-          />
         )}
 
         {/* Stats row */}
@@ -230,22 +193,9 @@ export default function GameOverScreen() {
 
         {/* Actions */}
         <View style={styles.actions}>
-          {questNodeId && questCategoryId ? (
-            <>
-              <Button title="Try Again" onPress={() => {
-                const nodeId = questNodeId
-                resetGame()
-                router.replace(`/quest?focus=${nodeId}` as never)
-              }} size="lg" />
-              <Button title="Quest Hub" onPress={() => { resetGame(); router.replace('/quest' as never) }} variant="secondary" size="lg" />
-            </>
-          ) : (
-            <>
-              <Button title="Play Again" onPress={handlePlayAgain} size="lg" />
-              <Button title="Leaderboard" onPress={handleLeaderboard} variant="secondary" size="lg" />
-              {xpResult && <Button title="Share Result" onPress={() => setShowShare(true)} variant="secondary" size="lg" />}
-            </>
-          )}
+          <Button title="Play Again" onPress={handlePlayAgain} size="lg" />
+          <Button title="Leaderboard" onPress={handleLeaderboard} variant="secondary" size="lg" />
+          {xpResult && <Button title="Share Result" onPress={() => setShowShare(true)} variant="secondary" size="lg" />}
           <Button title="Home" onPress={handleGoHome} variant="ghost" />
         </View>
       </ScrollView>

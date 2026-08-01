@@ -46,7 +46,7 @@ import type { IconName } from './iconRegistry'
  * attribution obligation.
  */
 
-export type GameModeId = 'classic' | 'blitz' | 'survival' | 'odd_one_out'
+export type GameModeId = 'classic' | 'blitz' | 'survival'
 
 /**
  * The contract an SVG emblem implements. Deliberately not typed against
@@ -85,7 +85,6 @@ const MODE_ARTWORK: Record<GameModeId, ModeArtwork | null> = {
   classic: null,
   blitz: null,
   survival: null,
-  odd_one_out: null,
 }
 
 /** The mark each mode falls back to, and the tint its plate carries. */
@@ -93,7 +92,6 @@ const MODE_FALLBACK: Record<GameModeId, { icon: IconName; color: string }> = {
   classic: { icon: 'trivia', color: colors.primary },
   blitz: { icon: 'quickPlay', color: colors.gold },
   survival: { icon: 'skull', color: colors.incorrect },
-  odd_one_out: { icon: 'puzzle', color: '#10B981' },
 }
 
 /** Whether a mode has real artwork yet — useful for art-review screens. */

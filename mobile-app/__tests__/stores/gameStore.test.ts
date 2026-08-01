@@ -35,14 +35,6 @@ describe('gameStore', () => {
     expect(useGameStore.getState().selectedDifficulty).toBe('medium')
   })
 
-  it('sets Odd One Out as a valid mode category', () => {
-    const { setCategory, setDifficulty } = useGameStore.getState()
-    setCategory('odd_one_out')
-    setDifficulty('easy')
-    expect(useGameStore.getState().selectedCategory).toBe('odd_one_out')
-    expect(useGameStore.getState().selectedDifficulty).toBe('easy')
-  })
-
   it('startRound sets all round state', () => {
     const { startRound } = useGameStore.getState()
     startRound('round-1', mockQuestions, 3, 0, 0)

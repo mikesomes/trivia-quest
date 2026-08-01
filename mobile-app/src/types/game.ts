@@ -81,7 +81,7 @@ export interface AnswerResult {
   hammerEarned: boolean
   timeBonus?: number
   explanation: string | null
-  // Quest mode only
+  // Set by the server on answer submission
   xpGained: number
   newXp?: number
   newLevel?: number
