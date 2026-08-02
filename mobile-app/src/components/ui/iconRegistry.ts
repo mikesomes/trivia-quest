@@ -2,7 +2,6 @@ import type React from 'react'
 import {
   ArrowLeft,
   ArrowRight,
-  Balloon,
   Bank,
   Brain,
   CalendarBlank,
@@ -12,6 +11,7 @@ import {
   CheckCircle,
   Coffee,
   Coins,
+  CompassRose,
   Confetti,
   Crown,
   Detective,
@@ -49,6 +49,7 @@ import {
   Package,
   Palette,
   PencilSimple,
+  Planet,
   Plant,
   Prohibit,
   Quotes,
@@ -62,7 +63,6 @@ import {
   SoccerBall,
   Sparkle,
   Star,
-  Strategy,
   Sword,
   Target,
   Timer,
@@ -217,12 +217,14 @@ export const ICONS = {
   idea: spec(Lightbulb, colors.gold),
 
   // ── Avatar progression stages ──────────────────────────────────────────
-  seedling: spec(Plant, colors.correct),
-  leaf: spec(Leaf, '#66BB6A'),
-  scholar: spec(GraduationCap, colors.gold),
-  strategist: spec(Strategy, '#FF5722'),
-  moon: spec(Moon, '#7B8CFF'),
-  cosmos: spec(Balloon, '#8B9CFF'),
+  // Tints mirror `constants/avatarStages`, which cannot be imported here
+  // without a cycle. Change them together.
+  seedling: spec(Plant, '#6FCF97'),
+  leaf: spec(Leaf, '#45C4A6'),
+  scholar: spec(GraduationCap, '#E8C46A'),
+  strategist: spec(CompassRose, '#EF8455'),
+  moon: spec(Moon, '#8AA4F2'),
+  cosmos: spec(Planet, '#A87BF2'),
 
   // ── Achievement marks ──────────────────────────────────────────────────
   endurance: spec(Mountains, colors.textSecondary),

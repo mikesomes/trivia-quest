@@ -71,7 +71,7 @@ export default function ProfileScreen() {
     return (
       <ScreenWrapper>
         <Skeleton label="Loading your profile" style={styles.skeletonScreen}>
-          <SkeletonCircle size={96} style={styles.skeletonAvatar} />
+          <SkeletonCircle size={136} style={styles.skeletonAvatar} />
           <SkeletonBox width={160} height={22} style={styles.skeletonCenter} />
           <SkeletonBox width={110} height={14} style={styles.skeletonCenter} />
           <View style={styles.skeletonGrid}>
