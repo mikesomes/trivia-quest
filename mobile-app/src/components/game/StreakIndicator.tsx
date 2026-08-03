@@ -4,6 +4,7 @@ import { colors, spacing, fontSize } from '../../constants/theme'
 import { tabularNums } from '../ui/Typography'
 import { FlameIcon } from '../icons'
 import { streakMessage } from '../../lib/a11y'
+import { streakXpMultiplier } from '../../utils/scoring'
 
 const STREAK_THRESHOLD = 3
 
@@ -11,7 +12,7 @@ interface StreakIndicatorProps {
   streak: number
 }
 
-export function StreakIndicator({ streak }: StreakIndicatorProps) {
+export const StreakIndicator = React.memo(function StreakIndicator({ streak }: StreakIndicatorProps) {
   const scale = useRef(new Animated.Value(1)).current
   const prevStreak = useRef(streak)
 
@@ -52,7 +53,7 @@ export function StreakIndicator({ streak }: StreakIndicatorProps) {
     )
   }
 
-  const multiplier = streak >= 10 ? 2.0 : streak >= 8 ? 1.5 : streak >= 5 ? 1.25 : 1.1
+  const multiplier = streakXpMultiplier(streak)
   // The flame itself grows larger at each power tier, on top of the per-tap pop
   const flameSize = streak >= 10 ? fontSize.xl : streak >= 8 ? fontSize.lg : streak >= 5 ? fontSize.md : fontSize.sm
 
@@ -68,7 +69,7 @@ export function StreakIndicator({ streak }: StreakIndicatorProps) {
       <Text style={styles.multiplier}>{multiplier.toFixed(1)}x</Text>
     </Animated.View>
   )
-}
+})
 
 const styles = StyleSheet.create({
   container: {

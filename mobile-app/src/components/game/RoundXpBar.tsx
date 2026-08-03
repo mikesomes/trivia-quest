@@ -15,7 +15,7 @@ function clampProgress(value: number) {
   return Math.max(0, Math.min(value, 1))
 }
 
-export function RoundXpBar({
+export const RoundXpBar = React.memo(function RoundXpBar({
   currentXp,
   level,
   xpEarnedInRound,
@@ -24,23 +24,47 @@ export function RoundXpBar({
   const baseProgressAnim = useRef(new Animated.Value(0)).current
   const earnedProgressAnim = useRef(new Animated.Value(0)).current
 
-  const roundStartXp = xpEarnedInRound === 0 ? currentXp : roundStartXpRef.current
-  const projectedTotalXp = roundStartXp + xpEarnedInRound
-  const roundStartLevel = Math.max(level, levelFromXp(roundStartXp))
-  const projectedLevel = levelFromXp(projectedTotalXp)
+  // levelFromXp/xpRequiredForLevel are O(n^2) in Math.pow (~400 pow calls at
+  // level 20), so keep them off any render that didn't change the XP inputs.
+  // roundStartXpRef is safe to read here without being a dependency: it is only
+  // written while xpEarnedInRound is 0, and in that case currentXp is used
+  // instead.
+  const {
+    displayLevel,
+    levelEndXp,
+    projectedTotalXp,
+    roundStartLevel,
+    projectedLevel,
+    baseXpInLevel,
+    earnedProgress,
+  } = React.useMemo(() => {
+    const roundStartXp = xpEarnedInRound === 0 ? currentXp : roundStartXpRef.current
+    const projected = roundStartXp + xpEarnedInRound
+    const startLevel = Math.max(level, levelFromXp(roundStartXp))
+    const projLevel = levelFromXp(projected)
 
-  // Calculate progress within current level (or projected level if leveling up)
-  const displayLevel = projectedLevel > roundStartLevel ? projectedLevel : roundStartLevel
-  const levelStartXp = xpRequiredForLevel(displayLevel)
-  const levelEndXp = xpRequiredForLevel(displayLevel + 1)
-  const levelTotalXp = levelEndXp - levelStartXp
-  const baseXpInLevel = displayLevel >= MAX_PLAYER_LEVEL
-    ? 1
-    : clampProgress(levelTotalXp > 0 ? (roundStartXp - levelStartXp) / levelTotalXp : 0)
-  const projectedXpInLevel = displayLevel >= MAX_PLAYER_LEVEL
-    ? 1
-    : clampProgress(levelTotalXp > 0 ? (projectedTotalXp - levelStartXp) / levelTotalXp : 0)
-  const earnedProgress = Math.max(0, projectedXpInLevel - baseXpInLevel)
+    // Progress within current level (or projected level if leveling up)
+    const display = projLevel > startLevel ? projLevel : startLevel
+    const levelStartXp = xpRequiredForLevel(display)
+    const endXp = xpRequiredForLevel(display + 1)
+    const levelTotalXp = endXp - levelStartXp
+    const base = display >= MAX_PLAYER_LEVEL
+      ? 1
+      : clampProgress(levelTotalXp > 0 ? (roundStartXp - levelStartXp) / levelTotalXp : 0)
+    const projectedXpInLevel = display >= MAX_PLAYER_LEVEL
+      ? 1
+      : clampProgress(levelTotalXp > 0 ? (projected - levelStartXp) / levelTotalXp : 0)
+
+    return {
+      displayLevel: display,
+      levelEndXp: endXp,
+      projectedTotalXp: projected,
+      roundStartLevel: startLevel,
+      projectedLevel: projLevel,
+      baseXpInLevel: base,
+      earnedProgress: Math.max(0, projectedXpInLevel - base),
+    }
+  }, [currentXp, level, xpEarnedInRound])
 
   useEffect(() => {
     if (xpEarnedInRound === 0) {
@@ -116,7 +140,7 @@ export function RoundXpBar({
       </View>
     </View>
   )
-}
+})
 
 const styles = StyleSheet.create({
   container: {

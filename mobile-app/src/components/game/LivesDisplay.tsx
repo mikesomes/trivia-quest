@@ -13,7 +13,7 @@ interface LivesDisplayProps {
   shieldBreakToken?: number
 }
 
-export function LivesDisplay({
+export const LivesDisplay = React.memo(function LivesDisplay({
   livesRemaining,
   shieldsRemaining = 0,
   shieldBreakToken = 0,
@@ -115,7 +115,7 @@ export function LivesDisplay({
       })}
     </View>
   )
-}
+})
 
 const styles = StyleSheet.create({
   container: {

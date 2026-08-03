@@ -14,13 +14,21 @@ export const XP_BASE_BY_DIFFICULTY = {
   boss: 40,
 } as const
 
-function streakXpMultiplier(streak: number) {
+export function streakXpMultiplier(streak: number) {
   if (streak >= 10) return 2.0
   if (streak >= 8) return 1.5
   if (streak >= 5) return 1.25
   if (streak >= 3) return 1.1
   return 1.0
 }
+
+/**
+ * The streaks at which streakXpMultiplier actually steps up. Celebrations and
+ * sound cues key off this so they can't drift from the reward again: the
+ * milestone toast and the shimmer sound used to fire at 3/6/10, cheering at 6
+ * where nothing changed and staying silent at 5 and 8 where it did.
+ */
+export const STREAK_TIERS = [3, 5, 8, 10] as const
 
 function clampInt(value: number, min: number, max: number) {
   if (!Number.isFinite(value)) return min

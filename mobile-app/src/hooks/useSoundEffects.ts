@@ -1,8 +1,10 @@
-import { useEffect } from 'react'
+import { useCallback, useEffect, useRef } from 'react'
 import { useAudioPlayer, setAudioModeAsync } from 'expo-audio'
+import { STREAK_TIERS } from '../utils/scoring'
 
-// Streaks at which a shimmer is layered on top of the normal correct sound.
-const SHIMMER_STREAKS = new Set([3, 6, 10])
+// Streaks at which a shimmer is layered on top of the normal correct sound —
+// the same steps where the XP multiplier rises, so the ear and the reward agree.
+const SHIMMER_STREAKS = new Set<number>(STREAK_TIERS)
 
 export function useSoundEffects() {
   const gameStart  = useAudioPlayer(require('../../assets/sounds/game-start.mp3'))
@@ -25,17 +27,26 @@ export function useSoundEffects() {
 
   const players = { gameStart, correct, wrong, nextRound, gameOver, extraLife, hammer, shieldBreak }
 
-  async function play(key: keyof typeof players, streak?: number) {
-    const player = players[key]
+  // Hold the current players in a ref so `play` can keep a stable identity.
+  // It sits in the dependency array of the gameplay screen's submit handler,
+  // and a new function every render would give that handler a new identity on
+  // every timer tick — re-subscribing the tick interval ten times a second and
+  // defeating memoization on the question and its answers.
+  const latest = useRef({ players, shimmer })
+  latest.current = { players, shimmer }
+
+  const play = useCallback(async (key: keyof typeof players, streak?: number) => {
+    const { players: current, shimmer: shimmerPlayer } = latest.current
+    const player = current[key]
 
     if (key === 'correct' && streak !== undefined && SHIMMER_STREAKS.has(streak)) {
-      try { await shimmer.seekTo(0) } catch {}
-      try { shimmer.play() } catch {}
+      try { await shimmerPlayer.seekTo(0) } catch {}
+      try { shimmerPlayer.play() } catch {}
     }
 
     try { await player.seekTo(0) } catch {}
     try { player.play() } catch {}
-  }
+  }, [])
 
   return { play }
 }

@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useCallback } from 'react'
 import { Animated, Easing, View, Text, StyleSheet, AppState, Alert, Platform, ScrollView } from 'react-native'
 import { useMutation } from '@tanstack/react-query'
-import { isAlreadyAnsweredError, isApiError } from '../../src/api/client'
+import { isAlreadyAnsweredError, isApiError, isNetworkError } from '../../src/api/client'
 import { flagsApi } from '../../src/api/flags'
 import { ScreenWrapper } from '../../src/components/ui/ScreenWrapper'
 import { router } from 'expo-router'
@@ -25,7 +25,6 @@ import { LivesDisplay } from '../../src/components/game/LivesDisplay'
 import { HammersDisplay } from '../../src/components/game/HammersDisplay'
 import { analytics } from '../../src/lib/analytics'
 import { StreakIndicator } from '../../src/components/game/StreakIndicator'
-import { StreakTargetIndicator } from '../../src/components/game/StreakTargetIndicator'
 import { PauseModal } from '../../src/components/game/PauseModal'
 import { ExtraLifeOverlay } from '../../src/components/game/ExtraLifeOverlay'
 import { HammerEarnedOverlay } from '../../src/components/game/HammerEarnedOverlay'
@@ -92,9 +91,23 @@ export default function PlayScreen() {
   const [timeRemainingMs, setTimeRemainingMs] = React.useState(
     isBlitz ? BLITZ_MS : GAME_CONFIG.TIMER_SECONDS * 1000
   )
+  // The live clock lives in a ref and is mirrored into state only so TimerBar can
+  // render it. handleSubmit reads the ref rather than the state: taking
+  // timeRemainingMs as a dependency gave the callback a new identity on every
+  // tick, and since the tick effect depends on handleSubmit, that tore down and
+  // recreated the interval ten times a second — which made the countdown run
+  // slow (each new interval restarts its 100ms after the re-render commits) and
+  // defeated memoization in every child below.
+  const timeRemainingRef = useRef(isBlitz ? BLITZ_MS : GAME_CONFIG.TIMER_SECONDS * 1000)
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null)
   const hasTimedOutRef = useRef(false)
   const submitInFlightRef = useRef(false)
+
+  // Only ever called from effects and event handlers, never during render.
+  const writeTimeRemaining = useCallback((ms: number) => {
+    timeRemainingRef.current = ms
+    setTimeRemainingMs(ms)
+  }, [])
 
   const questionTranslateX = useRef(new Animated.Value(0)).current
   const questionOpacity = useRef(new Animated.Value(1)).current
@@ -109,6 +122,7 @@ export default function PlayScreen() {
   const [blitzBonusKey, setBlitzBonusKey] = React.useState<number | null>(null)
   const [eliminatedOptions, setEliminatedOptions] = React.useState<Partial<Record<AnswerOption, EliminationEffect>>>({})
   const [shieldBreakToken, setShieldBreakToken] = React.useState(0)
+  const [connectionNotice, setConnectionNotice] = React.useState<string | null>(null)
   const [flaggedQuestionIds, setFlaggedQuestionIds] = React.useState<Set<string>>(new Set())
 
   const flagQuestion = useMutation({
@@ -143,6 +157,15 @@ export default function PlayScreen() {
   const { data: profile } = useProfile()
   const { play } = useSoundEffects()
   const availableShields = roundShields
+
+  // useMutation returns `{ ...result, mutate, mutateAsync }` — a brand new object
+  // on every render. Depending on the mutation itself would hand every callback
+  // below a fresh identity on every timer tick, which is exactly what the ref
+  // work above exists to prevent. mutateAsync is a bound method on the observer
+  // and stays stable for the life of the screen.
+  const submitAnswerAsync = submitAnswer.mutateAsync
+  const finishRoundAsync = finishRound.mutateAsync
+  const createRoundAsync = createRound.mutateAsync
 
   const displayedXp = isSuddenDeath ? sdBaseXp + xpEarnedInRound : xpEarnedInRound
   const displayXp = useAnimatedNumber(displayedXp)
@@ -197,12 +220,17 @@ export default function PlayScreen() {
     )
   }, [answerState, pendingResult, currentQuestion])
 
+  // accessibilityLiveRegion only covers Android, so announce it explicitly too.
+  useEffect(() => {
+    if (connectionNotice) announce(connectionNotice)
+  }, [connectionNotice])
+
   // Blitz: apply +5s time bonus when server returns streak milestone
   useEffect(() => {
     if (!isBlitz || !pendingResult?.timeBonus) return
-    setTimeRemainingMs((prev) => Math.min(prev + pendingResult.timeBonus!, BLITZ_MS))
+    writeTimeRemaining(Math.min(timeRemainingRef.current + pendingResult.timeBonus, BLITZ_MS))
     setBlitzBonusKey(Date.now())
-  }, [pendingResult?.timeBonus, isBlitz])
+  }, [pendingResult?.timeBonus, isBlitz, BLITZ_MS, writeTimeRemaining])
 
   // Navigate to results / gameover / sudden-death-over
   const handleRoundEnd = useCallback(async (livesLeft: number) => {
@@ -214,13 +242,13 @@ export default function PlayScreen() {
     // In sudden death, record this (final/dying) round before finishing it
     if (isSuddenDeath) addSdRoundId(roundId)
     try {
-      await finishRound.mutateAsync(roundId)
+      await finishRoundAsync(roundId)
       router.replace(destination)
     } catch (err) {
       console.error('Failed to finish round:', err)
       router.replace(destination)
     }
-  }, [roundId, finishRound, isSuddenDeath, addSdRoundId])
+  }, [roundId, finishRoundAsync, isSuddenDeath, addSdRoundId])
 
   // Sudden death: batch of 10 completed without error — chain the next batch
   const handleBatchComplete = useCallback(async () => {
@@ -241,11 +269,11 @@ export default function PlayScreen() {
     setDifficulty(nextDifficulty)
 
     try {
-      await finishRound.mutateAsync(completedRoundId)
+      await finishRoundAsync(completedRoundId)
     } catch { /* continue regardless */ }
 
     try {
-      await createRound.mutateAsync({
+      await createRoundAsync({
         category: nextCategory,
         difficulty: nextDifficulty,
         difficultyMix: nextMix,
@@ -258,7 +286,47 @@ export default function PlayScreen() {
       // No more questions available — end the run
       router.replace('/game/sudden-death-over')
     }
-  }, [roundId, xpEarnedInRound, sdBatchNumber, finishRound, createRound, addSdBatchXp, addSdRoundId])
+  }, [roundId, xpEarnedInRound, sdBatchNumber, finishRoundAsync, createRoundAsync, addSdBatchXp, addSdRoundId])
+
+  // Slide the current question out, swap in the next one, restart the clock.
+  // Shared by the normal Next path and by the already-answered recovery below.
+  const goToNextQuestion = useCallback(() => {
+    Animated.parallel([
+      Animated.timing(questionTranslateX, {
+        toValue: -32,
+        duration: 110,
+        easing: Easing.in(Easing.quad),
+        useNativeDriver: true,
+      }),
+      Animated.timing(questionOpacity, {
+        toValue: 0,
+        duration: 110,
+        useNativeDriver: true,
+      }),
+    ]).start(() => {
+      advanceQuestion()
+      setEliminatedOptions({})
+      setConnectionNotice(null)
+      if (!isBlitz) writeTimeRemaining(GAME_CONFIG.TIMER_SECONDS * 1000)
+      hasTimedOutRef.current = false
+      startQuestionTimer()
+      // Position next question off-screen right, then slide in
+      questionTranslateX.setValue(24)
+      Animated.parallel([
+        Animated.timing(questionTranslateX, {
+          toValue: 0,
+          duration: 160,
+          easing: Easing.out(Easing.quad),
+          useNativeDriver: true,
+        }),
+        Animated.timing(questionOpacity, {
+          toValue: 1,
+          duration: 160,
+          useNativeDriver: true,
+        }),
+      ]).start()
+    })
+  }, [advanceQuestion, startQuestionTimer, questionTranslateX, questionOpacity, isBlitz, writeTimeRemaining])
 
   // Handle answer submission
   const handleSubmit = useCallback(
@@ -266,14 +334,15 @@ export default function PlayScreen() {
       if (!roundId || !currentQuestion || answerState !== 'idle' || submitInFlightRef.current) return
 
       submitInFlightRef.current = true
+      setConnectionNotice(null)
       clearInterval(timerRef.current!)
       selectOption(option ?? ('a' as AnswerOption)) // timeout uses null but we still need to call selectOption for state
 
       const timeTakenMs = getElapsedMs()
-      const activeTimer = getActiveScoringTimerSnapshot(timeRemainingMs)
+      const activeTimer = getActiveScoringTimerSnapshot(timeRemainingRef.current)
 
       try {
-        const result = await submitAnswer.mutateAsync({
+        const result = await submitAnswerAsync({
           roundId,
           questionId: currentQuestion.questionId,
           position: currentPosition,
@@ -315,8 +384,10 @@ export default function PlayScreen() {
               Animated.timing(correctGlowOpacity, { toValue: 0, duration: 550, easing: Easing.out(Easing.cubic), useNativeDriver: true }),
             ]).start()
           }
+          // Tiers 5 and 10 also award a life or a hammer, and those overlays are
+          // blocking modals that hold for ~2s — don't stack a toast behind one.
           const milestone = STREAK_MILESTONES[result.currentStreak]
-          if (milestone) {
+          if (milestone && !result.lifeEarned && !result.hammerEarned) {
             setStreakMilestone({ ...milestone, key: Date.now() })
           }
         }
@@ -328,18 +399,52 @@ export default function PlayScreen() {
           setShowHammerEarned(true)
         }
       } catch (err) {
-        if (isAlreadyAnsweredError(err)) return
         submitInFlightRef.current = false
+
+        if (isAlreadyAnsweredError(err)) {
+          // The server already has an answer for this position, so our response
+          // went missing rather than our request. Nothing reads a recorded
+          // answer back, so the reveal for this one is unrecoverable — skip it
+          // instead of leaving the screen wedged in 'pending' forever, which is
+          // what returning here used to do (currentPosition never advances, so
+          // the submitInFlightRef reset effect never fires again).
+          resetAnswerState()
+          if (currentPosition + 1 >= questions.length) {
+            handleRoundEnd(livesRemaining)
+          } else {
+            setConnectionNotice('Answer already recorded — skipping ahead.')
+            goToNextQuestion()
+          }
+          return
+        }
+
         if (isApiError(err) && err.status === 410) {
           Alert.alert('Round Expired', 'Your session timed out while you were away.', [
             { text: 'OK', onPress: () => router.replace('/game/gameover') },
           ])
           return
         }
+
+        // The hook has already reset answerState to idle, so the player can just
+        // tap again. Say so inline rather than in a modal that takes over the
+        // screen for what is usually a one-second blip.
+        setConnectionNotice(
+          isNetworkError(err) && err.isTimeout
+            ? 'That took too long to send — tap your answer again.'
+            : 'Could not reach the server — tap your answer again.'
+        )
         console.error('Failed to submit answer:', (err as Error)?.message ?? err)
       }
     },
-    [roundId, currentQuestion, currentPosition, answerState, getElapsedMs, getActiveScoringTimerSnapshot, timeRemainingMs, selectOption, availableShields, submitAnswer, setShields, play, resetAnswerState]
+    [roundId, currentQuestion, currentPosition, answerState, getElapsedMs, getActiveScoringTimerSnapshot, selectOption, availableShields, submitAnswerAsync, setShields, play, resetAnswerState, questions.length, livesRemaining, handleRoundEnd, goToNextQuestion]
+  )
+
+  // Passed to the memoized QuestionCard, so it has to keep a stable identity
+  // between renders. handleSubmit already guards on answerState; this only
+  // narrows the type from `AnswerOption | null` to `AnswerOption`.
+  const handleSelectOption = useCallback(
+    (opt: AnswerOption) => { handleSubmit(opt) },
+    [handleSubmit]
   )
 
   // Advance to next question or end round
@@ -353,43 +458,9 @@ export default function PlayScreen() {
         await handleRoundEnd(pendingResult.livesRemaining)
       }
     } else {
-      // Slide current question out to the left
-      Animated.parallel([
-        Animated.timing(questionTranslateX, {
-          toValue: -40,
-          duration: 160,
-          easing: Easing.in(Easing.quad),
-          useNativeDriver: true,
-        }),
-        Animated.timing(questionOpacity, {
-          toValue: 0,
-          duration: 160,
-          useNativeDriver: true,
-        }),
-      ]).start(() => {
-        advanceQuestion()
-        setEliminatedOptions({})
-        if (!isBlitz) setTimeRemainingMs(GAME_CONFIG.TIMER_SECONDS * 1000)
-        hasTimedOutRef.current = false
-        startQuestionTimer()
-        // Position next question off-screen right, then slide in
-        questionTranslateX.setValue(40)
-        Animated.parallel([
-          Animated.timing(questionTranslateX, {
-            toValue: 0,
-            duration: 220,
-            easing: Easing.out(Easing.quad),
-            useNativeDriver: true,
-          }),
-          Animated.timing(questionOpacity, {
-            toValue: 1,
-            duration: 220,
-            useNativeDriver: true,
-          }),
-        ]).start()
-      })
+      goToNextQuestion()
     }
-  }, [pendingResult, handleRoundEnd, advanceQuestion, startQuestionTimer, questionTranslateX, questionOpacity, isBlitz])
+  }, [pendingResult, handleRoundEnd, handleBatchComplete, isSuddenDeath, goToNextQuestion])
 
   // Timer tick
   useEffect(() => {
@@ -399,29 +470,30 @@ export default function PlayScreen() {
     }
 
     timerRef.current = setInterval(() => {
-      setTimeRemainingMs((prev) => {
-        const next = prev - TICK_INTERVAL
-        if (next <= 0 && !hasTimedOutRef.current) {
-          hasTimedOutRef.current = true
-          clearInterval(timerRef.current!)
-          if (isBlitz) {
-            // Global timer expired — end the round (non-zero lives → results screen)
-            handleRoundEnd(1)
-          } else {
-            handleSubmit(null)
-          }
-          return 0
+      const next = Math.max(0, timeRemainingRef.current - TICK_INTERVAL)
+      writeTimeRemaining(next)
+
+      // Expiry is handled out here rather than inside a setState updater —
+      // updaters must stay pure, and this one fired navigation and a network
+      // submit (twice over, under StrictMode's double-invoke).
+      if (next <= 0 && !hasTimedOutRef.current) {
+        hasTimedOutRef.current = true
+        clearInterval(timerRef.current!)
+        if (isBlitz) {
+          // Global timer expired — end the round (non-zero lives → results screen)
+          handleRoundEnd(1)
+        } else {
+          handleSubmit(null)
         }
-        return Math.max(0, next)
-      })
+      }
     }, TICK_INTERVAL)
 
     return () => clearInterval(timerRef.current!)
-  }, [isPaused, answerState, currentPosition, handleSubmit, isBlitz, handleRoundEnd])
+  }, [isPaused, answerState, currentPosition, handleSubmit, isBlitz, handleRoundEnd, writeTimeRemaining])
 
   // Reset timer on new question (blitz keeps the global countdown running)
   useEffect(() => {
-    if (!isBlitz) setTimeRemainingMs(GAME_CONFIG.TIMER_SECONDS * 1000)
+    if (!isBlitz) writeTimeRemaining(GAME_CONFIG.TIMER_SECONDS * 1000)
     hasTimedOutRef.current = false
     startQuestionTimer()
   }, [currentPosition])
@@ -581,6 +653,13 @@ export default function PlayScreen() {
             keyboardShouldPersistTaps="handled"
           >
             <ProgressDots answerHistory={answerHistory} currentPosition={currentPosition} />
+
+            {connectionNotice && (
+              <View style={styles.notice} accessibilityLiveRegion="polite">
+                <Text style={styles.noticeText}>{connectionNotice}</Text>
+              </View>
+            )}
+
             <QuestionCard
               question={currentQuestion}
               category={selectedCategory ?? undefined}
@@ -589,9 +668,7 @@ export default function PlayScreen() {
               selectedOption={selectedOption}
               correctOption={pendingResult?.correctOption ?? null}
               eliminatedOptions={eliminatedOptions}
-              onSelectOption={(opt) => {
-                if (answerState === 'idle') handleSubmit(opt)
-              }}
+              onSelectOption={handleSelectOption}
             />
 
             {/* Explanation + Next/Flag actions — shown after answer is revealed */}
@@ -658,7 +735,7 @@ export default function PlayScreen() {
 
       {/* Blitz time bonus toast */}
       {blitzBonusKey !== null && (
-        <View pointerEvents="none" style={styles.milestoneContainer}>
+        <View pointerEvents="none" style={styles.blitzBonusContainer}>
           <StreakMilestoneToast
             key={blitzBonusKey}
             icon="timer"
@@ -695,11 +772,33 @@ const styles = StyleSheet.create({
   scrollArea: { flex: 1 },
   scrollContent: { gap: spacing.md, paddingBottom: spacing.xl },
   loadingText: { color: colors.textSecondary, textAlign: 'center', marginTop: spacing.xl },
+  notice: {
+    backgroundColor: colors.bgCardAlt,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: colors.timerWarning,
+    paddingVertical: spacing.sm,
+    paddingHorizontal: spacing.md,
+  },
+  noticeText: {
+    color: colors.textPrimary,
+    fontSize: fontSize.sm,
+    textAlign: 'center',
+  },
   milestoneContainer: {
     ...StyleSheet.absoluteFillObject,
     alignItems: 'center',
     justifyContent: 'center',
     marginTop: -80, // bias upward so it floats above the question card
+  },
+  blitzBonusContainer: {
+    ...StyleSheet.absoluteFillObject,
+    alignItems: 'center',
+    justifyContent: 'center',
+    // Sits below the streak toast rather than in the same slot: in blitz a +5s
+    // and a streak tier can land on the same answer, and they were drawing on
+    // top of each other.
+    marginTop: 16,
   },
   correctGlow: {
     ...StyleSheet.absoluteFillObject,

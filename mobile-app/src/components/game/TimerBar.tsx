@@ -111,7 +111,10 @@ export function TimerBar({ timeRemainingMs, isPaused, totalMs = GAME_CONFIG.TIME
           style={[
             styles.fill,
             {
-              width: `${progress * 100}%` as any,
+              // scaleX from a left origin rather than a percentage width: width
+              // forces a layout pass on every one of the ten ticks a second,
+              // a transform does not. The track clips the ends either way.
+              transform: [{ scaleX: progress }],
               backgroundColor: timerColor,
               opacity: pulseAnim,
             },
@@ -145,7 +148,9 @@ const styles = StyleSheet.create({
   },
   fill: {
     height: '100%',
+    width: '100%',
     borderRadius: radius.full,
+    transformOrigin: 'left',
   },
   label: { ...tabularNums,
     fontSize: fontSize.md,

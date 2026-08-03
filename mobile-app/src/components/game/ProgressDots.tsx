@@ -9,7 +9,7 @@ interface ProgressDotsProps {
   currentPosition: number
 }
 
-export function ProgressDots({ answerHistory, currentPosition }: ProgressDotsProps) {
+export const ProgressDots = React.memo(function ProgressDots({ answerHistory, currentPosition }: ProgressDotsProps) {
   const total = GAME_CONFIG.QUESTIONS_PER_ROUND
 
   return (
@@ -40,7 +40,7 @@ export function ProgressDots({ answerHistory, currentPosition }: ProgressDotsPro
       })}
     </View>
   )
-}
+})
 
 const styles = StyleSheet.create({
   row: {

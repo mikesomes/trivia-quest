@@ -38,7 +38,11 @@ interface QuestionCardProps {
   onSelectOption: (option: AnswerOption) => void
 }
 
-export function QuestionCard({
+// Memoized: the question, its four options and their reveal state only change
+// on answer or advance, but this sits under a screen that re-renders on every
+// timer tick. Every prop below is replaced rather than mutated in place, so the
+// default shallow comparison is enough.
+export const QuestionCard = React.memo(function QuestionCard({
   question,
   category,
   difficulty,
@@ -118,7 +122,7 @@ export function QuestionCard({
       </View>
     </View>
   )
-}
+})
 
 const styles = StyleSheet.create({
   container: {

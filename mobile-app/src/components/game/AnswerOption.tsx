@@ -1,11 +1,17 @@
 import React, { useEffect, useRef } from 'react'
-import { Animated, Easing, TouchableWithoutFeedback, Text, StyleSheet, View } from 'react-native'
+import { Animated, Easing, Text, StyleSheet, View } from 'react-native'
 import type { AnswerOption as AnswerOptionType, AnswerState } from '../../types/game'
 import { colors, spacing, radius, fontSize } from '../../constants/theme'
 import { haptics } from '../../lib/haptics'
+import { useReducedMotion } from '../../hooks/useReducedMotion'
+import { AnimatedPressable } from '../ui/AnimatedPressable'
 import { HammerIcon, ShieldIcon } from '../icons'
 
 type EliminationEffect = 'hammer' | 'shield'
+
+/** How long the server gets to respond before we admit we're waiting. Below
+ * this the reveal lands first and no pending state is ever shown. */
+const PENDING_HINT_DELAY_MS = 350
 
 interface AnswerOptionProps {
   option: AnswerOptionType
@@ -20,7 +26,7 @@ interface AnswerOptionProps {
   disabled?: boolean
 }
 
-export function AnswerOption({
+export const AnswerOption = React.memo(function AnswerOption({
   option,
   text,
   onPress,
@@ -34,8 +40,11 @@ export function AnswerOption({
 }: AnswerOptionProps) {
   const isSelected = selectedOption === option
   const isRevealed = answerState === 'revealed'
+  const isPending = answerState === 'pending'
   const isCorrect = isRevealed && option === correctOption
   const isWrong = isRevealed && isSelected && !isCorrect
+  const isDisabled = Boolean(disabled) || Boolean(eliminated) || answerState !== 'idle'
+  const reducedMotion = useReducedMotion()
 
   const a11yStatus = eliminated
     ? 'Eliminated'
@@ -44,12 +53,17 @@ export function AnswerOption({
     : isWrong
     ? 'Your answer, incorrect'
     : isSelected
-    ? 'Selected'
+    ? isPending
+      ? 'Selected, submitting'
+      : 'Selected'
     : ''
 
-  const scale = useRef(new Animated.Value(1)).current
   const pulse = useRef(new Animated.Value(1)).current
   const wrongShakeX = useRef(new Animated.Value(0)).current
+  // The three unselected options recede the moment a choice is locked in, so
+  // the tap visibly changes the whole card rather than just one border.
+  const dimOpacity = useRef(new Animated.Value(1)).current
+  const pendingSheen = useRef(new Animated.Value(0)).current
 
   // Elimination animation values
   const strikeY = useRef(new Animated.Value(-64)).current
@@ -79,6 +93,45 @@ export function AnswerOption({
       ]).start()
     }
   }, [isCorrect, isWrong])
+
+  // Lock-in: everything the player didn't pick steps back immediately, without
+  // waiting on the server round trip that decides correct vs wrong.
+  useEffect(() => {
+    Animated.timing(dimOpacity, {
+      toValue: isPending && !isSelected ? 0.45 : 1,
+      duration: 140,
+      easing: Easing.out(Easing.quad),
+      useNativeDriver: true,
+    }).start()
+  }, [dimOpacity, isPending, isSelected])
+
+  // A breathing sheen on the locked-in option, but only once the wait becomes
+  // noticeable — on a healthy connection this never starts.
+  useEffect(() => {
+    if (!isSelected || !isPending) {
+      pendingSheen.setValue(0)
+      return
+    }
+
+    const loop = Animated.loop(
+      Animated.sequence([
+        Animated.timing(pendingSheen, { toValue: 1, duration: 420, easing: Easing.inOut(Easing.ease), useNativeDriver: true }),
+        Animated.timing(pendingSheen, { toValue: 0.15, duration: 420, easing: Easing.inOut(Easing.ease), useNativeDriver: true }),
+      ])
+    )
+
+    const timer = setTimeout(() => {
+      // Reduced motion still gets the "we're waiting" signal, just held steady.
+      if (reducedMotion) pendingSheen.setValue(0.75)
+      else loop.start()
+    }, PENDING_HINT_DELAY_MS)
+
+    return () => {
+      clearTimeout(timer)
+      loop.stop()
+      pendingSheen.setValue(0)
+    }
+  }, [isSelected, isPending, pendingSheen, reducedMotion])
 
   // Hammer smash animation when eliminated
   useEffect(() => {
@@ -166,14 +219,10 @@ export function AnswerOption({
     return () => clearTimeout(timer)
   }, [burstOpacity, burstScale, eliminated, eliminatedIndex, eliminatedOpacity, eliminationEffect, shakeX, strikeOpacity, strikeRotate, strikeY])
 
+  // The press scale itself now lives in AnimatedPressable, which springs a
+  // Reanimated shared value on the UI thread — it lands before React re-renders.
   const handlePressIn = () => {
-    if (disabled || eliminated || answerState !== 'idle') return
     haptics.optionPress()
-    Animated.spring(scale, { toValue: 0.97, friction: 8, tension: 200, useNativeDriver: true }).start()
-  }
-
-  const handlePressOut = () => {
-    Animated.spring(scale, { toValue: 1, friction: 5, tension: 200, useNativeDriver: true }).start()
   }
 
   const strikeRotateDeg = strikeRotate.interpolate({
@@ -220,24 +269,18 @@ export function AnswerOption({
         <StrikeMark size={38} weight="fill" />
       </Animated.View>
 
-      <TouchableWithoutFeedback
+      <AnimatedPressable
         onPress={() => onPress(option)}
         onPressIn={handlePressIn}
-        onPressOut={handlePressOut}
-        disabled={disabled || eliminated || answerState !== 'idle'}
+        disabled={isDisabled}
+        // Sighted players read correct/wrong from the green or red fill and
+        // the pop/shake. Screen reader users get nothing from either, so the
+        // outcome has to be part of the accessible name and state.
+        accessibilityLabel={`Option ${option.toUpperCase()}. ${text}`}
+        accessibilityValue={{ text: a11yStatus }}
+        accessibilityState={{ selected: isSelected }}
       >
         <Animated.View
-          // Sighted players read correct/wrong from the green or red fill and
-          // the pop/shake. Screen reader users get nothing from either, so the
-          // outcome has to be part of the accessible name and state.
-          accessible
-          accessibilityRole="button"
-          accessibilityLabel={`Option ${option.toUpperCase()}. ${text}`}
-          accessibilityValue={{ text: a11yStatus }}
-          accessibilityState={{
-            disabled: disabled || eliminated || answerState !== 'idle',
-            selected: isSelected,
-          }}
           style={[
             styles.option,
             isSelected && !isRevealed && styles.selected,
@@ -245,14 +288,23 @@ export function AnswerOption({
             isWrong && styles.wrong,
             eliminated && styles.eliminatedBorder,
             {
-              opacity: eliminated ? eliminatedOpacity : 1,
+              opacity: eliminated ? eliminatedOpacity : dimOpacity,
               transform: [
                 { translateX: Animated.add(shakeX, wrongShakeX) },
-                { scale: Animated.multiply(scale, pulse) },
+                { scale: pulse },
               ],
             },
           ]}
         >
+          {/* Painted first so the label and answer text stay on top of it. */}
+          <Animated.View
+            pointerEvents="none"
+            style={[
+              styles.pendingSheen,
+              { opacity: pendingSheen.interpolate({ inputRange: [0, 1], outputRange: [0, 0.3] }) },
+            ]}
+          />
+
           <View style={[
             styles.label,
             !isRevealed && !eliminated && { backgroundColor: OPTION_COLORS[option].bg, borderColor: OPTION_COLORS[option].border },
@@ -273,10 +325,10 @@ export function AnswerOption({
             </View>
           )}
         </Animated.View>
-      </TouchableWithoutFeedback>
+      </AnimatedPressable>
     </View>
   )
-}
+})
 
 const OPTION_COLORS: Record<string, { bg: string; border: string }> = {
   a: { bg: '#1e3a5f', border: '#2e5a8f' },  // blue
@@ -303,6 +355,11 @@ const styles = StyleSheet.create({
   selected: {
     borderColor: colors.primary,
     backgroundColor: `${colors.primary}22`,
+  },
+  pendingSheen: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: colors.primary,
+    borderRadius: radius.md,
   },
   correct: {
     borderColor: colors.correct,

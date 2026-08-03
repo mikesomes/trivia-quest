@@ -1,6 +1,5 @@
 import { useRef } from 'react'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
-import { Alert } from 'react-native'
 import { answersApi } from '../api/answers'
 import { isAlreadyAnsweredError } from '../api/client'
 import { queryKeys } from '../constants/queryKeys'
@@ -41,11 +40,15 @@ export function useSubmitAnswer() {
     },
     onError: (error) => {
       if (isAlreadyAnsweredError(error)) {
+        // Recovery for this one is the screen's job — it has to decide whether
+        // to skip the question or end the round. Leave the state alone.
         return
       }
 
+      // Back to 'idle' so the player can simply tap again. The screen surfaces
+      // an inline notice; a modal alert here ejected them from the question
+      // over what is usually a one-second network blip.
       resetAnswerState()
-      Alert.alert('Connection Error', 'Could not submit answer. Check your connection and try again.')
     },
   })
 }

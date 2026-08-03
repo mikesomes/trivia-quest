@@ -2,6 +2,7 @@ import React, { useEffect, useRef } from 'react'
 import { Animated, Easing, StyleSheet, Text, View } from 'react-native'
 import { colors, fontSize, radius, spacing } from '../../constants/theme'
 import { GameIcon, type GameIconName } from '../icons'
+import { streakXpMultiplier } from '../../utils/scoring'
 
 export interface StreakMilestone {
   streak: number
@@ -12,10 +13,17 @@ export interface StreakMilestone {
   key: number
 }
 
+/**
+ * Keyed by the streaks where the XP multiplier actually steps up (STREAK_TIERS)
+ * — this used to fire at 3/6/10, celebrating at 6 where nothing changed and
+ * staying silent at 5 and 8 where the multiplier rose. The multiplier is in the
+ * label because this toast is the only place the ladder is ever explained.
+ */
 export const STREAK_MILESTONES: Record<number, Omit<StreakMilestone, 'key'>> = {
-  3:  { streak: 3,  icon: 'flame' as GameIconName, label: 'Heating up',   color: colors.timerWarning },
-  6:  { streak: 6,  icon: 'xp' as GameIconName, label: 'On fire',       color: '#FFE033' },
-  10: { streak: 10, icon: 'crown' as GameIconName, label: 'UNSTOPPABLE',  color: colors.gold },
+  3:  { streak: 3,  icon: 'flame' as GameIconName, label: `Heating up · ${streakXpMultiplier(3)}× XP`,   color: colors.timerWarning },
+  5:  { streak: 5,  icon: 'flame' as GameIconName, label: `On fire · ${streakXpMultiplier(5)}× XP`,      color: colors.streakActive },
+  8:  { streak: 8,  icon: 'xp' as GameIconName,    label: `Blazing · ${streakXpMultiplier(8)}× XP`,      color: '#FFE033' },
+  10: { streak: 10, icon: 'crown' as GameIconName, label: `UNSTOPPABLE · ${streakXpMultiplier(10)}× XP`, color: colors.gold },
 }
 
 interface Props {

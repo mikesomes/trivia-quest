@@ -4,9 +4,12 @@ import {
   createActiveScoringTimerSnapshot,
   levelFromXp,
   levelProgress,
+  streakXpMultiplier,
   xpRequiredForLevel,
   MAX_PLAYER_LEVEL,
+  STREAK_TIERS,
 } from '../../src/utils/scoring'
+import { STREAK_MILESTONES } from '../../src/components/game/StreakMilestoneToast'
 
 describe('computeXpEarned', () => {
   it('scales with difficulty', () => {
@@ -149,5 +152,32 @@ describe('levelProgress', () => {
   it('reads full at the level cap, where there is no next level', () => {
     expect(levelProgress(xpRequiredForLevel(MAX_PLAYER_LEVEL), MAX_PLAYER_LEVEL)).toBe(1)
     expect(levelProgress(0, MAX_PLAYER_LEVEL)).toBe(1)
+  })
+})
+
+// The celebration thresholds drifted from the reward thresholds once already:
+// the toast and the shimmer sound fired at 3/6/10 while the multiplier stepped
+// at 3/5/8/10, so the game cheered at 6 where nothing changed and stayed silent
+// at 5 and 8 where it did. These lock the two together.
+describe('STREAK_TIERS', () => {
+  it('lists exactly the streaks where the XP multiplier steps up', () => {
+    const steps: number[] = []
+    for (let streak = 1; streak <= 15; streak++) {
+      if (streakXpMultiplier(streak) !== streakXpMultiplier(streak - 1)) steps.push(streak)
+    }
+    expect(steps).toEqual([...STREAK_TIERS])
+  })
+
+  it('is the exact key set of the milestone toasts', () => {
+    const milestoneStreaks = Object.keys(STREAK_MILESTONES)
+      .map(Number)
+      .sort((a, b) => a - b)
+    expect(milestoneStreaks).toEqual([...STREAK_TIERS])
+  })
+
+  it('names the real multiplier in every milestone label', () => {
+    for (const streak of STREAK_TIERS) {
+      expect(STREAK_MILESTONES[streak].label).toContain(`${streakXpMultiplier(streak)}× XP`)
+    }
   })
 })
