@@ -1,0 +1,57 @@
+{
+  "generatedAt": "2026-08-08T01:31:19.728Z",
+  "threshold": 0.55,
+  "category": "music",
+  "applied": true,
+  "adjudicated": true,
+  "totals": {
+    "proposedPairs": 6,
+    "confirmedPairs": 3,
+    "survivors": 3,
+    "deactivated": 3
+  },
+  "groups": [
+    {
+      "category": "music",
+      "keep": {
+        "id": "11285389-93d7-48a2-83b6-c6b8c5bd5591",
+        "text": "Who is the lead singer of the band Coldplay?"
+      },
+      "drop": [
+        {
+          "id": "14d9d520-63f7-463f-b111-4047f0a2ae81",
+          "text": "Who is the lead singer of the British pop rock band Coldplay?",
+          "score": 0.714286
+        }
+      ]
+    },
+    {
+      "category": "music",
+      "keep": {
+        "id": "17922b30-0b44-47ff-8ce6-feffd9836365",
+        "text": "Which influential hip-hop group released the album 'Straight Outta Compton' in 1988?"
+      },
+      "drop": [
+        {
+          "id": "5525c932-deab-4272-b41f-8440a67cd107",
+          "text": "Which rap group released the album \"Straight Outta Compton\"?",
+          "score": 0.658537
+        }
+      ]
+    },
+    {
+      "category": "music",
+      "keep": {
+        "id": "53d1ad30-b1dc-4bfb-ac49-74550951f956",
+        "text": "What is the highest-selling album of all time?"
+      },
+      "drop": [
+        {
+          "id": "5ec8b510-7371-484e-87f3-b975733a65fc",
+          "text": "What is the best selling album of all time from 1976 to 2018?",
+          "score": 0.587302
+        }
+      ]
+    }
+  ]
+}

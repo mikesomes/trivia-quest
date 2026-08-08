@@ -75,6 +75,7 @@ const CATEGORY_MAP = {
   movies_tv:         [11, 14], // Entertainment: Film + Entertainment: Television
   geography:         [22],
   video_games:       [15],     // Entertainment: Video Games
+  music:             [12],     // Entertainment: Music
 }
 
 if (ONLY_CATEGORY && !CATEGORY_MAP[ONLY_CATEGORY]) {

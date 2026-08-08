@@ -8993,5 +8993,20 @@
     "duplicate": true,
     "confidence": 0.9,
     "reason": "Both questions ask about the same team in the same game, just phrased differently."
+  },
+  "11285389-93d7-48a2-83b6-c6b8c5bd5591|14d9d520-63f7-463f-b111-4047f0a2ae81": {
+    "duplicate": true,
+    "confidence": 0.95,
+    "reason": "Both questions ask about the same subject, the lead singer of Coldplay, with only minor rewording and additional detail in the second question."
+  },
+  "53d1ad30-b1dc-4bfb-ac49-74550951f956|5ec8b510-7371-484e-87f3-b975733a65fc": {
+    "duplicate": true,
+    "confidence": 0.9,
+    "reason": "Both questions are asking about the same underlying subject, which is the highest-selling album of all time, despite the different phrasing and time frame mentioned in Question B."
+  },
+  "17922b30-0b44-47ff-8ce6-feffd9836365|5525c932-deab-4272-b41f-8440a67cd107": {
+    "duplicate": true,
+    "confidence": 0.9,
+    "reason": "Both questions ask about the same album 'Straight Outta Compton' by the same group N.W.A, just phrased differently."
   }
 }
