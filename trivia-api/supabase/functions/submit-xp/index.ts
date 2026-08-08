@@ -172,7 +172,16 @@ Deno.serve(async (req) => {
   const sessionXpEarned = prevSessionXp + xpEarned
   const sessionRound = sessionRoundIds.length + 1
 
-  if (existing) {
+  // Shared by the pre-insert existence check above and the insert-time race
+  // below: another request for this round already has a `scores` row (there
+  // is a window between the SELECT and the INSERT), so recover the response
+  // from what was actually persisted instead of failing the request.
+  async function recoveredXpResponse(scoreRow: {
+    id: string
+    xp_earned: number | null
+    correct_count: number | null
+    session_xp_earned: number | null
+  }) {
     const { data: user, error: userError } = await supabase
       .from('users')
       .select('xp, level, total_games, total_correct, best_score, coins')
@@ -181,9 +190,9 @@ Deno.serve(async (req) => {
 
     if (userError || !user) return errorResponse('Failed to fetch user', 500)
 
-    const recoveredSessionXp = existing.session_xp_earned ?? sessionXpEarned
-    const recoveredCorrectCount = existing.correct_count ?? correctCount
-    const recoveredXpEarned = existing.xp_earned ?? xpEarned
+    const recoveredSessionXp = scoreRow.session_xp_earned ?? sessionXpEarned
+    const recoveredCorrectCount = scoreRow.correct_count ?? correctCount
+    const recoveredXpEarned = scoreRow.xp_earned ?? xpEarned
     const recoveredOldXp = Math.max(0, user.xp - recoveredXpEarned)
     const recoveredNewLevel = levelFromXp(user.xp)
     const recoveredOldLevel = levelFromXp(recoveredOldXp)
@@ -194,7 +203,7 @@ Deno.serve(async (req) => {
       .gt('session_xp_earned', recoveredSessionXp)
 
     return jsonResponse({
-      submissionId: existing.id,
+      submissionId: scoreRow.id,
       roundXp: recoveredXpEarned,
       correctCount: recoveredCorrectCount,
       xpEarned: recoveredXpEarned,
@@ -212,6 +221,8 @@ Deno.serve(async (req) => {
       recoveredSubmission: true,
     })
   }
+
+  if (existing) return await recoveredXpResponse(existing)
 
   const { data: submission, error: submissionError } = await supabase
     .from('scores')
@@ -233,6 +244,18 @@ Deno.serve(async (req) => {
     })
     .select()
     .single()
+
+  if (submissionError?.code === '23505') {
+    // Another request for this round won the race between the SELECT above
+    // and this INSERT — score_round_unique (20240001000000_init_schema.sql)
+    // rejected ours. Recover exactly like the pre-check path.
+    const { data: raced } = await supabase
+      .from('scores')
+      .select('id, xp_earned, correct_count, session_xp_earned')
+      .eq('round_id', body.roundId)
+      .maybeSingle()
+    if (raced) return await recoveredXpResponse(raced)
+  }
 
   if (submissionError || !submission) return errorResponse('Failed to save XP', 500)
 
