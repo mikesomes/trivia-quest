@@ -50,7 +50,7 @@ Run the focused tests with `npm test -- questionCandidateReview.test.ts`, or run
 
 ## AI blind review
 
-`run-ai-blind-review` is an explicitly invoked, service-role-only Edge Function. It selects up to ten pending or revision candidates that have not already received an AI blind review. The model receives the category, question text, and four choices only; it does not receive the stored answer, answer index, or explanation. The server compares its selected index to the stored index and saves the result, confidence, notes, model name, and timestamp.
+`run-ai-blind-review` is a service-authorized Edge Function. It selects up to ten pending or revision candidates that have not already received an AI blind review. The model receives the category, question text, and four choices only; it does not receive the stored answer, answer index, or explanation. The server compares its selected index to the stored index and saves the result, confidence, notes, model name, and timestamp. Each AI stage accepts an optional `generationBatchId`, which scopes it to exactly one generated batch.
 
 It does **not** change editorial status, verification status, or create a live question. A blind-review mismatch is a useful signal for a later editorial workflow, not an automatic rejection.
 
@@ -60,6 +60,16 @@ It does **not** change editorial status, verification status, or create a live q
 
 ## Batch promotion
 
-`promote-approved-candidates` is the final service-authorized step. It selects only candidates already marked `approved` and `verified`, then delegates each one to `promote_question_candidate`. The database RPC remains the single promotion authority and rechecks blind-review matching, duplicate prevention, and one-time provenance inside its transaction. The batch function has no direct `question_bank` insert.
+`promote-approved-candidates` is the final service-authorized step. It selects only candidates already marked `approved`, `verified`, and blind-review matched, then delegates each one to `promote_question_candidate`. The database RPC remains the single promotion authority and rechecks blind-review matching, duplicate prevention, and one-time provenance inside its transaction. The batch function has no direct `question_bank` insert.
 
-Deploy it with `supabase functions deploy run-ai-blind-review`. It uses the existing `OPENAI_API_KEY`; optionally set `AI_BLIND_REVIEW_MODEL` to use a different already-supported model from the generator. For a dedicated invocation credential, configure `AI_REVIEW_SECRET` and send it as the Bearer token; the deployed function also accepts its own service-role key. Invoke it manually with an optional `{"limit": 1}` body while testing. Do not schedule it yet.
+## Automated pipeline
+
+`run-question-candidate-pipeline` is the only function the scheduler calls. It generates a maximum of five candidates per run, then scopes blind review, fact verification, editorial review, and promotion to the resulting generation batch. It records a `running`, `succeeded`, `partial`, or `failed` row in `question_candidate_pipeline_runs`; overlapping runs are skipped and a run abandoned for 45 minutes is released safely.
+
+Set a deliberately small coverage target on the Edge runtime, for example:
+
+```bash
+supabase secrets set AI_PIPELINE_TARGETS='[{"category":"science","difficulty":"medium","count":5}]'
+```
+
+The scheduler invokes the function at 09:00 UTC daily using the existing Vault `cron_secret`. After deploying the function and applying the scheduler migration, run `select public.schedule_maintenance_jobs();` once in the Supabase SQL editor. You may test a configured run manually with `POST /functions/v1/run-question-candidate-pipeline`, `Authorization: Bearer $CRON_SECRET`, and `{}`. Do not pass a broad all-category top-up: increasing coverage is an explicit target configuration change.

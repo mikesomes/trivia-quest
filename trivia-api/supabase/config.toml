@@ -51,6 +51,9 @@ verify_jwt = false
 [functions.promote-approved-candidates]
 verify_jwt = false
 
+[functions.run-question-candidate-pipeline]
+verify_jwt = false
+
 [functions.get-profile]
 verify_jwt = false
 

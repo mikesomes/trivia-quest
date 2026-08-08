@@ -429,7 +429,7 @@ an external cron service.
 
 | Job | Schedule | What it does |
 |---|---|---|
-| `question-bank-topup` | 09:00 UTC daily | Calls `generate-questions` with `{"topUpAll": true}`, filling any category/difficulty below `QUESTION_BANK_MIN`. |
+| `question-candidate-pipeline` | 09:00 UTC daily | Generates one configured small candidate batch and runs its AI review and promotion gates. |
 | `leaderboard-rank-snapshot` | 04:30 UTC daily | Calls `snapshot-leaderboard-ranks` so `get-leaderboard` has a "rank as of yesterday" to diff against. Without it, movement badges stay hidden — the client degrades gracefully. |
 
 The migration reads the function URL and the shared secret from Vault rather

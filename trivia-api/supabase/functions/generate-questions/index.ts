@@ -45,9 +45,10 @@ async function stageCandidates(
   questions: Awaited<ReturnType<typeof generateQuestions>>,
   generationBatchId = crypto.randomUUID(),
 ) {
-  if (questions.length === 0) return
+  if (questions.length === 0) return generationBatchId
   const { error } = await supabase.from('question_candidates').insert(toCandidateRows(questions, generationBatchId))
   if (error) throw new Error(`Failed to stage question candidates: ${error.message}`)
+  return generationBatchId
 }
 
 /**
@@ -181,8 +182,8 @@ Deno.serve(async (req) => {
           findBankDuplicates: bankDuplicateFinder(supabase, cat),
           openaiChat: (params) => openai.chat({ ...params, model: modelOverride }),
         })
-        await stageCandidates(supabase, questions)
-        return { category: cat, difficulty: diff, staged: questions.length }
+        const generationBatchId = await stageCandidates(supabase, questions)
+        return { category: cat, difficulty: diff, staged: questions.length, generationBatchId }
       } catch (err) {
         log.error('Bucket generation failed', { category: cat, difficulty: diff, error: String(err) })
         return { category: cat, difficulty: diff, staged: 0, errors: String(err) }
@@ -229,8 +230,9 @@ Deno.serve(async (req) => {
     return errorResponse('Failed to generate any valid questions', 500)
   }
 
+  let generationBatchId: string
   try {
-    await stageCandidates(supabase, questions)
+    generationBatchId = await stageCandidates(supabase, questions)
   } catch (err) {
     log.error('Candidate staging failed', { error: String(err) })
     return errorResponse(`Failed to stage question candidates: ${String(err)}`, 500)
@@ -242,5 +244,6 @@ Deno.serve(async (req) => {
     staged: questions.length,
     category: body.category,
     difficulty: body.difficulty,
+    generationBatchId,
   })
 })
