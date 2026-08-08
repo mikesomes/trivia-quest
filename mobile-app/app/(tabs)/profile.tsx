@@ -8,6 +8,7 @@ import { LinearGradient } from 'expo-linear-gradient'
 import { haptics } from '../../src/lib/haptics'
 import { ScreenWrapper } from '../../src/components/ui/ScreenWrapper'
 import { AnimatedPressable } from '../../src/components/ui/AnimatedPressable'
+import { AppIcon } from '../../src/components/ui/AppIcon'
 import { colors, spacing, fontSize, radius } from '../../src/constants/theme'
 import { useProfile, useUpdateDisplayName } from '../../src/hooks/useProfile'
 import { useAchievements } from '../../src/hooks/useAchievements'
@@ -109,6 +110,14 @@ export default function ProfileScreen() {
             start={{ x: 0.5, y: 0 }}
             end={{ x: 0.5, y: 1 }}
           />
+          <AnimatedPressable
+            style={styles.settingsBtn}
+            onPress={() => router.push('/settings')}
+            accessibilityLabel="Settings"
+            hitSlop={8}
+          >
+            <AppIcon name="settings" size="md" />
+          </AnimatedPressable>
           <PlayerAvatar level={profile.level} size="lg" />
           <AnimatedPressable
             style={styles.nameRow}
@@ -304,6 +313,13 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.lg,
     gap: spacing.sm,
     overflow: 'hidden',
+  },
+  settingsBtn: {
+    position: 'absolute',
+    top: spacing.lg,
+    right: spacing.lg,
+    zIndex: 1,
+    padding: spacing.xs,
   },
   nameRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
   heroName: { fontSize: fontSize.xxl, fontWeight: '900', color: colors.textPrimary },

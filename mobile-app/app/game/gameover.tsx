@@ -9,7 +9,7 @@ import { useGameStore } from '../../src/store/gameStore'
 import { useAuthStore } from '../../src/store/authStore'
 import { useSubmitXp } from '../../src/hooks/useSubmitXp'
 import { useProfile } from '../../src/hooks/useProfile'
-import { useAudioPlayer, setAudioModeAsync } from 'expo-audio'
+import { useSoundEffects } from '../../src/hooks/useSoundEffects'
 import { colors, spacing, fontSize, radius } from '../../src/constants/theme'
 import { Button } from '../../src/components/ui/Button'
 import { XpCountUp } from '../../src/components/game/XpCountUp'
@@ -36,19 +36,18 @@ export default function GameOverScreen() {
   const setDisplayName = useAuthStore((s) => s.setDisplayName)
   const submitXp = useSubmitXp()
   const { data: profile } = useProfile()
-  const gameOverMusic = useAudioPlayer(require('../../assets/sounds/game-over.mp3'))
+  const { play } = useSoundEffects()
   const [showLevelUp, setShowLevelUp] = useState(false)
   const [showShare, setShowShare] = useState(false)
 
   useEffect(() => {
-    if (xpResult?.leveledUp) setShowLevelUp(true)
+    if (xpResult?.leveledUp) {
+      play('levelUp')
+      setShowLevelUp(true)
+    }
   }, [xpResult])
 
-  useEffect(() => {
-    setAudioModeAsync({ playsInSilentMode: true }).catch(() => {})
-    gameOverMusic.play()
-    return () => { try { gameOverMusic.pause() } catch {} }
-  }, [])
+  useEffect(() => { play('gameOver') }, [])
 
   useEffect(() => {
     if (roundId && roundResult && !xpResult && !submitXp.isPending) {

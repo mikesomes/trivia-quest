@@ -1,5 +1,5 @@
 import React, { useEffect, useRef } from 'react'
-import { Animated, Easing, Modal, StyleSheet, Text, View } from 'react-native'
+import { Animated, Easing, StyleSheet, Text, View } from 'react-native'
 import { colors, fontSize, spacing } from '../../constants/theme'
 import { LifeIcon } from '../icons'
 
@@ -105,8 +105,14 @@ export function ExtraLifeOverlay({ visible, onDismiss }: Props) {
     return () => clearTimeout(timer)
   }, [visible])
 
+  if (!visible) return null
+
+  // A plain absolutely-positioned overlay rather than a native Modal — a
+  // transparent Modal still swallows touches to whatever's behind it (the
+  // "Next Question" button) regardless of pointerEvents on its content, which
+  // used to block advancing for the ~2s this is on screen.
   return (
-    <Modal visible={visible} transparent animationType="none" statusBarTranslucent>
+    <View style={StyleSheet.absoluteFillObject} pointerEvents="none">
       {/* Red flash layer */}
       <Animated.View
         style={[styles.flash, { opacity: flashOpacity }]}
@@ -133,7 +139,7 @@ export function ExtraLifeOverlay({ visible, onDismiss }: Props) {
           <Text style={styles.subtitle}>5 in a row</Text>
         </Animated.View>
       </Animated.View>
-    </Modal>
+    </View>
   )
 }
 

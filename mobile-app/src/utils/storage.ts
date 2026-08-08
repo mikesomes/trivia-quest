@@ -4,6 +4,7 @@ const KEYS = {
   LAST_CATEGORY: 'trivia:lastCategory',
   LAST_DIFFICULTY: 'trivia:lastDifficulty',
   ONBOARDING_DONE: 'trivia:onboardingDone',
+  SOUND_ENABLED: 'trivia:soundEnabled',
 } as const
 
 export const storage = {
@@ -25,5 +26,12 @@ export const storage = {
   },
   async setOnboardingDone(): Promise<void> {
     await AsyncStorage.setItem(KEYS.ONBOARDING_DONE, 'true')
+  },
+  async isSoundEnabled(): Promise<boolean> {
+    const val = await AsyncStorage.getItem(KEYS.SOUND_ENABLED)
+    return val !== 'false'
+  },
+  async setSoundEnabled(enabled: boolean): Promise<void> {
+    await AsyncStorage.setItem(KEYS.SOUND_ENABLED, enabled ? 'true' : 'false')
   },
 }

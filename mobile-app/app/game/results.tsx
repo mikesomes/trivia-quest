@@ -11,7 +11,7 @@ import { useSubmitXp } from '../../src/hooks/useSubmitXp'
 import { useCreateRound } from '../../src/hooks/useRound'
 import { useProfile } from '../../src/hooks/useProfile'
 import { useSoundEffects } from '../../src/hooks/useSoundEffects'
-import { useAudioPlayer, setAudioModeAsync } from 'expo-audio'
+import { useInterimMusic } from '../../src/hooks/useInterimMusic'
 import { colors, spacing, fontSize, radius } from '../../src/constants/theme'
 import { Button } from '../../src/components/ui/Button'
 import { XpCountUp } from '../../src/components/game/XpCountUp'
@@ -60,8 +60,8 @@ export default function ResultsScreen() {
   const { data: profile } = useProfile()
   const { data: challengesData } = useChallenges()
   const { play } = useSoundEffects()
+  useInterimMusic()
 
-  const interimMusic = useAudioPlayer(require('../../assets/sounds/interim-round.mp3'))
   const [showLevelUp, setShowLevelUp] = useState(false)
   const [showShare, setShowShare] = useState(false)
 
@@ -97,21 +97,16 @@ export default function ResultsScreen() {
   }
 
   useEffect(() => {
-    setAudioModeAsync({ playsInSilentMode: true }).catch(() => {})
-    interimMusic.volume = 0.5
-    interimMusic.loop = true
-    interimMusic.play()
-    return () => { try { interimMusic.pause() } catch {} }
-  }, [])
-
-  useEffect(() => {
     if (roundId && roundResult && !xpResult && !submitXp.isPending) {
       submitXp.mutate(roundId)
     }
   }, [roundId, roundResult])
 
   useEffect(() => {
-    if (xpResult?.leveledUp) setShowLevelUp(true)
+    if (xpResult?.leveledUp) {
+      play('levelUp')
+      setShowLevelUp(true)
+    }
   }, [xpResult])
 
   // Ask for notification permission once, after the player's first finished

@@ -1,5 +1,5 @@
 import React, { useEffect, useRef } from 'react'
-import { Animated, Easing, Modal, StyleSheet, Text } from 'react-native'
+import { Animated, Easing, StyleSheet, Text } from 'react-native'
 import { colors, fontSize, spacing } from '../../constants/theme'
 import { HammerIcon } from '../icons'
 
@@ -48,18 +48,22 @@ export function HammerEarnedOverlay({ visible, onDismiss }: Props) {
     return () => clearTimeout(timer)
   }, [onDismiss, visible])
 
+  if (!visible) return null
+
+  // A plain absolutely-positioned overlay rather than a native Modal — a
+  // transparent Modal still swallows touches to whatever's behind it (the
+  // "Next Question" button) regardless of pointerEvents on its content, which
+  // used to block advancing for the ~2s this is on screen.
   return (
-    <Modal visible={visible} transparent animationType="none" statusBarTranslucent>
-      <Animated.View style={[styles.overlay, { opacity: overlayOpacity }]} pointerEvents="none">
-        <Animated.Text style={[styles.hammer, { transform: [{ scale: hammerScale }] }]}>
-          <HammerIcon size={44} />
-        </Animated.Text>
-        <Animated.View style={{ opacity: textOpacity, transform: [{ translateY: textTranslateY }] }}>
-          <Text style={styles.title}>HAMMER!</Text>
-          <Text style={styles.subtitle}>Eliminate 2 wrong answers</Text>
-        </Animated.View>
+    <Animated.View style={[StyleSheet.absoluteFillObject, styles.overlay, { opacity: overlayOpacity }]} pointerEvents="none">
+      <Animated.Text style={[styles.hammer, { transform: [{ scale: hammerScale }] }]}>
+        <HammerIcon size={44} />
+      </Animated.Text>
+      <Animated.View style={{ opacity: textOpacity, transform: [{ translateY: textTranslateY }] }}>
+        <Text style={styles.title}>HAMMER!</Text>
+        <Text style={styles.subtitle}>Eliminate 2 wrong answers</Text>
       </Animated.View>
-    </Modal>
+    </Animated.View>
   )
 }
 

@@ -2,6 +2,8 @@ import React, { useEffect, useRef, useState } from 'react'
 import { Animated, Easing, StyleSheet, Text, View } from 'react-native'
 import { haptics } from '../../lib/haptics'
 import { useAudioPlayer } from 'expo-audio'
+import { AUDIO_ASSETS, SOUND_VOLUMES } from '../../constants/audio'
+import { isSoundMuted } from '../../lib/sound'
 import { colors, fontSize, spacing } from '../../constants/theme'
 import { formatNumber } from '../../utils/format'
 import { tabularNums } from '../ui/Typography'
@@ -25,7 +27,7 @@ export function XpCounter({ finalXp, onLanded }: Props) {
   const landingScale = useRef(new Animated.Value(1)).current
   const landingGlow = useRef(new Animated.Value(0)).current
 
-  const tickPlayer = useAudioPlayer(require('../../../assets/sounds/xp-tick.wav'))
+  const tickPlayer = useAudioPlayer(AUDIO_ASSETS.xpTick)
 
   useEffect(() => {
     if (finalXp === 0) {
@@ -71,11 +73,11 @@ export function XpCounter({ finalXp, onLanded }: Props) {
 
       setDisplayXp(current)
 
-      if (now - lastTickTime > TICK_INTERVAL_MS && t < 1) {
+      if (now - lastTickTime > TICK_INTERVAL_MS && t < 1 && !isSoundMuted()) {
         lastTickTime = now
         try {
           tickPlayer.seekTo(0)
-          tickPlayer.volume = 0.3
+          tickPlayer.volume = SOUND_VOLUMES.xpTick
           tickPlayer.play()
         } catch {}
       }

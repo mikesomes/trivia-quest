@@ -24,6 +24,8 @@ import { GestureHandlerRootView } from 'react-native-gesture-handler'
 import { initNotifications, rescheduleInactivityLadder } from '../src/lib/notifications'
 import { colors } from '../src/constants/theme'
 import { useSyncHapticsWithReducedMotion } from '../src/hooks/useReducedMotion'
+import { useSyncSoundWithStorage } from '../src/hooks/useSoundMuted'
+import { initAudioSession } from '../src/lib/sound'
 
 SplashScreen.preventAutoHideAsync()
 
@@ -46,8 +48,10 @@ function AuthInitializer({ children }: { children: React.ReactNode }) {
   const isInitialized = useAuthStore((s) => s.isInitialized)
   const userId = useAuthStore((s) => s.userId)
   useMenuMusic()
+  useSyncSoundWithStorage()
 
   useEffect(() => {
+    initAudioSession()
     initializeAuth()
   }, [])
 

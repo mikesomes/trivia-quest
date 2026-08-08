@@ -1,14 +1,29 @@
 import { renderHook } from '@testing-library/react-native'
 import { useSoundEffects } from '../../src/hooks/useSoundEffects'
+import { isSoundMuted } from '../../src/lib/sound'
 
-// A fresh player object per call, as expo-audio does — the hook must not depend
-// on those identities.
+// Shared spies so mute assertions can check them, even though each
+// useAudioPlayer() call still returns its own fresh object — the hook must
+// not depend on those object identities.
+const mockPlay = jest.fn()
+const mockSeekTo = jest.fn().mockResolvedValue(undefined)
+
 jest.mock('expo-audio', () => ({
-  useAudioPlayer: () => ({ seekTo: jest.fn().mockResolvedValue(undefined), play: jest.fn(), volume: 1 }),
+  useAudioPlayer: () => ({ seekTo: mockSeekTo, play: mockPlay, volume: 1 }),
   setAudioModeAsync: jest.fn().mockResolvedValue(undefined),
 }))
 
+jest.mock('../../src/lib/sound', () => ({
+  isSoundMuted: jest.fn(() => false),
+}))
+
 describe('useSoundEffects', () => {
+  beforeEach(() => {
+    mockPlay.mockClear()
+    mockSeekTo.mockClear()
+    ;(isSoundMuted as jest.Mock).mockReturnValue(false)
+  })
+
   // `play` sits in the dependency array of the gameplay screen's submit handler.
   // If it changed identity per render, that handler would too — and since the
   // timer effect depends on it, the tick interval would be torn down and
@@ -29,5 +44,16 @@ describe('useSoundEffects', () => {
     rerender({})
 
     await expect(result.current.play('correct', 4)).resolves.toBeUndefined()
+    expect(mockPlay).toHaveBeenCalled()
+  })
+
+  it('does not play when sound is muted', async () => {
+    ;(isSoundMuted as jest.Mock).mockReturnValue(true)
+    const { result } = renderHook(() => useSoundEffects())
+
+    await result.current.play('correct', 4)
+
+    expect(mockSeekTo).not.toHaveBeenCalled()
+    expect(mockPlay).not.toHaveBeenCalled()
   })
 })

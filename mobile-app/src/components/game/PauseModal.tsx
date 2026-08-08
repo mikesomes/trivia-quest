@@ -1,8 +1,11 @@
 import React from 'react'
-import { View, Text, StyleSheet, Modal } from 'react-native'
+import { View, Text, StyleSheet, Modal, Switch } from 'react-native'
 import { colors, spacing, radius, fontSize, surfaces } from '../../constants/theme'
 import { Button } from '../ui/Button'
+import { AppIcon } from '../ui/AppIcon'
 import { tabularNums } from '../ui/Typography'
+import { useSoundMuted } from '../../hooks/useSoundMuted'
+import { setSoundMuted } from '../../lib/sound'
 
 interface PauseModalProps {
   visible: boolean
@@ -12,12 +15,27 @@ interface PauseModalProps {
 }
 
 export function PauseModal({ visible, xp, onResume, onQuit }: PauseModalProps) {
+  const muted = useSoundMuted()
+
   return (
     <Modal visible={visible} transparent animationType="fade">
       <View style={styles.overlay}>
         <View style={styles.modal}>
           <Text style={styles.title}>Game Paused</Text>
           <Text style={styles.xpText}>Current XP: {xp.toLocaleString()}</Text>
+
+          <View style={styles.soundRow}>
+            <View style={styles.soundLabel}>
+              <AppIcon name={muted ? 'soundOff' : 'soundOn'} size="sm" />
+              <Text style={styles.soundLabelText}>Sound</Text>
+            </View>
+            <Switch
+              value={!muted}
+              onValueChange={(enabled) => setSoundMuted(!enabled)}
+              trackColor={{ false: colors.border, true: colors.primary }}
+              thumbColor={colors.textPrimary}
+            />
+          </View>
 
           <View style={styles.buttons}>
             <Button title="Resume" onPress={onResume} variant="primary" style={styles.button} />
@@ -56,6 +74,26 @@ const styles = StyleSheet.create({
     fontSize: fontSize.md,
     color: colors.textSecondary,
     textAlign: 'center',
+  },
+  soundRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingVertical: spacing.sm,
+    paddingHorizontal: spacing.md,
+    borderRadius: radius.md,
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  soundLabel: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+  },
+  soundLabelText: {
+    fontSize: fontSize.md,
+    fontWeight: '600',
+    color: colors.textPrimary,
   },
   buttons: {
     gap: spacing.sm,

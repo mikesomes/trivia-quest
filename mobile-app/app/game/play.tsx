@@ -336,7 +336,7 @@ export default function PlayScreen() {
       submitInFlightRef.current = true
       setConnectionNotice(null)
       clearInterval(timerRef.current!)
-      selectOption(option ?? ('a' as AnswerOption)) // timeout uses null but we still need to call selectOption for state
+      selectOption(option) // null on timeout — moves answerState to 'pending' without marking any option selected
 
       const timeTakenMs = getElapsedMs()
       const activeTimer = getActiveScoringTimerSnapshot(timeRemainingRef.current)
@@ -396,6 +396,7 @@ export default function PlayScreen() {
           setShowExtraLife(true)
         }
         if (result.hammerEarned) {
+          play('hammerEarned')
           setShowHammerEarned(true)
         }
       } catch (err) {
@@ -501,12 +502,17 @@ export default function PlayScreen() {
   // Play game-start sound once on mount
   useEffect(() => { play('gameStart') }, [])
 
-  // Blitz: auto-advance to next question after reveal
+  // Blitz: auto-advance to next question after reveal. Held off while a streak
+  // milestone, extra-life, or hammer-earned celebration is still on screen —
+  // firing on a fixed delay regardless used to advance underneath them, so the
+  // next question loaded hidden behind an opaque overlay. Re-fires once the
+  // celebration clears (its dismissal flips these back to falsy).
   useEffect(() => {
     if (!isBlitz || answerState !== 'revealed') return
+    if (showExtraLife || showHammerEarned || streakMilestone) return
     const timer = setTimeout(handleNextQuestion, 1200)
     return () => clearTimeout(timer)
-  }, [isBlitz, answerState, handleNextQuestion])
+  }, [isBlitz, answerState, handleNextQuestion, showExtraLife, showHammerEarned, streakMilestone])
 
   // Handle app going to background: forfeit question if one is active, otherwise pause
   useEffect(() => {

@@ -89,7 +89,7 @@ interface GameState {
   startQuestionTimer: () => void
   getElapsedMs: () => number
   getActiveScoringTimerSnapshot: (visibleRemainingMs: number) => ActiveScoringTimerSnapshot
-  selectOption: (option: AnswerOption) => void
+  selectOption: (option: AnswerOption | null) => void
   recordAnswer: (result: AnswerResult) => void
   advanceQuestion: () => void
   resetAnswerState: () => void

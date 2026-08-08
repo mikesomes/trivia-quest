@@ -8,7 +8,7 @@ import { NewAchievementsToast } from '../../src/components/game/NewAchievementsT
 import { ShareModal } from '../../src/components/share/ShareModal'
 import { useGameStore } from '../../src/store/gameStore'
 import { useSubmitSuddenDeath } from '../../src/hooks/useSuddenDeath'
-import { useAudioPlayer, setAudioModeAsync } from 'expo-audio'
+import { useSoundEffects } from '../../src/hooks/useSoundEffects'
 import { haptics } from '../../src/lib/haptics'
 import { colors, spacing, fontSize, radius } from '../../src/constants/theme'
 import { XpCounter } from '../../src/components/game/XpCounter'
@@ -30,14 +30,11 @@ export default function SuddenDeathOverScreen() {
   const submitSuddenDeath = useSubmitSuddenDeath()
   const [showLevelUp, setShowLevelUp] = useState(false)
   const [showShare, setShowShare] = useState(false)
-  const gameOverMusic = useAudioPlayer(require('../../assets/sounds/game-over.mp3'))
+  const { play } = useSoundEffects()
 
   useEffect(() => {
-    setAudioModeAsync({ playsInSilentMode: true }).catch(() => {})
-    gameOverMusic.volume = 0.5
-    gameOverMusic.play()
+    play('gameOver')
     haptics.defeat()
-    return () => { try { gameOverMusic.pause() } catch {} }
   }, [])
 
   useEffect(() => {
@@ -47,7 +44,10 @@ export default function SuddenDeathOverScreen() {
   }, [])
 
   useEffect(() => {
-    if (submitSuddenDeath.data?.leveledUp) setShowLevelUp(true)
+    if (submitSuddenDeath.data?.leveledUp) {
+      play('levelUp')
+      setShowLevelUp(true)
+    }
   }, [submitSuddenDeath.data])
 
   const handlePlayAgain = () => {
