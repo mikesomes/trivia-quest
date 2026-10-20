@@ -27,6 +27,10 @@
         "appleId": "somersm8@gmail.com",
         "ascAppId": "6763799154",
         "appleTeamId": "P5695T777V"
+      },
+      "android": {
+        "serviceAccountKeyPath": "./google-play-service-account.json",
+        "track": "internal"
       }
     }
   }
