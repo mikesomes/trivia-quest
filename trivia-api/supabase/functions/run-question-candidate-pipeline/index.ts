@@ -71,7 +71,6 @@ Deno.serve(async (req) => {
     const blindReviewSecret = requiredSecret('AI_REVIEW_SECRET')
     const verificationSecret = requiredSecret('AI_VERIFY_SECRET')
     const editorialSecret = requiredSecret('AI_EDITORIAL_SECRET')
-    const promotionSecret = requiredSecret('CANDIDATE_PROMOTION_SECRET')
 
     for (const target of targets) {
       const generated = await invokeStage('generate-questions', cronSecret, target)
@@ -90,7 +89,8 @@ Deno.serve(async (req) => {
       targetResult.blindReview = await invokeStage('run-ai-blind-review', blindReviewSecret, scopedBody)
       targetResult.factVerification = await invokeStage('run-ai-fact-verification', verificationSecret, scopedBody)
       targetResult.editorialReview = await invokeStage('run-ai-editorial-review', editorialSecret, scopedBody)
-      targetResult.promotion = await invokeStage('promote-approved-candidates', promotionSecret, scopedBody)
+      // Promotion is intentionally manual (see promote-question-candidate) until the pipeline has
+      // a real content-safety check beyond the "wtf" regex in validator.ts.
       results.push(targetResult)
     }
 

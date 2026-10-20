@@ -240,6 +240,12 @@ Copy `.env.example` to `.env.local` for local development. For production, use `
 | `QUESTION_BANK_TOPUP_COUNT` | How many questions to generate per batch when topping up. Default: `15`. |
 | `CRON_SECRET` | A random secret string you generate. Used to authenticate calls to `generate-questions` from a cron job. Generate with: `openssl rand -hex 32` |
 | `APP_ENV` | `development` or `production`. Controls logging verbosity. |
+| `AI_REVIEW_SECRET` | Random secret authenticating `run-question-candidate-pipeline`'s calls to `run-ai-blind-review`. Generate with: `openssl rand -hex 32` |
+| `AI_VERIFY_SECRET` | Random secret authenticating calls to `run-ai-fact-verification`. Generate with: `openssl rand -hex 32` |
+| `AI_EDITORIAL_SECRET` | Random secret authenticating calls to `run-ai-editorial-review`. Generate with: `openssl rand -hex 32` |
+| `CANDIDATE_PROMOTION_SECRET` | Random secret authenticating calls to `promote-approved-candidates`. Generate with: `openssl rand -hex 32` |
+| `AI_PIPELINE_TARGETS` | JSON array of `{ category, difficulty, count }` the scheduled pipeline run should generate, e.g. `[{"category":"famous_quotes","difficulty":"easy","count":5}]`. Required by `run-question-candidate-pipeline`; max 3 targets, 5 total candidates per run. |
+| `ADMIN_USER_IDS` | Comma-separated Supabase user UUIDs allowed to call `review-question-candidates` and `promote-question-candidate`. |
 | `EXPO_PUBLIC_SUPABASE_URL` | Same as `SUPABASE_URL` — included here so `.env.example` can serve both repos. |
 | `EXPO_PUBLIC_SUPABASE_ANON_KEY` | Same as `SUPABASE_ANON_KEY`. |
 | `EXPO_PUBLIC_API_BASE_URL` | Base URL for Edge Function calls, e.g. `https://abcdef.supabase.co/functions/v1` |
@@ -388,8 +394,16 @@ supabase secrets set \
   OPENAI_MODEL=gpt-4o-mini \
   QUESTION_BANK_MIN_THRESHOLD=150 \
   QUESTION_BANK_TOPUP_COUNT=15 \
-  APP_ENV=production
+  APP_ENV=production \
+  AI_REVIEW_SECRET=$(openssl rand -hex 32) \
+  AI_VERIFY_SECRET=$(openssl rand -hex 32) \
+  AI_EDITORIAL_SECRET=$(openssl rand -hex 32) \
+  CANDIDATE_PROMOTION_SECRET=$(openssl rand -hex 32) \
+  AI_PIPELINE_TARGETS='[{"category":"famous_quotes","difficulty":"easy","count":5}]' \
+  ADMIN_USER_IDS=uuid-of-admin-user-1,uuid-of-admin-user-2
 ```
+
+Without the four `AI_*`/`CANDIDATE_PROMOTION_SECRET` values, the scheduled `question-candidate-pipeline` cron job fails every run — silently, aside from a `failed` row in `question_candidate_pipeline_runs`.
 
 Verify with:
 ```bash
